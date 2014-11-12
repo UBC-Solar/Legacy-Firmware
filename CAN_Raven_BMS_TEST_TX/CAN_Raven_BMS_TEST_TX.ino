@@ -18,10 +18,6 @@
 #define BUS_SPEED 125
 #define ZEVA_ID 100
 
-//global variable used to determine whether loop should
-//be in Tx or Rx mode.
-//int state;
-
 byte length,rx_status,filter,ext;
 uint32_t frame_id;
 byte frame_data[8];
@@ -37,11 +33,6 @@ void setup() {
   
   CAN.setMode(CONFIGURATION);
   CAN.baudConfig(BUS_SPEED);
- 
-  
-  //Wait 10 seconds so that I can still upload even
-  //if the previous iteration spams the serial port
-  delay(1000);
   
   /*CAN.setMaskOrFilter(MASK_0,   0b11111111, 0b11100000, 0b00000000, 0b00000000);
   CAN.setMaskOrFilter(FILTER_0, 0b11111111, 0b11100000, 0b00000000, 0b00000000); //DISALLOW ext packets.
@@ -54,12 +45,10 @@ void setup() {
 
  
   CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
-  //CAN.toggleRxBuffer0Acceptance(true, true);
-  //CAN.toggleRxBuffer1Acceptance(true, true);
 
-     CAN.toggleRxBuffer0Acceptance(true, true);
-     CAN.toggleRxBuffer1Acceptance(true, true); 
-     CAN.resetFiltersAndMasks();
+  CAN.toggleRxBuffer0Acceptance(true, true);
+  CAN.toggleRxBuffer1Acceptance(true, true); 
+  CAN.resetFiltersAndMasks();
 }
 
 void printBufTX(byte length, uint32_t frame_id, byte *frame_data, byte ext) {
