@@ -15,28 +15,17 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#define BUS_SPEED 1000
+#define BUS_SPEED 125
 
-
-//global variable used to determine whether loop should
-//be in Tx or Rx mode.
-int state;
-
-void setup() {                
-  state =1;
+void setup() {
   
   Serial.begin(9600);
   
   // initialize CAN bus class
   // this class initializes SPI communications with MCP2515
   CAN.begin();
+  CAN.setMode(CONFIGURATION);
   CAN.baudConfig(BUS_SPEED);
- 
-  
-  //Wait 10 seconds so that I can still upload even
-  //if the previous iteration spams the serial port
-  delay(1000);
-
   CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
   CAN.toggleRxBuffer0Acceptance(false, false); //set to true,true to disable filtering
   CAN.toggleRxBuffer1Acceptance(true, true);
@@ -84,33 +73,6 @@ void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte 
       Serial.println("]"); 
 }
 
-void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
-   if(frame_id==0x7FF){ //current sensor
-      union u_tag {
-        byte b[4];
-        float fval;
-      } u;
-
-      Serial.print("Current Sensor:");
-      
-      u.b[0] = frame_data[0];
-      u.b[1] = frame_data[1];
-      u.b[2] = frame_data[2];
-      u.b[3] = frame_data[3];      
-      Serial.print("I=");
-      Serial.print(u.fval);
-      
-      u.b[0] = frame_data[4];
-      u.b[1] = frame_data[5];
-      u.b[2] = frame_data[6];
-      u.b[3] = frame_data[7];
-      Serial.print(", Q=");
-      Serial.println(u.fval);
-   }else{
-      Serial.print("unknown msg ");
-      Serial.println(frame_id, HEX);
-   }  
-}
 void loop() {
   
   byte length,rx_status,filter,ext;
@@ -130,25 +92,20 @@ void loop() {
       rx_status = CAN.readStatus();
 
       if ((rx_status & 0x40) == 0x40) {
-       CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
-        //printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
-        msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
+        CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
+        printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
         CAN.clearRX0Status();
         rx_status = CAN.readStatus();
         Serial.println(rx_status,HEX);
       }
       
       if ((rx_status & 0x80) == 0x80) {
-       CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
-        //printBuf(rx_status, length, frame_id, filter, 1, frame_data, ext);       
-        msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
+        CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
+        printBuf(rx_status, length, frame_id, filter, 1, frame_data, ext);
         CAN.clearRX1Status();
         rx_status = CAN.readStatus();
         Serial.println(rx_status,HEX);
       }
-       
-      
-   //delay(100);
     
 }
 
