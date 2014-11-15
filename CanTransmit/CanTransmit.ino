@@ -17,13 +17,7 @@
 
 #define BUS_SPEED 125
 
-//global variable used to determine whether loop should
-//be in Tx or Rx mode.
-int state;
-
-void setup() {                
-
-  
+void setup() {
   Serial.begin(9600);
   
   // initialize CAN bus class
@@ -31,39 +25,10 @@ void setup() {
   CAN.begin();
   CAN.setMode(CONFIGURATION);
   CAN.baudConfig(BUS_SPEED);
- 
-  
-  //Wait 10 seconds so that I can still upload even
-  //if the previous iteration spams the serial port
-  delay(1000);
-   
- #if  defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__)
-  state = 0;
-  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
- #else
- state = 1;
-
-
-  /*CAN.setMaskOrFilter(MASK_0,   0b11111111, 0b11100000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_0, 0b11111111, 0b11100000, 0b00000000, 0b00000000); //DISALLOW ext packets.
-  CAN.setMaskOrFilter(FILTER_1, 0b10111111, 0b11100000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(MASK_1,   0b00000000, 0b00000000, 0b00001111, 0b11111111);  
-  CAN.setMaskOrFilter(FILTER_2, 0b00000000, 0b00001000, 0b00001101, 0b11111111);
-  CAN.setMaskOrFilter(FILTER_3, 0b00000000, 0b00001000, 0b00001101, 0b11111111);
-  CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00001000, 0b00001111, 0b11111111);
-  CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00001000, 0b00001101, 0b11111111);*/
-
- 
-  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
-  //CAN.toggleRxBuffer0Acceptance(true, true);
-  //CAN.toggleRxBuffer1Acceptance(true, true);
-
-  #endif
- 
-    state =0;
-     CAN.toggleRxBuffer0Acceptance(true, true);
-     CAN.toggleRxBuffer1Acceptance(true, true); 
-     CAN.resetFiltersAndMasks();
+  CAN.setMode(NORMAL); // set to "NORMAL" for standard com
+  CAN.toggleRxBuffer0Acceptance(true, true);
+  CAN.toggleRxBuffer1Acceptance(true, true); 
+  CAN.resetFiltersAndMasks();
 }
 
 byte inc = 0;
@@ -103,9 +68,6 @@ void loop() {
   uint32_t frame_id;
   byte frame_data[8];
   
- 
-  switch(state) {
-    case 0: //Tx
     Serial.println("sending an ext packet.");
      
       frame_data[0] = 0x55;
@@ -142,51 +104,8 @@ void loop() {
       
   
       CAN.load_ff_0(length,&frame_id,frame_data, 0);
-      
+        printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
       delay(1000);
       inc++;
-      
-      break;
-    case 1: //Rx
-      //clear receive buffers, just in case.
-      frame_data[0] = 0x00;
-      frame_data[1] = 0x00;
-      frame_data[2] = 0x00;
-      frame_data[3] = 0x00;
-      frame_data[4] = 0x00;
-      frame_data[5] = 0x00;
-      frame_data[6] = 0x00;
-      frame_data[7] = 0x00;
-  
-      frame_id = 0x0000;
-  
-      length = 0;
-      
-      rx_status = CAN.readStatus();
-
-      if ((rx_status & 0x40) == 0x40) {
-       CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
-        printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
-        CAN.clearRX0Status();
-        rx_status = CAN.readStatus();
-        Serial.println(rx_status,HEX);
-      }
-      
-      if ((rx_status & 0x80) == 0x80) {
-       CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
-        printBuf(rx_status, length, frame_id, filter, 1, frame_data, ext);       
-        CAN.clearRX1Status();
-        rx_status = CAN.readStatus();
-        Serial.println(rx_status,HEX);
-      }
-       
-      
-   delay(1000);   
-    //CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
-    // printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
-     //CAN.clearRX1Status();
-    
-      break;      
-  }
 }
 

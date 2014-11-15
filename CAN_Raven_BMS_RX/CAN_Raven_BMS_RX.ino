@@ -18,14 +18,7 @@
 #define BUS_SPEED 125
 #define ZEVA_ID 100
 
-
-//global variable used to determine whether loop should
-//be in Tx or Rx mode.
-int state;
-
-void setup() {                
-  state =1;
-  
+void setup() {  
   Serial.begin(115200);
   
   // initialize CAN bus class
@@ -34,12 +27,6 @@ void setup() {
   
   CAN.setMode(CONFIGURATION);
   CAN.baudConfig(BUS_SPEED);
- 
-  
-  //Wait 10 seconds so that I can still upload even
-  //if the previous iteration spams the serial port
-  delay(1000);
-
   CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
   CAN.toggleRxBuffer0Acceptance(false, false); //set to true,true to disable filtering
   CAN.toggleRxBuffer1Acceptance(true, true);
@@ -178,9 +165,6 @@ void loop() {
         rx_status = CAN.readStatus();
         //Serial.println(rx_status,HEX);
       }
-       
-      
-   //delay(100);
     
 }
 

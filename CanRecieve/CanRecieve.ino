@@ -15,7 +15,7 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#define BUS_SPEED 1000
+#define BUS_SPEED 125
 
 //global variable used to determine whether loop should
 //be in Tx or Rx mode.
@@ -23,13 +23,13 @@ int state;
 
 void setup()
 {                
-  state = 1;
-  
+  state = 1; 
   Serial.begin(9600);
   
   // initialize CAN bus class
   // this class initializes SPI communications with MCP2515
   CAN.begin();
+  CAN.setMode(CONFIGURATION);
   CAN.baudConfig(BUS_SPEED);
  
   //Wait 10 seconds so that I can still upload even
@@ -117,6 +117,7 @@ void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byt
     Serial.println(frame_id, HEX);
   }  
 }
+
 void loop()
 {  
   byte length,rx_status,filter,ext;
