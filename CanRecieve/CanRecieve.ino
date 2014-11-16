@@ -11,11 +11,11 @@
 //even at 1 Megabit.  But we didn't do any tests that required arbitration
 //with multiple nodes.
 
-#include <CAN.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
+#include <CAN.h>
 
-#define BUS_SPEED 125
+#define BUS_SPEED 125000
 
 //global variable used to determine whether loop should
 //be in Tx or Rx mode.
@@ -25,6 +25,7 @@ void setup()
 {                
   state = 1; 
   Serial.begin(9600);
+  Serial.println("starting CanRecieve...");
   
   // initialize CAN bus class
   // this class initializes SPI communications with MCP2515
@@ -44,14 +45,14 @@ void setup()
                                                    un       DATA        DATA
                                   ID MSB   ID LSB used     BYTE 0      BYTE 1
                                   [             ][   ]    [      ]    [      ]  */                                
-  CAN.setMaskOrFilter(MASK_0,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 0 controls filters 0 and 1 
-  CAN.setMaskOrFilter(FILTER_0, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
-  CAN.setMaskOrFilter(FILTER_1, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //a message will pass if at least one of the filters pass it. 
-  CAN.setMaskOrFilter(MASK_1,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 1 control filters 2 to 5
-  CAN.setMaskOrFilter(FILTER_2, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_3, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 0 on printBuf
-  CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 1 on printBuf
+  //CAN.setMaskOrFilter(MASK_0,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 0 controls filters 0 and 1 
+  //CAN.setMaskOrFilter(FILTER_0, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
+  //CAN.setMaskOrFilter(FILTER_1, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //a message will pass if at least one of the filters pass it. 
+  //CAN.setMaskOrFilter(MASK_1,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 1 control filters 2 to 5
+  //CAN.setMaskOrFilter(FILTER_2, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
+  //CAN.setMaskOrFilter(FILTER_3, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
+  //CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 0 on printBuf
+  //CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 1 on printBuf
 }
 
 
@@ -131,8 +132,9 @@ void loop()
   length = 0;
   rx_status = CAN.readStatus();
 
-  if ((rx_status & 0x40) == 0x40)
+  if ((rx_status & 0x80) == 0x80)
   {
+    Serial.println("Reading frame in buffer 0");
     CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
     printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
     //msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
@@ -141,8 +143,9 @@ void loop()
     Serial.println(rx_status,HEX);
   }
       
-  if ((rx_status & 0x80) == 0x80)
+  if ((rx_status & 0x40) == 0x40)
   {
+    Serial.println("Reading frame in buffer 1...");
     CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
     printBuf(rx_status, length, frame_id, filter, 1, frame_data, ext);       
     //msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
@@ -151,6 +154,6 @@ void loop()
     Serial.println(rx_status,HEX);
   }    
   
-  //delay(100);  
+  delay(100);  
 }
 
