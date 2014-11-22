@@ -23,13 +23,15 @@ void setup() {
   
   // initialize CAN bus class
   // this class initializes SPI communications with MCP2515
+  
+
   CAN.begin();
   
   CAN.setMode(CONFIGURATION);
   CAN.baudConfig(BUS_SPEED);
-  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
-  CAN.toggleRxBuffer0Acceptance(false, false); //set to true,true to disable filtering
+  CAN.toggleRxBuffer0Acceptance(true, true); //set to true,true to disable filtering
   CAN.toggleRxBuffer1Acceptance(true, true);
+  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
 /* set mask bit to 1 to turn on filtering for that bit
                                                    un       DATA        DATA
                                   ID MSB   ID LSB used     BYTE 0      BYTE 1
@@ -42,7 +44,7 @@ void setup() {
   CAN.setMaskOrFilter(FILTER_3, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
   CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 0 on printBuf
   CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 1 on printBuf
-  
+
 }
 
 
@@ -98,6 +100,7 @@ void msgHandleCurrentSensor(byte rx_status, byte length, uint32_t frame_id, byte
 
 void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
   if(frame_id%2 == 0){ //is a request
+    Serial.println("req");
     return;
   }
   
@@ -126,9 +129,8 @@ void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byt
      msgHandleZevaBms(rx_status, length, frame_id, filter, buffer, frame_data, ext);
    }else{
      Serial.print("unknown msg ");
-     Serial.println(frame_id, HEX);
-   }  
-
+     printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext);     
+   }
 }
 void loop() {
   
@@ -160,7 +162,7 @@ void loop() {
       if ((rx_status & 0x80) == 0x80) {
         CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
         //printBuf(rx_status, length, frame_id, filter, 1, frame_data, ext);       
-        msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
+        msgHandler(rx_status, length, frame_id, filter, 1, frame_data, ext);
         CAN.clearRX1Status();
         rx_status = CAN.readStatus();
         //Serial.println(rx_status,HEX);
