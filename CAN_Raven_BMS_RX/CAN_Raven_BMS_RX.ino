@@ -17,6 +17,8 @@
 
 #define BUS_SPEED 125
 #define ZEVA_ID 100
+//ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
+
 
 void setup() {  
   Serial.begin(115200);
@@ -100,7 +102,8 @@ void msgHandleCurrentSensor(byte rx_status, byte length, uint32_t frame_id, byte
 
 void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
   if(frame_id%2 == 0){ //is a request
-    Serial.println("req");
+    Serial.print("req ");
+    Serial.println(frame_id);
     return;
   }
   
