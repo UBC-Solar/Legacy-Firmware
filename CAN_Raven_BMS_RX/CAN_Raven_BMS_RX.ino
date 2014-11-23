@@ -100,9 +100,20 @@ void msgHandleCurrentSensor(byte rx_status, byte length, uint32_t frame_id, byte
 }
 
 void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
-  if(frame_id%2 == 0) {   // is a request
-    Serial.print("req ");
-    Serial.println(frame_id);
+  
+  // even IDs are requests from Core to BMS12
+  if(frame_id%2 == 0) {
+    uint32_t messageID = frame_id%10;
+    switch (messageID) {
+      case 0: Serial.print("Request for status from Core to Module "); break;
+      case 2: Serial.print("Request for voltages #1 from Core to Module "); break;
+      case 4: Serial.print("Request for voltages #2 from Core to Module "); break;
+      case 6: Serial.print("Request for config info from Core to Module "); break;
+      case 8: Serial.print("Command to set config info from Core to Module "); break;
+      default: Serial.print("Unknown message from Core to Module "); break;
+    }
+    Serial.print((frame_id - 100 - messageID)/10);  // frameID = 100 + 10 * moduleID + messageID, 0 <= messageID <=8
+    Serial.println();
     return;
   }
   
@@ -140,7 +151,6 @@ void loop() {
   byte length,rx_status,filter,ext;
   uint32_t frame_id;
   byte frame_data[8];
-  
  
   // Rx
   // clear receive buffers, just in case.
