@@ -22,6 +22,7 @@
 #define ZEVA_CORE_ID 10
 
 void setup() {  
+  
   Serial.begin(115200);
   
   // initialize CAN bus class
@@ -77,29 +78,6 @@ void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte 
   Serial.println("]"); 
 }
 
-void msgHandleCurrentSensor(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
-  union u_tag {
-    byte b[4];
-    float fval;
-  } u;
- 
-  Serial.print("Current Sensor:");
-      
-  u.b[0] = frame_data[0];
-  u.b[1] = frame_data[1];
-  u.b[2] = frame_data[2];
-  u.b[3] = frame_data[3];      
-  Serial.print("I=");
-  Serial.print(u.fval);
-      
-  u.b[0] = frame_data[4];
-  u.b[1] = frame_data[5];
-  u.b[2] = frame_data[6];
-  u.b[3] = frame_data[7];
-  Serial.print(", Q=");
-  Serial.println(u.fval);
-}
-
 void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
   
   // even IDs are requests from Core to BMS12
@@ -136,7 +114,8 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
   Serial.println();
 }
 
-void msgHandleZevaCore(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
+void msgHandleZevaCore(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
+  
   int soc = frame_data[1];
   int voltage = (frame_data[2] + ((frame_data[3] & 0xF0) << 4));
   int current = ((frame_data[4] << 4) + (frame_data[3] & 0x0F)) - 2048;
@@ -156,13 +135,12 @@ void msgHandleZevaCore(byte rx_status, byte length, uint32_t frame_id, byte filt
 }
 
 void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
-   if(frame_id==0x7FF) { // current sensor
-     msgHandleCurrentSensor(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   }else if(frame_id>=ZEVA_BASE_ID && frame_id<ZEVA_BASE_ID+40){
+   
+   if(frame_id>=ZEVA_BASE_ID && frame_id<ZEVA_BASE_ID+40) {
      msgHandleZevaBms(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   }else if(frame_id == ZEVA_CORE_ID){
+   } else if(frame_id == ZEVA_CORE_ID) {
      msgHandleZevaCore(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   }else{
+   } else {
      Serial.print("unknown msg ");
      printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext);     
    }
@@ -184,6 +162,7 @@ void loop() {
   rx_status = CAN.readStatus();
 
   if ((rx_status & 0x40) == 0x40) {
+
     CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
     //printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
     msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
@@ -193,6 +172,7 @@ void loop() {
   }
       
   if ((rx_status & 0x80) == 0x80) {
+
     CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
     //printBuf(rx_status, length, frame_id, filter, 1, frame_data, ext);       
     msgHandler(rx_status, length, frame_id, filter, 1, frame_data, ext);
