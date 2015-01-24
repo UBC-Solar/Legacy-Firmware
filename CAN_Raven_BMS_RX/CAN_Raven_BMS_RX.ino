@@ -18,7 +18,8 @@
 #include <SPI.h>
 
 #define BUS_SPEED 125
-#define ZEVA_ID 100
+#define ZEVA_BASE_ID 100
+#define ZEVA_CORE_ID 10
 
 void setup() {  
   Serial.begin(115200);
@@ -135,12 +136,18 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
   Serial.println();
 }
 
+void msgHandleZevaCore(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
+  
+}
+
 void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
    if(frame_id==0x7FF) { // current sensor
      msgHandleCurrentSensor(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   } else if(frame_id>=ZEVA_ID && frame_id<ZEVA_ID+40) {
+   }else if(frame_id>=ZEVA_BASE_ID && frame_id<ZEVA_BASE_ID+40){
      msgHandleZevaBms(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   } else {
+   }else if(frame_id == ZEVA_CORE_ID){
+     msgHandleZevaCore(rx_status, length, frame_id, filter, buffer, frame_data, ext);
+   }else{
      Serial.print("unknown msg ");
      printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext);     
    }
