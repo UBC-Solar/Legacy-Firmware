@@ -98,9 +98,9 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
   
   byte bmsId=(frame_id-100)/10;
   byte voltGrp=(frame_id%10-1)/2;
-  byte vx100[6];
+  int vx100[6];
   for(int i=0; i<6; i++) {
-    vx100[i]=frame_data[i]+((frame_data[6]>>(i-1))&1 ? 128 : 0);
+    vx100[i]=frame_data[i]+((frame_data[6]>>i)&1 ? 256 : 0);
   }
   
   Serial.print("BMS #");
@@ -122,6 +122,10 @@ void msgHandleZevaCore(byte rx_status, byte length, uint32_t frame_id, byte filt
   float aux_voltage = frame_data[5]/10;
   int temperature = frame_data[7];
   
+  Serial.print("Error: ");
+  Serial.println(frame_data[0]>>4);
+  Serial.print("Status: ");
+  Serial.println(frame_data[0]&15);
   Serial.print("State of Charge: ");
   Serial.println(soc);
   Serial.print("Voltage: ");
