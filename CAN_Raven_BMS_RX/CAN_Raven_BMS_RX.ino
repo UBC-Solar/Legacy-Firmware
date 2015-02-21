@@ -19,7 +19,6 @@
 
 #define BUS_SPEED 125
 #define ZEVA_BASE_ID 100
-#define ZEVA_CORE_ID 10
 
 void setup() {  
   
@@ -114,37 +113,15 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
   Serial.println();
 }
 
-void msgHandleZevaCore(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
-  
-  int soc = frame_data[1];
-  int voltage = (frame_data[2] + ((frame_data[3] & 0xF0) << 4));
-  int current = ((frame_data[4] << 4) + (frame_data[3] & 0x0F)) - 2048;
-  float aux_voltage = frame_data[5]/10;
-  int temperature = frame_data[7];
-  
-  Serial.print("Error: ");
-  Serial.println(frame_data[0]>>4);
-  Serial.print("Status: ");
-  Serial.println(frame_data[0]&15);
-  Serial.print("State of Charge: ");
-  Serial.println(soc);
-  Serial.print("Voltage: ");
-  Serial.println(voltage);
-  Serial.print("Current: ");
-  Serial.println(current);
-  Serial.print("Auxiliary Voltage: ");
-  Serial.println(aux_voltage);
-  Serial.print("Temperature: ");
-  Serial.println(temperature);
-}
-
 void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
    
    if(frame_id>=ZEVA_BASE_ID && frame_id<ZEVA_BASE_ID+40) {
      msgHandleZevaBms(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   } else if(frame_id == ZEVA_CORE_ID) {
-     msgHandleZevaCore(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   } else {
+   }
+   else if(frame_id == 10) {
+     msgHandleZevaCoreStatus(rx_status, length, frame_id, filter, buffer, frame_data, ext);
+   }
+   else {
      Serial.print("unknown msg ");
      printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext);     
    }
