@@ -42,10 +42,10 @@ void setup() {
                                                    un       DATA        DATA
                                   ID MSB   ID LSB used     BYTE 0      BYTE 1
                                   [             ][   ]    [      ]    [      ]  */                                
-  CAN.setMaskOrFilter(MASK_0,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 0 controls filters 0 and 1 
+  CAN.setMaskOrFilter(MASK_0,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 0 (for buffer 0) controls filters 0 and 1 
   CAN.setMaskOrFilter(FILTER_0, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
   CAN.setMaskOrFilter(FILTER_1, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //a message will pass if at least one of the filters pass it. 
-  CAN.setMaskOrFilter(MASK_1,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 1 control filters 2 to 5
+  CAN.setMaskOrFilter(MASK_1,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 1 (for buffer 1) controls filters 2 to 5
   CAN.setMaskOrFilter(FILTER_2, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
   CAN.setMaskOrFilter(FILTER_3, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
   CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 0 on printBuf
@@ -123,7 +123,7 @@ void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byt
    }
    else if(frame_id == ZEVA_BMS_CORE_STATUS) {
      msgHandleZevaCoreStatus(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-     test = 1;
+     test |= 1;
    }
    else if(frame_id >= 12 && frame_id <= 17) {
      msgHandleZevaCoreConfig(rx_status, length, frame_id, filter, buffer, frame_data, ext);
@@ -170,12 +170,53 @@ void loop() {
   }
   
   if (test == 1) {
-    frame_id = 11;
+    frame_id = ZEVA_BMS_CORE_SET_STATE;
     frame_data[0] = 1;
     length = 1;
     CAN.load_ff_0(length, &frame_id, frame_data, false);
-    test = 2;
-  //} else if(bmsConfig.valid == 7) {
+    test |= 2;
+  } else if(test == 3 && bmsConfig.valid == 7) {
+    Serial.println("SEND CFG NOW");
+/*
+    frame_data[0] = bmsConfig.pack_capacity
+    frame_data[1] = bmsConfig.soc_warn_thresh
+    frame_data[2] = bmsConfig.full_voltage
+    frame_data[3] = bmsConfig.current_warn_thresh
+    frame_data[4] = bmsConfig.overcurrent_thresh
+    frame_data[5] = bmsConfig.overtemperature_thresh
+    frame_data[6] = bmsConfig.min_aux_voltage
+    frame_data[7] = bmsConfig.max_leakage
+    length = 8;
+    frame_id = ZEVA_BMS_CORE_CONFIG_WR1;
+    CAN.load_ff_0(length,&frame_id,frame_data, false);
+    delay(10);
+    frame_data[0] = bmsConfig.tacho_pulses_per_rev
+    frame_data[1] = bmsConfig.fuel_gauge_full
+    frame_data[2] = bmsConfig.fuel_gauge_empty
+    frame_data[3] = bmsConfig.temp_gauge_hot
+    frame_data[4] = bmsConfig.temp_gauge_cold
+    frame_data[5] = bmsConfig.peukerts_exponent
+    frame_data[6] = bmsConfig.enable_precharge
+    frame_data[7] = bmsConfig.enable_contactor_aux_sw
+    length = 8;
+    frame_id = ZEVA_BMS_CORE_CONFIG_WR2;
+    CAN.load_ff_1(length,&frame_id,frame_data, false);
+    delay(10);
+    frame_data[0] = bmsConfig.bms_min_cell_voltage
+    frame_data[1] = bmsConfig.bms_max_cell_voltage
+    frame_data[2] = bmsConfig.bms_shunt_voltage
+    frame_data[3] = bmsConfig.low_temperature_warn
+    frame_data[4] = bmsConfig.high_temperature_warn
+    length = 5;
+    frame_id = ZEVA_BMS_CORE_CONFIG_WR3;
+    CAN.load_ff_1(length,&frame_id,frame_data, false);
+    delay(10);
+    frame_id = ZEVA_BMS_CORE_SET_STATE;
+    frame_data[0] = 0;
+    length = 1;
+    CAN.load_ff_0(length, &frame_id, frame_data, false);
+*/
+    test |= 4;
   }
 }
 
