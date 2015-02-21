@@ -16,9 +16,12 @@
 #include <CAN.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
+#include "bms_defs.h"
 
 #define BUS_SPEED 125
-#define ZEVA_BASE_ID 100
+
+int test = 0;
+BMSConfig bmsConfig = {0}; //set valid to 0
 
 void setup() {  
   
@@ -115,11 +118,15 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
 
 void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
    
-   if(frame_id>=ZEVA_BASE_ID && frame_id<ZEVA_BASE_ID+40) {
+   if(frame_id>=ZEVA_BMS_BASE_ID && frame_id<ZEVA_BMS_BASE_ID+40) {
      msgHandleZevaBms(rx_status, length, frame_id, filter, buffer, frame_data, ext);
    }
-   else if(frame_id == 10) {
+   else if(frame_id == ZEVA_BMS_CORE_STATUS) {
      msgHandleZevaCoreStatus(rx_status, length, frame_id, filter, buffer, frame_data, ext);
+     test = 1;
+   }
+   else if(frame_id >= 12 && frame_id <= 17) {
+     msgHandleZevaCoreConfig(rx_status, length, frame_id, filter, buffer, frame_data, ext);
    }
    else {
      Serial.print("unknown msg ");
@@ -160,6 +167,15 @@ void loop() {
     CAN.clearRX1Status();
     rx_status = CAN.readStatus();
     //Serial.println(rx_status,HEX);
+  }
+  
+  if (test == 1) {
+    frame_id = 11;
+    frame_data[0] = 1;
+    length = 1;
+    CAN.load_ff_0(length, &frame_id, frame_data, false);
+    test = 2;
+  //} else if(bmsConfig.valid == 7) {
   }
 }
 

@@ -1,16 +1,3 @@
-struct BMSConfig {
-  byte pack_capacity;
-  byte soc_warn_thresh;
-  byte full_voltage; // x2 to get real value
-  byte current_warn_thresh; // x10 to get real value
-  byte overcurrent_thresh; // x10 to get real value
-  byte overtemperature_thresh;
-  byte min_aux_voltage;
-  byte max_leakage;
-};
-
-BMSConfig bmsConfig;
-
 void msgHandleZevaCoreStatus(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
   
   int soc = frame_data[1];
@@ -44,6 +31,7 @@ void msgHandleZevaCoreConfigData1(byte rx_status, byte length, uint32_t frame_id
   bmsConfig.overtemperature_thresh = frame_data[5];
   bmsConfig.min_aux_voltage = frame_data[6];
   bmsConfig.max_leakage = frame_data[7];
+  bmsConfig.valid |= 1;
   
   Serial.print("Pack capacity [Ah]: ");
   Serial.println(bmsConfig.pack_capacity);
@@ -68,13 +56,68 @@ void msgHandleZevaCoreConfigData1(byte rx_status, byte length, uint32_t frame_id
   
   Serial.print("Maximum leakage [%]: ");
   Serial.println(bmsConfig.max_leakage);
-  
 }
+
+void msgHandleZevaCoreConfigData2(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
+  bmsConfig.tacho_pulses_per_rev = frame_data[0];
+  bmsConfig.fuel_gauge_full = frame_data[1];
+  bmsConfig.fuel_gauge_empty = frame_data[2];
+  bmsConfig.temp_gauge_hot = frame_data[3];
+  bmsConfig.temp_gauge_cold = frame_data[4];
+  bmsConfig.peukerts_exponent = frame_data[5];
+  bmsConfig.enable_precharge = frame_data[6];
+  bmsConfig.enable_contactor_aux_sw = frame_data[7];
+  bmsConfig.valid |= 2;
+  
+  Serial.print("Tacho pulses-per-rev (for gauge scaling): ");
+  Serial.println(bmsConfig.tacho_pulses_per_rev);
+  Serial.print("Fuel gauge full (for gauge scaling): ");
+  Serial.println(bmsConfig.fuel_gauge_full);
+  Serial.print("Fuel gauge empty: ");
+  Serial.println(bmsConfig.fuel_gauge_empty);
+  Serial.print("Temp gauge hot: ");
+  Serial.println(bmsConfig.temp_gauge_hot);
+  Serial.print("Temp gauge cold: ");
+  Serial.println(bmsConfig.temp_gauge_cold);
+  Serial.print("Peukerts exponent: ");
+  Serial.println(bmsConfig.peukerts_exponent);
+  Serial.print("Enable precharge: ");
+  Serial.println(bmsConfig.enable_precharge);
+  Serial.print("Enable contactor auxiliary switches: ");
+  Serial.println(bmsConfig.enable_contactor_aux_sw);
+}
+  
+void msgHandleZevaCoreConfigData3(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
+  bmsConfig.bms_min_cell_voltage = frame_data[0];
+  bmsConfig.bms_max_cell_voltage = frame_data[1];
+  bmsConfig.bms_shunt_voltage = frame_data[2];
+  bmsConfig.low_temperature_warn = frame_data[3];
+  bmsConfig.high_temperature_warn = frame_data[4];
+  bmsConfig.valid |= 4;
+  
+  Serial.print("BMS minimum cell voltage: ");
+  Serial.println(bmsConfig.bms_min_cell_voltage);
+  Serial.print("BMS maximum cell voltage: ");
+  Serial.println(bmsConfig.bms_max_cell_voltage);
+  Serial.print("BMS shunt voltage: ");
+  Serial.println(bmsConfig.bms_shunt_voltage);
+  Serial.print("Low temperature warning: ");
+  Serial.println(bmsConfig.low_temperature_warn);
+  Serial.print("High temperature warning: ");
+  Serial.println(bmsConfig.high_temperature_warn);
+}
+  
 
 void msgHandleZevaCoreConfig(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
   switch(frame_id){
-    case 13:
+    case ZEVA_BMS_CORE_CONFIG_RD1:
       msgHandleZevaCoreConfigData1(rx_status, length, frame_id, filter, buffer, frame_data, ext);
+      break;
+    case ZEVA_BMS_CORE_CONFIG_RD2:
+      msgHandleZevaCoreConfigData2(rx_status, length, frame_id, filter, buffer, frame_data, ext);
+      break;
+    case ZEVA_BMS_CORE_CONFIG_RD3:
+      msgHandleZevaCoreConfigData3(rx_status, length, frame_id, filter, buffer, frame_data, ext);
       break;
     default:
       break;
