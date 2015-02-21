@@ -176,46 +176,48 @@ void loop() {
     CAN.load_ff_0(length, &frame_id, frame_data, false);
     test |= 2;
   } else if(test == 3 && bmsConfig.valid == 7) {
+    bmsConfig.enable_precharge = 0;
     Serial.println("SEND CFG NOW");
-/*
-    frame_data[0] = bmsConfig.pack_capacity
-    frame_data[1] = bmsConfig.soc_warn_thresh
-    frame_data[2] = bmsConfig.full_voltage
-    frame_data[3] = bmsConfig.current_warn_thresh
-    frame_data[4] = bmsConfig.overcurrent_thresh
-    frame_data[5] = bmsConfig.overtemperature_thresh
-    frame_data[6] = bmsConfig.min_aux_voltage
-    frame_data[7] = bmsConfig.max_leakage
+
+    frame_data[0] = bmsConfig.pack_capacity;
+    frame_data[1] = bmsConfig.soc_warn_thresh;
+    frame_data[2] = bmsConfig.full_voltage;
+    frame_data[3] = bmsConfig.current_warn_thresh;
+    frame_data[4] = bmsConfig.overcurrent_thresh;
+    frame_data[5] = bmsConfig.overtemperature_thresh;
+    frame_data[6] = bmsConfig.min_aux_voltage;
+    frame_data[7] = bmsConfig.max_leakage;
     length = 8;
     frame_id = ZEVA_BMS_CORE_CONFIG_WR1;
     CAN.load_ff_0(length,&frame_id,frame_data, false);
     delay(10);
-    frame_data[0] = bmsConfig.tacho_pulses_per_rev
-    frame_data[1] = bmsConfig.fuel_gauge_full
-    frame_data[2] = bmsConfig.fuel_gauge_empty
-    frame_data[3] = bmsConfig.temp_gauge_hot
-    frame_data[4] = bmsConfig.temp_gauge_cold
-    frame_data[5] = bmsConfig.peukerts_exponent
-    frame_data[6] = bmsConfig.enable_precharge
-    frame_data[7] = bmsConfig.enable_contactor_aux_sw
+    frame_data[0] = bmsConfig.tacho_pulses_per_rev;
+    frame_data[1] = bmsConfig.fuel_gauge_full;
+    frame_data[2] = bmsConfig.fuel_gauge_empty;
+    frame_data[3] = bmsConfig.temp_gauge_hot;
+    frame_data[4] = bmsConfig.temp_gauge_cold;
+    frame_data[5] = bmsConfig.peukerts_exponent;
+    frame_data[6] = bmsConfig.enable_precharge;
+    frame_data[7] = bmsConfig.enable_contactor_aux_sw;
     length = 8;
     frame_id = ZEVA_BMS_CORE_CONFIG_WR2;
     CAN.load_ff_1(length,&frame_id,frame_data, false);
     delay(10);
-    frame_data[0] = bmsConfig.bms_min_cell_voltage
-    frame_data[1] = bmsConfig.bms_max_cell_voltage
-    frame_data[2] = bmsConfig.bms_shunt_voltage
-    frame_data[3] = bmsConfig.low_temperature_warn
-    frame_data[4] = bmsConfig.high_temperature_warn
+    frame_data[0] = bmsConfig.bms_min_cell_voltage;
+    frame_data[1] = bmsConfig.bms_max_cell_voltage;
+    frame_data[2] = bmsConfig.bms_shunt_voltage;
+    frame_data[3] = bmsConfig.low_temperature_warn;
+    frame_data[4] = bmsConfig.high_temperature_warn;
     length = 5;
     frame_id = ZEVA_BMS_CORE_CONFIG_WR3;
     CAN.load_ff_1(length,&frame_id,frame_data, false);
     delay(10);
+    
     frame_id = ZEVA_BMS_CORE_SET_STATE;
     frame_data[0] = 0;
     length = 1;
     CAN.load_ff_0(length, &frame_id, frame_data, false);
-*/
+    
     test |= 4;
   }
 }
