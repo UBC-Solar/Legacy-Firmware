@@ -97,12 +97,22 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
     return;
   }
   
+  if(frame_id > 5 || frame_id < 2){
+    Serial.print("BMS #");
+    Serial.print((frame_id-100)/10);
+    Serial.print(" packet ");
+    Serial.print(frame_id%10);
+    Serial.println(" parsing not implemented");
+  }
+  
   byte bmsId=(frame_id-100)/10;
-  byte voltGrp=(frame_id%10-1)/2;
+  byte voltGrp=(frame_id%10)/2;
   int vx100[6];
+  int temp;
   for(int i=0; i<6; i++) {
     vx100[i]=frame_data[i]+((frame_data[6]>>i)&1 ? 256 : 0);
   }
+  temp = frame_data[7] - 128;
   
   Serial.print("BMS #");
   Serial.print(bmsId);
@@ -112,6 +122,10 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
     Serial.print("=");
     Serial.print(vx100[i]);
   }
+  Serial.print(" t");
+  Serial.print(voltGrp);
+  Serial.print("=");
+  Serial.print(temp);
   Serial.println();
 }
 
