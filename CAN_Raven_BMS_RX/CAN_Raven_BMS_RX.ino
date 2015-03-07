@@ -81,9 +81,10 @@ void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte 
 
 void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
   
+  uint32_t messageID = frame_id%10;
+  
   // even IDs are requests from Core to BMS12
-  if(frame_id%2 == 0) {
-    uint32_t messageID = frame_id%10;
+  if(messageID%2 == 0) {
     switch (messageID) {
       case 0: Serial.print("Request for status from Core to Module "); break;
       case 2: Serial.print("Request for voltages #1 from Core to Module "); break;
@@ -97,12 +98,13 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
     return;
   }
   
-  if(frame_id > 5 || frame_id < 2){
+  if(messageID != 3 && messageID != 5){
     Serial.print("BMS #");
     Serial.print((frame_id-100)/10);
     Serial.print(" packet ");
     Serial.print(frame_id%10);
     Serial.println(" parsing not implemented");
+    return;
   }
   
   byte bmsId=(frame_id-100)/10;
