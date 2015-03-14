@@ -1,8 +1,8 @@
 void msgHandleZevaCoreStatus(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
   
   int soc = frame_data[1];
-  int voltage = (frame_data[2] + ((frame_data[3] & 0xF0) << 4));
-  int current = ((frame_data[4] << 4) + (frame_data[3] & 0x0F)) - 2048;
+  int voltage = (frame_data[2] + ((frame_data[3] & 0x0F) << 8));
+  int current = ((frame_data[4] << 4) + ((frame_data[3] & 0xF0) >> 4)) - 2048;
   float aux_voltage = frame_data[5]/10;
   int temperature = frame_data[7];
   
