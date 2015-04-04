@@ -170,6 +170,7 @@ void loop() {
   }
   
   if (test == 1) {
+    Serial.println("ENTER SETUP STATE");
     frame_id = ZEVA_BMS_CORE_SET_STATE;
     frame_data[0] = 1;
     length = 1;
@@ -213,10 +214,26 @@ void loop() {
     CAN.load_ff_1(length,&frame_id,frame_data, false);
     delay(10);
     
+    Serial.println("EXIT SETUP STATE");
     frame_id = ZEVA_BMS_CORE_SET_STATE;
     frame_data[0] = 0;
     length = 1;
     CAN.load_ff_0(length, &frame_id, frame_data, false);
+    delay(10);
+    
+    Serial.println("SEND CELL NUM");
+    frame_id = ZEVA_BMS_CORE_SET_CELL_NUM;
+    frame_data[0] = 0xCC;
+    frame_data[1] = 0xCC;
+    frame_data[2] = 0;
+    frame_data[3] = 0;
+    frame_data[4] = 0;
+    frame_data[5] = 0;
+    frame_data[6] = 0;
+    frame_data[7] = 0;
+    length = 8;
+    CAN.load_ff_0(length, &frame_id, frame_data, false);
+    delay(10);
     
     test |= 4;
   }

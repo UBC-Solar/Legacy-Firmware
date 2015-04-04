@@ -123,4 +123,4 @@ void msgHandleZevaCoreConfig(byte rx_status, byte length, uint32_t frame_id, byt
       break;
   }
 }
-      
+
