@@ -8,6 +8,7 @@
 #define ZEVA_BMS_CORE_CONFIG_RD2 15
 #define ZEVA_BMS_CORE_CONFIG_WR3 16
 #define ZEVA_BMS_CORE_CONFIG_RD3 17
+#define ZEVA_BMS_CORE_SET_CELL_NUM 18
 
 struct BMSConfig {
   byte valid;

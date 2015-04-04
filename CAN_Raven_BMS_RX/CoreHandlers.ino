@@ -20,6 +20,8 @@ void msgHandleZevaCoreStatus(byte rx_status, byte length, uint32_t frame_id, byt
   Serial.println(aux_voltage);
   Serial.print("Temperature: ");
   Serial.println(temperature);
+  
+  bmsAlive |= 1;
 }
 
 void msgHandleZevaCoreConfigData1(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {

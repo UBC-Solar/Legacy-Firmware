@@ -22,6 +22,8 @@
 
 BMSConfig bmsConfig = {0}; //set valid to 0
 
+int bmsAlive = 0;
+
 void setup() {  
   
   Serial.begin(115200);
@@ -181,6 +183,22 @@ void loop() {
     CAN.clearRX1Status();
     rx_status = CAN.readStatus();
     //Serial.println(rx_status,HEX);
+  }
+  
+  if(bmsAlive == 1){
+    Serial.println("SEND CELL NUM");
+    frame_id = ZEVA_BMS_CORE_SET_CELL_NUM;
+    frame_data[0] = 0xCC;
+    frame_data[1] = 0xCC;
+    frame_data[2] = 0;
+    frame_data[3] = 0;
+    frame_data[4] = 0;
+    frame_data[5] = 0;
+    frame_data[6] = 0;
+    frame_data[7] = 0;
+    length = 8;
+    CAN.load_ff_0(length, &frame_id, frame_data, false);
+    bmsAlive |= 2;
   }
 }
 
