@@ -1,25 +1,34 @@
+void zevaCoreStatusPrint(){
+  Serial.print("Error: ");
+  Serial.println(bmsStatus.error);
+  Serial.print("Status: ");
+  Serial.println(bmsStatus.status);
+  Serial.print("State of Charge: ");
+  Serial.println(bmsStatus.soc);
+  Serial.print("Voltage: ");
+  Serial.println(bmsStatus.voltage);
+  Serial.print("Current: ");
+  Serial.println(bmsStatus.current);
+  Serial.print("Auxiliary Voltage: ");
+  Serial.println(bmsStatus.aux_voltage);
+  Serial.print("Temperature: ");
+  Serial.println(bmsStatus.temperature);
+}
+
 void msgHandleZevaCoreStatus(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
   
-  int soc = frame_data[1];
-  int voltage = (frame_data[2] + ((frame_data[3] & 0x0F) << 8));
-  int current = ((frame_data[4] << 4) + ((frame_data[3] & 0xF0) >> 4)) - 2048;
-  float aux_voltage = frame_data[5]/10.0;
-  int temperature = frame_data[7];
+  bmsStatus.status = frame_data[0]&15;
+  bmsStatus.error = frame_data[0]>>4;
+  bmsStatus.soc = frame_data[1];
+  bmsStatus.voltage = (frame_data[2] + ((frame_data[3] & 0x0F) << 8));
+  bmsStatus.current = ((frame_data[4] << 4) + ((frame_data[3] & 0xF0) >> 4)) - 2048;
+  bmsStatus.aux_voltage = frame_data[5]/10.0;
+  bmsStatus.temperature = frame_data[7];
   
-  Serial.print("Error: ");
-  Serial.println(frame_data[0]>>4);
-  Serial.print("Status: ");
-  Serial.println(frame_data[0]&15);
-  Serial.print("State of Charge: ");
-  Serial.println(soc);
-  Serial.print("Voltage: ");
-  Serial.println(voltage);
-  Serial.print("Current: ");
-  Serial.println(current);
-  Serial.print("Auxiliary Voltage: ");
-  Serial.println(aux_voltage);
-  Serial.print("Temperature: ");
-  Serial.println(temperature);
+  #if DEBUG
+  Serial.println("BMS Core status packet");
+  zevaCoreStatusPrint();
+  #endif
   
   bmsAlive |= 1;
 }
@@ -124,4 +133,23 @@ void msgHandleZevaCoreConfig(byte rx_status, byte length, uint32_t frame_id, byt
     default:
       break;
   }
+}
+
+void zevaCoreSetCellNum(void){
+  byte length,rx_status,filter,ext;
+  uint32_t frame_id;
+  byte frame_data[8];
+  
+  Serial.println("SEND CELL NUM");
+  frame_id = ZEVA_BMS_CORE_SET_CELL_NUM;
+  frame_data[0] = 0xCC;
+  frame_data[1] = 0xCC;
+  frame_data[2] = 0;
+  frame_data[3] = 0;
+  frame_data[4] = 0;
+  frame_data[5] = 0;
+  frame_data[6] = 0;
+  frame_data[7] = 0;
+  length = 8;
+  CAN.load_ff_0(length, &frame_id, frame_data, false);
 }

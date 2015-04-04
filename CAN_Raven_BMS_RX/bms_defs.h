@@ -37,3 +37,13 @@ struct BMSConfig {
   byte low_temperature_warn;
   byte high_temperature_warn;
 };
+
+struct BMSStatus {
+  byte status;
+  byte error;
+  int soc;
+  int voltage;
+  int current;
+  float aux_voltage;
+  int temperature;
+};

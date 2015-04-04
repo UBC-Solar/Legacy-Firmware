@@ -18,11 +18,18 @@
 #include <SPI.h>
 #include "bms_defs.h"
 
+#define DEBUG 0
+
 #define BUS_SPEED 125
+#define PRINT_DELAY 1000
 
 BMSConfig bmsConfig = {0}; //set valid to 0
+BMSStatus bmsStatus = {0};
+int cellVoltagesX100[4][12] = {{0}};
+signed char bmsTemperatures[4][2] = {{0}};
 
-int bmsAlive = 0;
+unsigned char bmsAlive = 0;
+unsigned long int lastPrintTime = 0;
 
 void setup() {  
   
@@ -87,6 +94,7 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
   
   // even IDs are requests from Core to BMS12
   if(messageID%2 == 0) {
+    #if DEBUG
     switch (messageID) {
       case 0: Serial.print("Request for status from Core to Module "); break;
       case 2: Serial.print("Request for voltages #1 from Core to Module "); break;
@@ -97,6 +105,7 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
     }
     Serial.print((frame_id - 100 - messageID)/10);  // frameID = 100 + 10 * moduleID + messageID, 0 <= messageID <=8
     Serial.println();
+    #endif
     return;
   }
   
@@ -110,27 +119,28 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
   }
   
   byte bmsId=(frame_id-100)/10;
-  byte voltGrp=(frame_id%10)/2;
-  int vx100[6];
-  int temp;
-  for(int i=0; i<6; i++) {
-    vx100[i]=frame_data[i]+((frame_data[6]>>i)&1 ? 256 : 0);
-  }
-  temp = frame_data[7] - 128;
+  byte voltGrp=(frame_id%10)/2-1;
   
+  for(int i=0; i<6; i++) {
+    cellVoltagesX100[bmsId][voltGrp*6+i] = frame_data[i]+((frame_data[6]>>i)&1 ? 256 : 0);
+  }
+  bmsTemperatures[bmsId][voltGrp] = frame_data[7] - 128;
+  
+  #if DEBUG
   Serial.print("BMS #");
   Serial.print(bmsId);
   for(int i=0; i<6; i++) {
     Serial.print(" c");
-    Serial.print(i+6*(voltGrp-1));
+    Serial.print(i+6*voltGrp);
     Serial.print("=");
-    Serial.print(vx100[i]);
+    Serial.print(cellVoltagesX100[bmsId][voltGrp*6+i]);
   }
   Serial.print(" t");
   Serial.print(voltGrp);
   Serial.print("=");
-  Serial.print(temp);
+  Serial.print(bmsTemperatures[bmsId][voltGrp]);
   Serial.println();
+  #endif
 }
 
 void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
@@ -186,19 +196,35 @@ void loop() {
   }
   
   if(bmsAlive == 1){
-    Serial.println("SEND CELL NUM");
-    frame_id = ZEVA_BMS_CORE_SET_CELL_NUM;
-    frame_data[0] = 0xCC;
-    frame_data[1] = 0xCC;
-    frame_data[2] = 0;
-    frame_data[3] = 0;
-    frame_data[4] = 0;
-    frame_data[5] = 0;
-    frame_data[6] = 0;
-    frame_data[7] = 0;
-    length = 8;
-    CAN.load_ff_0(length, &frame_id, frame_data, false);
+    zevaCoreSetCellNum();
     bmsAlive |= 2;
   }
+  
+  #if !DEBUG
+  if(millis() - lastPrintTime > PRINT_DELAY){
+    zevaCoreStatusPrint();
+    lastPrintTime += PRINT_DELAY;
+    for(int i=0; i<4; i++){
+      Serial.print("BMS #");
+      Serial.print(i);
+      Serial.print(": ");
+      for(int j=0; j<12; j++){
+        Serial.print("c");
+        Serial.print(j);
+        Serial.print("=");
+        Serial.print(cellVoltagesX100[i][j]);
+        Serial.print(" ");
+      }
+      for(int j=0; j<2; j++){
+        Serial.print("t");
+        Serial.print(j);
+        Serial.print("=");
+        Serial.print(bmsTemperatures[i][j]);
+        Serial.print(" ");
+      }
+      Serial.println();
+    }
+  }
+  #endif
 }
 
