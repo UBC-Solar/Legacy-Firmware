@@ -205,10 +205,12 @@ void loop() {
     zevaCoreStatusPrint();
     lastPrintTime += PRINT_DELAY;
     for(int i=0; i<4; i++){
+      int total = 0;
       Serial.print("BMS #");
       Serial.print(i);
       Serial.print(": ");
       for(int j=0; j<12; j++){
+        total += cellVoltagesX100[i][j];
         Serial.print("c");
         Serial.print(j);
         Serial.print("=");
@@ -222,6 +224,8 @@ void loop() {
         Serial.print(bmsTemperatures[i][j]);
         Serial.print(" ");
       }
+      Serial.print("V=");
+      Serial.print(total / 100.0);
       Serial.println();
     }
   }
