@@ -26,6 +26,10 @@
 #define BIT_SIGNAL_LEFT 2
 #define BIT_SIGNAL_RIGHT 4
 
+#define MOTOR_CTRL_INTERVAL 50
+#define SIGNAL_CTRL_INTERVAL 500
+#define MPPT_CURRENT_INTERVAL 1000
+
 byte length,rx_status,filter,ext;
 uint32_t frame_id;
 byte frame_data[8];
@@ -101,8 +105,8 @@ void sendMPPTCurrentPacket(void){
   frame_data[2] = mppt_i.b[2];
   frame_data[3] = mppt_i.b[3];
   
-  while(CAN.TX0Busy());
-  CAN.load_ff_0(length,&frame_id,frame_data, false);
+  while(CAN.TX1Busy());
+  CAN.load_ff_1(length,&frame_id,frame_data, false);
 }
 
 void sendMotorControlPacket(void){
@@ -123,34 +127,36 @@ void sendSignalControlPacket(void){
   
   frame_data[0] = signal_lights;
   
-  while(CAN.TX0Busy());
-  CAN.load_ff_0(length,&frame_id,frame_data, false);
+  while(CAN.TX1Busy());
+  CAN.load_ff_1(length,&frame_id,frame_data, false);
 }
 
 void MPPTCurrent(){
   static unsigned long int lastTX = millis();
-  if(millis() - lastTX > 1000){
+  if(millis() - lastTX + 250 > MPPT_CURRENT_INTERVAL){
     mppt_i.f = mppt_i.f + 1;
     sendMPPTCurrentPacket();
-    lastTX += 100;
+    lastTX += MPPT_CURRENT_INTERVAL;
+    //Serial.print("M");
   }
 }
 
 void motorControl(){
   static unsigned long int lastTX = millis();
-  if(millis() - lastTX > 20){
+  if(millis() - lastTX > MOTOR_CTRL_INTERVAL){
     sendMotorControlPacket();
-    lastTX += 20;
+    lastTX += MOTOR_CTRL_INTERVAL;
     Serial.print("m");
   }
 }
 
 void signalControl(){
   static unsigned long int lastTX = millis();
-  if(millis() - lastTX > 500){
+  if(millis() - lastTX > SIGNAL_CTRL_INTERVAL){
     signal_lights ^= (BIT_SIGNAL_LEFT + BIT_SIGNAL_RIGHT);
     sendSignalControlPacket();
-    lastTX += 500;
+    lastTX += SIGNAL_CTRL_INTERVAL;
+    //Serial.print("s");
   }
 }
 
