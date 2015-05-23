@@ -30,6 +30,10 @@
 #define SIGNAL_CTRL_INTERVAL 500
 #define MPPT_CURRENT_INTERVAL 1000
 
+#define MPPT_SENSOR_PIN A0
+#define MPPT_SENSOR_SHUNT_R 0.002
+#define MPPT_SENSOR_AMP_GAIN 20
+
 byte length,rx_status,filter,ext;
 uint32_t frame_id;
 byte frame_data[8];
@@ -134,7 +138,7 @@ void sendSignalControlPacket(void){
 void MPPTCurrent(){
   static unsigned long int lastTX = millis();
   if(millis() - lastTX + 250 > MPPT_CURRENT_INTERVAL){
-    mppt_i.f = mppt_i.f + 1;
+    mppt_i.f = (analogRead(MPPT_SENSOR_PIN) - 511.5) * 5.0 / 1024 / MPPT_SENSOR_AMP_GAIN / MPPT_SENSOR_SHUNT_R;
     sendMPPTCurrentPacket();
     lastTX += MPPT_CURRENT_INTERVAL;
     //Serial.print("M");
