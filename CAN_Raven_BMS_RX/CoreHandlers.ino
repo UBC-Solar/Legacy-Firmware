@@ -142,8 +142,8 @@ void zevaCoreSetCellNum(void){
   
   Serial.println("SEND CELL NUM");
   frame_id = ZEVA_BMS_CORE_SET_CELL_NUM;
-  frame_data[0] = 0xCC;
-  frame_data[1] = 0xCC;
+  frame_data[0] = 0x0B;
+  frame_data[1] = 0;
   frame_data[2] = 0;
   frame_data[3] = 0;
   frame_data[4] = 0;
