@@ -17,6 +17,9 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
+#define RHEO_THROTTLE_SS 9
+#define RHEO_REGEN_SS 8
+
 #define BUS_SPEED 125
 
 #define CAN_ID_SIGNAL_CTRL 9
@@ -28,9 +31,10 @@ byte dir = 0;
 
 
 void setup() {  
-  
+/* SERIAL INIT */
   Serial.begin(115200);
-  
+
+/* CAN INIT */
   // initialize CAN bus class
   // this class initializes SPI communications with MCP2515
 
@@ -56,6 +60,15 @@ void setup() {
   CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 1 on printBuf
   
   // we only want 4 (motor ctrl) and 9 (light ctrl)
+
+/* RHEO INIT */
+  pinMode(RHEO_THROTTLE_SS,OUTPUT);
+  pinMode(RHEO_REGEN_SS,OUTPUT);
+  //SPI init already done in CAN INIT
+
+  setRheo(RHEO_THROTTLE_SS, 0);
+  setRheo(RHEO_REGEN_SS, 0); // this code will be replaced with power on default setting in rheo EEPROM.
+
 }
 
 void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
@@ -111,6 +124,14 @@ void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byt
      Serial.print("unknown msg ");
      printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext); 
    }
+}
+
+void setRheo(int ss, byte r){
+  digitalWrite(ss,LOW);
+  SPI.transfer(0x00);
+  SPI.transfer(r&0xff);
+  digitalWrite(ss,HIGH);
+  delayMicroseconds(1);
 }
 
 void loop() {
