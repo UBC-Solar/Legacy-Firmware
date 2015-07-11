@@ -103,6 +103,8 @@ void msgHandleMotorCtrl(byte rx_status, byte length, uint32_t frame_id, byte fil
   throttle = frame_data[0];
   regen = frame_data[1];
   dir = frame_data[2];
+  setRheo(RHEO_THROTTLE_SS, throttle);
+  setRheo(RHEO_REGEN_SS, regen);
   Serial.print(throttle);
   Serial.print(" ");
   Serial.print(regen);

@@ -148,6 +148,7 @@ void MPPTCurrent(){
 void motorControl(){
   static unsigned long int lastTX = millis();
   if(millis() - lastTX > MOTOR_CTRL_INTERVAL){
+    motor_acceleration  = (motor_acceleration + 1) & 0xff;
     sendMotorControlPacket();
     lastTX += MOTOR_CTRL_INTERVAL;
     Serial.print("m");
