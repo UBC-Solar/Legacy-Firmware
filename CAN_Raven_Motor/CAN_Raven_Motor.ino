@@ -17,8 +17,19 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#define RHEO_THROTTLE_SS 9
-#define RHEO_REGEN_SS 8
+#define RHEO_THROTTLE_SS 8
+#define RHEO_REGEN_SS 7
+
+/* relays, from top to bottom */
+#define RELAY1PIN 4
+#define RELAY2PIN 5
+#define RELAY3PIN 6
+#define RELAY4PIN 3
+
+#define FORWARD_SWITCH RELAY1PIN
+#define REVERSE_SWITCH RELAY2PIN
+#define SEAT_SWITCH RELAY3PIN
+#define FS1_SWITCH RELAY4PIN
 
 #define BUS_SPEED 125
 
@@ -28,6 +39,8 @@
 byte throttle = 0;
 byte regen = 0;
 byte dir = 0;
+
+unsigned long int lastMotorCtrlRxTime = 0;
 
 
 void setup() {  
@@ -64,11 +77,32 @@ void setup() {
 /* RHEO INIT */
   pinMode(RHEO_THROTTLE_SS,OUTPUT);
   pinMode(RHEO_REGEN_SS,OUTPUT);
+  digitalWrite(RHEO_THROTTLE_SS, HIGH);
+  digitalWrite(RHEO_REGEN_SS, HIGH);
   //SPI init already done in CAN INIT
 
   setRheo(RHEO_THROTTLE_SS, 0);
   setRheo(RHEO_REGEN_SS, 0); // this code will be replaced with power on default setting in rheo EEPROM.
 
+/* RELAY INIT */
+  pinMode(RELAY1PIN, OUTPUT);
+  pinMode(RELAY2PIN, OUTPUT);
+  pinMode(RELAY3PIN, OUTPUT);
+  pinMode(RELAY4PIN, OUTPUT);
+  digitalWrite(RELAY1PIN, LOW);
+  digitalWrite(RELAY2PIN, LOW);
+  digitalWrite(RELAY3PIN, LOW);
+  digitalWrite(RELAY4PIN, LOW);
+
+/* MOTOR CONTROLLER INIT */
+  Serial.println("seat on");
+  digitalWrite(SEAT_SWITCH, HIGH);
+  delay(2000);
+  Serial.println("fwd on");
+  digitalWrite(FORWARD_SWITCH, HIGH);
+  delay(2000);
+  Serial.println("fs1 on");
+  digitalWrite(FS1_SWITCH, HIGH);
 }
 
 void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
@@ -102,9 +136,13 @@ void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte 
 void msgHandleMotorCtrl(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
   throttle = frame_data[0];
   regen = frame_data[1];
-  dir = frame_data[2];
+  if(dir != frame_data[2]){
+    dir = frame_data[2];
+    motorSwitchDir(dir);
+  }
   setRheo(RHEO_THROTTLE_SS, throttle);
   setRheo(RHEO_REGEN_SS, regen);
+  lastMotorCtrlRxTime = millis();
   Serial.print(throttle);
   Serial.print(" ");
   Serial.print(regen);
@@ -136,6 +174,18 @@ void setRheo(int ss, byte r){
   delayMicroseconds(1);
 }
 
+void motorSwitchDir(int dir){
+  // this function should only be called when the direction changes
+  // 0=FWD, 1=REV
+  digitalWrite(FORWARD_SWITCH, LOW);
+  digitalWrite(REVERSE_SWITCH, LOW);
+  delay(100);
+  if(dir == 0)
+    digitalWrite(FORWARD_SWITCH, HIGH);
+  else if(dir == 1)
+    digitalWrite(REVERSE_SWITCH, HIGH);
+}
+
 void loop() {
   
   byte length,rx_status,filter,ext;
@@ -158,6 +208,11 @@ void loop() {
     msgHandler(rx_status, length, frame_id, filter, 1, frame_data, ext);
     CAN.clearRX1Status();
     rx_status = CAN.readStatus();
+  }
+
+  if(millis() - lastMotorCtrlRxTime > 500){
+    throttle = 0;
+    setRheo(RHEO_THROTTLE_SS, throttle);
   }
 }
 
