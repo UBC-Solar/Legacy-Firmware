@@ -43,7 +43,7 @@ union floatbytes {
   float f;
 } mppt_i;
 
-byte motor_acceleration;
+byte motor_acceleration = 0;
 byte motor_regen;
 byte motor_direction;
 
@@ -147,8 +147,28 @@ void MPPTCurrent(){
 
 void motorControl(){
   static unsigned long int lastTX = millis();
+  static int state = 0;
+  static int cntr = 0;
   if(millis() - lastTX > MOTOR_CTRL_INTERVAL){
-    motor_acceleration  = (motor_acceleration + 1) & 0xff;
+    switch(state){
+      case 0:
+        if(motor_acceleration < 128){
+          motor_acceleration++;
+        }else{
+          state = 1;
+        }
+        break;
+
+      case 1:
+        if(motor_acceleration > 0){
+          motor_acceleration--;
+        }else{
+          state = 0;
+          motor_direction = !motor_direction;
+        }
+        break;
+    }
+
     sendMotorControlPacket();
     lastTX += MOTOR_CTRL_INTERVAL;
     Serial.print("m");
