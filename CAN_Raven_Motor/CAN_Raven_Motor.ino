@@ -31,16 +31,25 @@
 #define SEAT_SWITCH RELAY3PIN
 #define FS1_SWITCH RELAY4PIN
 
+#define SPEED_SENSOR_PIN A0
+#define SPEED_SENSOR_TIMEOUT 5000000 //microseconds
+#define SPEED_SENSOR_AVG_PERIOD 5000000.0 //microseconds, make sure to add .0 to the end to force floating point or it will fail
+
 #define BUS_SPEED 125
 
 #define CAN_ID_SIGNAL_CTRL 9
 #define CAN_ID_MOTOR_CTRL 4
+#define CAN_ID_SPEED_SENSOR 20
 
 byte throttle = 0;
 byte regen = 0;
 byte dir = 0;
-
 unsigned long int lastMotorCtrlRxTime = 0;
+
+union floatbytes {
+  byte b[4];
+  float f;
+} speedHz;
 
 
 void setup() {  
@@ -103,6 +112,9 @@ void setup() {
   delay(2000);
   Serial.println("fs1 on");
   digitalWrite(FS1_SWITCH, HIGH);
+
+/* SPEED SENSOR INIT */
+  pinMode(SPEED_SENSOR_PIN, INPUT);
 }
 
 void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
@@ -143,11 +155,13 @@ void msgHandleMotorCtrl(byte rx_status, byte length, uint32_t frame_id, byte fil
   setRheo(RHEO_THROTTLE_SS, throttle);
   setRheo(RHEO_REGEN_SS, regen);
   lastMotorCtrlRxTime = millis();
+  /*
   Serial.print(throttle);
   Serial.print(" ");
   Serial.print(regen);
   Serial.print(" ");
   Serial.println(dir);
+  */
 }
 
 void msgHandleLightCtrl(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
@@ -186,6 +200,66 @@ void motorSwitchDir(int dir){
     digitalWrite(REVERSE_SWITCH, HIGH);
 }
 
+/* this function detects falling edges */
+void speedSensorRun(){
+  static unsigned long lastTime=micros();
+  static unsigned long thisTime;
+  static unsigned long period;
+  static boolean lastState=0;
+  static boolean timedout=false;
+  static boolean firstTime=true;
+
+  thisTime = micros();
+  if(thisTime-lastTime > SPEED_SENSOR_TIMEOUT){
+    speedHz.f=0;
+    timedout=true;
+    lastTime=thisTime;
+    //enable these for automatic sending (good for CAN)
+    Serial.println(speedHz.f);
+    sendSpeedSensorPacket();
+  }else{
+    if(lastState){
+      if(!digitalRead(SPEED_SENSOR_PIN)){ //detect falling edge
+        if(timedout){
+          lastTime=thisTime;
+          timedout=false;
+          lastState=false;
+          firstTime=true;
+        }else{
+          period=thisTime-lastTime;
+          if(firstTime || period>SPEED_SENSOR_AVG_PERIOD){
+            speedHz.f=1000000.0/period; //instantaneous speed
+            firstTime=false;
+          }else{
+            speedHz.f=speedHz.f * (1-period/SPEED_SENSOR_AVG_PERIOD) + (1000000.0/period) * (period/SPEED_SENSOR_AVG_PERIOD); //average speed readings to reduce fluctuations
+          }
+          lastTime=thisTime;
+          lastState=false;
+          //enable these for automatic sending (good for CAN)
+          Serial.println(speedHz.f);
+          sendSpeedSensorPacket();
+        }
+      }
+    }else{
+      lastState=digitalRead(SPEED_SENSOR_PIN);
+    }
+  }
+}
+
+void sendSpeedSensorPacket(){
+  uint32_t frame_id = CAN_ID_SPEED_SENSOR;
+  byte frame_data[8];
+  byte length = 4;
+  
+  frame_data[0] = speedHz.b[0];
+  frame_data[1] = speedHz.b[1];
+  frame_data[2] = speedHz.b[2];
+  frame_data[3] = speedHz.b[3];
+  
+  while(CAN.TX1Busy());
+  CAN.load_ff_1(length,&frame_id,frame_data, false);
+}
+
 void loop() {
   
   byte length,rx_status,filter,ext;
@@ -210,9 +284,12 @@ void loop() {
     rx_status = CAN.readStatus();
   }
 
+  // stop motor if the commander is lost
   if(millis() - lastMotorCtrlRxTime > 500){
     throttle = 0;
     setRheo(RHEO_THROTTLE_SS, throttle);
   }
+  
+  speedSensorRun();
 }
 
