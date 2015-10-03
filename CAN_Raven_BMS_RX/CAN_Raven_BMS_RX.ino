@@ -18,7 +18,8 @@
 #include <SPI.h>
 #include "bms_defs.h"
 
-#define DEBUG 0
+#define DEBUG 0 //print contents of all packets received instead of once per second
+#define PRINT_JSON 1 //print data in json format. only when DEBUG=0
 
 #define BUS_SPEED 125
 #define PRINT_DELAY 1000
@@ -200,10 +201,11 @@ void loop() {
     bmsAlive |= 2;
   }
   
-  #if !DEBUG
+#if !DEBUG
   if(millis() - lastPrintTime > PRINT_DELAY){
-    zevaCoreStatusPrint();
     lastPrintTime += PRINT_DELAY;
+#if !PRINT_JSON
+    zevaCoreStatusPrint();
     for(int i=0; i<4; i++){
       int total = 0;
       Serial.print("BMS #");
@@ -228,7 +230,46 @@ void loop() {
       Serial.print(total / 100.0);
       Serial.println();
     }
+#else
+    Serial.print("{\"speed\":");
+    Serial.print(0); //dummy value for now
+    Serial.print(",\"totalVoltage\":");
+    Serial.print(bmsStatus.voltage);
+    Serial.print(",\"stateOfCharge\":");
+    Serial.print(bmsStatus.soc);
+    Serial.print(",\"temperatures\":{\"bms\":");
+    Serial.print(bmsStatus.temperature);
+    Serial.print(",\"motor\":");
+    Serial.print(1); //dummy value for now
+    for(int i=0; i<4; i++){
+      Serial.print(",\"pack");
+      Serial.print(i);
+      Serial.print("\":");
+      Serial.print(bmsTemperatures[i][0]);
+    }
+    Serial.print("}");
+    Serial.print(",\"cellVoltages\":{");
+    bool firstValI = true;
+    bool firstValJ = true;
+    for(int i=0; i<4; i++){
+      if(!firstValI)
+        Serial.print(",");
+      firstValI = false;
+      Serial.print("\"pack");
+      Serial.print(i);
+      Serial.print("\":[");
+      firstValJ = true;
+      for(int j=0; j<12; j++){
+        if(!firstValJ)
+          Serial.print(",");
+        firstValJ = false;
+        Serial.print(cellVoltagesX100[i][j]/100.0);
+      }
+      Serial.print("]");
+    }
+    Serial.print("}}\n");
+#endif
   }
-  #endif
+#endif
 }
 
