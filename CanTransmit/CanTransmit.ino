@@ -15,7 +15,7 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#define BUS_SPEED 125
+#define BUS_SPEED 125000
 
 void setup()
 {
@@ -34,7 +34,7 @@ void setup()
 
 byte inc = 0;
 
-void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) ]
+void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext)
 {       
       Serial.print("[Rx] Status:");
       Serial.print(rx_status, HEX);
