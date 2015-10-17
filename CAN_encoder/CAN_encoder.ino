@@ -31,10 +31,11 @@ void encoder(){
   if(Serial.available() && Serial.read()=='s')
     Serial.println(freq);
   
-  if(micros()-lastTime > TIMEOUT){
+  thisTime = micros();
+  if(thisTime-lastTime > TIMEOUT){
     freq=0;
     timedout=true;
-    lastTime=micros();
+    lastTime=thisTime;
     //enable these for automatic sending (good for CAN)
     //Serial.println();
     //Serial.println(freq);
@@ -42,12 +43,11 @@ void encoder(){
     if(lastState){
       if(!digitalRead(h_pin)){ //detect falling edge
         if(timedout){
-          lastTime=micros();
+          lastTime=thisTime;
           timedout=false;
           lastState=false;
           firstTime=true;
         }else{
-          thisTime=micros();
           period=thisTime-lastTime;
           if(firstTime || period>AVGPRD){
             freq=1000000.0/period; //instantaneous speed
@@ -65,5 +65,5 @@ void encoder(){
     }else{
       lastState=digitalRead(h_pin);
     }
-  }  
+  }
 }
