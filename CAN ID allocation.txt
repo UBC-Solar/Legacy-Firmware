@@ -17,6 +17,8 @@ ID(dec)	SYSTEM	LENGTH	FORMAT
 
 10	BMS	8	(see ZEVA BMS datasheet)
 
+20	motor	4	data[0..3] = speed (32bit float, in Hz (rotations per s))
+
 100-139	BMS	vary	(see ZEVA BMS datasheet)
 
 200	MPPT	4	data[0..3] = current (32bit float)

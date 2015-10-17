@@ -3,16 +3,41 @@
     so the encoder can detect the high and low of each cycle.
 */
 
-#define h_pin 4  // analogi pin for reading the IR sensor
-#define TIMEOUT 5000000 //microseconds
-#define AVGPRD 5000000.0 //microseconds, make sure to add .0 to the end to force floating point or it will fail
+#include <CAN.h>
+#include <SoftwareSerial.h>
+#include <SPI.h>
 
-float freq;
+#define BUS_SPEED 125
+#define CAN_ID_SPEED_SENSOR 20
+
+#define ENC_PIN 4  // analog pin for reading the IR sensor
+#define ENC_TIMEOUT 5000000 //microseconds
+#define ENC_AVERAGE_PERIOD 5000000.0 //microseconds, make sure to add .0 to the end to force floating point or it will fail
+
+byte length,rx_status,filter,ext;
+uint32_t frame_id;
+byte frame_data[8];
+
+union floatbytes {
+  byte b[4];
+  float f;
+} freq;
 
 void setup() {
-  Serial.begin(9600);     // start the serial port
-  pinMode(h_pin, INPUT);
+  Serial.begin(115200);     // start the serial port
+  pinMode(ENC_PIN, INPUT);
   Serial.flush();
+  
+  CAN.begin();
+  CAN.setMode(CONFIGURATION);
+  CAN.baudConfig(BUS_SPEED);
+  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
+  CAN.toggleRxBuffer0Acceptance(true, true);
+  CAN.toggleRxBuffer1Acceptance(true, true); 
+  CAN.resetFiltersAndMasks();
+
+  length = 4;
+  frame_id = CAN_ID_SPEED_SENSOR;
 }
 
 void loop(){  
@@ -28,20 +53,20 @@ void encoder(){
   static boolean firstTime=true;
   
   //enable these for serial request/response protocol
-  if(Serial.available() && Serial.read()=='s')
-    Serial.println(freq);
+//  if(Serial.available() && Serial.read()=='s')
+//    Serial.println(freq.f);
   
   thisTime = micros();
-  if(thisTime-lastTime > TIMEOUT){
-    freq=0;
+  if(thisTime-lastTime > ENC_TIMEOUT){
+    freq.f=0;
     timedout=true;
     lastTime=thisTime;
     //enable these for automatic sending (good for CAN)
-    //Serial.println();
-    //Serial.println(freq);
+    Serial.println(freq.f);
+    CAN.load_ff_0(length,&frame_id, freq.b, false); //send the bytes directly, don't copy
   }else{
     if(lastState){
-      if(!digitalRead(h_pin)){ //detect falling edge
+      if(!digitalRead(ENC_PIN)){ //detect falling edge
         if(timedout){
           lastTime=thisTime;
           timedout=false;
@@ -49,21 +74,21 @@ void encoder(){
           firstTime=true;
         }else{
           period=thisTime-lastTime;
-          if(firstTime || period>AVGPRD){
-            freq=1000000.0/period; //instantaneous speed
+          if(firstTime || period>ENC_AVERAGE_PERIOD){
+            freq.f=1000000.0/period; //instantaneous speed
             firstTime=false;
           }else{
-            freq=freq * (1-period/AVGPRD) + (1000000.0/period) * (period/AVGPRD); //average speed readings to reduce fluctuations
+            freq.f=freq.f * (1-period/ENC_AVERAGE_PERIOD) + (1000000.0/period) * (period/ENC_AVERAGE_PERIOD); //average speed readings to reduce fluctuations
           }
           lastTime=thisTime;
           lastState=false;
           //enable these for automatic sending (good for CAN)
-          //Serial.println();
-          //Serial.println(freq);
+          Serial.println(freq.f);
+          CAN.load_ff_0(length,&frame_id, freq.b, false); //send the bytes directly, don't copy
         }
       }
     }else{
-      lastState=digitalRead(h_pin);
+      lastState=digitalRead(ENC_PIN);
     }
   }
 }
