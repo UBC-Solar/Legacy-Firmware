@@ -15,7 +15,7 @@
 #include <SPI.h>
 #include <CAN.h>
 
-#define BUS_SPEED 125000
+#define BUS_SPEED 125
 
 //global variable used to determine whether loop should
 //be in Tx or Rx mode.

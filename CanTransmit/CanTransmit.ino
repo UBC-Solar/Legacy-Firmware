@@ -15,7 +15,7 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#define BUS_SPEED 125000
+#define BUS_SPEED 125
 
 void setup()
 {
