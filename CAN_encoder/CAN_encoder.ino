@@ -13,6 +13,7 @@
 #define ENC_PIN 4  // analog pin for reading the IR sensor
 #define ENC_TIMEOUT 5000000 //microseconds
 #define ENC_AVERAGE_PERIOD 5000000.0 //microseconds, make sure to add .0 to the end to force floating point or it will fail
+#define ENC_AVERAGE_MIN_NEW_VALUE_WEIGHT 500000 //microseconds
 
 byte length,rx_status,filter,ext;
 uint32_t frame_id;
@@ -78,7 +79,8 @@ void encoder(){
             freq.f=1000000.0/period; //instantaneous speed
             firstTime=false;
           }else{
-            freq.f=freq.f * (1-period/ENC_AVERAGE_PERIOD) + (1000000.0/period) * (period/ENC_AVERAGE_PERIOD); //average speed readings to reduce fluctuations
+            unsigned long periodForAvg = period > ENC_AVERAGE_MIN_NEW_VALUE_WEIGHT ? period : ENC_AVERAGE_MIN_NEW_VALUE_WEIGHT;
+            freq.f=freq.f * (1-periodForAvg/ENC_AVERAGE_PERIOD) + (1000000.0/period) /*new speed*/ * (periodForAvg/ENC_AVERAGE_PERIOD); //average speed readings to reduce fluctuations
           }
           lastTime=thisTime;
           lastState=false;
