@@ -36,6 +36,8 @@
 #define SPEED_SENSOR_PIN A0
 #define SPEED_SENSOR_TIMEOUT 5000000 //microseconds
 #define SPEED_SENSOR_AVG_PERIOD 5000000.0 //microseconds, make sure to add .0 to the end to force floating point or it will fail
+#define SPEED_SENSOR_AVERAGE_MIN_NEW_VALUE_WEIGHT 500000 //microseconds
+
 
 #define BUS_SPEED 125
 
@@ -223,7 +225,8 @@ void speedSensorRun(){
             speedHz.f=1000000.0/period; //instantaneous speed
             firstTime=false;
           }else{
-            speedHz.f=speedHz.f * (1-period/SPEED_SENSOR_AVG_PERIOD) + (1000000.0/period) * (period/SPEED_SENSOR_AVG_PERIOD); //average speed readings to reduce fluctuations
+            unsigned long periodForAvg = period > SPEED_SENSOR_AVERAGE_MIN_NEW_VALUE_WEIGHT ? period : SPEED_SENSOR_AVERAGE_MIN_NEW_VALUE_WEIGHT;
+            speedHz.f=speedHz.f * (1-periodForAvg/SPEED_SENSOR_AVG_PERIOD) + (1000000.0/period) * (period/SPEED_SENSOR_AVG_PERIOD); //average speed readings to reduce fluctuations
           }
           lastTime=thisTime;
           lastState=false;
