@@ -1,3 +1,5 @@
+#include <ubcsolar_can_ids.h>
+
 void zevaCoreStatusPrint(){
   Serial.print("Error: ");
   Serial.println(bmsStatus.error);
@@ -121,13 +123,13 @@ void msgHandleZevaCoreConfigData3(byte rx_status, byte length, uint32_t frame_id
 
 void msgHandleZevaCoreConfig(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
   switch(frame_id){
-    case ZEVA_BMS_CORE_CONFIG_RD1:
+    case CAN_ID_ZEVA_BMS_CORE_CONFIG_RD1:
       msgHandleZevaCoreConfigData1(rx_status, length, frame_id, filter, buffer, frame_data, ext);
       break;
-    case ZEVA_BMS_CORE_CONFIG_RD2:
+    case CAN_ID_ZEVA_BMS_CORE_CONFIG_RD2:
       msgHandleZevaCoreConfigData2(rx_status, length, frame_id, filter, buffer, frame_data, ext);
       break;
-    case ZEVA_BMS_CORE_CONFIG_RD3:
+    case CAN_ID_ZEVA_BMS_CORE_CONFIG_RD3:
       msgHandleZevaCoreConfigData3(rx_status, length, frame_id, filter, buffer, frame_data, ext);
       break;
     default:
@@ -141,7 +143,7 @@ void zevaCoreSetCellNum(void){
   byte frame_data[8];
   
   Serial.println("SEND CELL NUM");
-  frame_id = ZEVA_BMS_CORE_SET_CELL_NUM;
+  frame_id = CAN_ID_ZEVA_BMS_CORE_SET_CELL_NUM;
   frame_data[0] = 0x0B;
   frame_data[1] = 0;
   frame_data[2] = 0;

@@ -16,7 +16,9 @@
 #include <CAN.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
+
 #include "bms_defs.h"
+#include <ubcsolar_can_ids.h>
 
 #define DEBUG 0 //print contents of all packets received instead of once per second
 #define PRINT_JSON 1 //print data in json format. only when DEBUG=0
@@ -146,10 +148,10 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
 
 void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
    
-   if(frame_id>=ZEVA_BMS_BASE_ID && frame_id<ZEVA_BMS_BASE_ID+40) {
+   if(frame_id>=CAN_ID_ZEVA_BMS_BASE && frame_id<CAN_ID_ZEVA_BMS_BASE+40) {
      msgHandleZevaBms(rx_status, length, frame_id, filter, buffer, frame_data, ext);
    }
-   else if(frame_id == ZEVA_BMS_CORE_STATUS) {
+   else if(frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS) {
      msgHandleZevaCoreStatus(rx_status, length, frame_id, filter, buffer, frame_data, ext);
    }
    else if(frame_id >= 12 && frame_id <= 17) {

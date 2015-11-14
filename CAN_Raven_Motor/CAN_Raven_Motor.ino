@@ -17,6 +17,8 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
+#include <ubcsolar_can_ids.h>
+
 #define RHEO_THROTTLE_SS 8
 #define RHEO_REGEN_SS 7
 
@@ -36,10 +38,6 @@
 #define SPEED_SENSOR_AVG_PERIOD 5000000.0 //microseconds, make sure to add .0 to the end to force floating point or it will fail
 
 #define BUS_SPEED 125
-
-#define CAN_ID_SIGNAL_CTRL 9
-#define CAN_ID_MOTOR_CTRL 4
-#define CAN_ID_SPEED_SENSOR 20
 
 byte throttle = 0;
 byte regen = 0;
@@ -164,16 +162,10 @@ void msgHandleMotorCtrl(byte rx_status, byte length, uint32_t frame_id, byte fil
   */
 }
 
-void msgHandleLightCtrl(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
-  Serial.println(frame_data[0]);
-}
-
 void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
    
    if(frame_id == CAN_ID_MOTOR_CTRL){
      msgHandleMotorCtrl(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   }else if(frame_id == CAN_ID_SIGNAL_CTRL){
-     msgHandleLightCtrl(rx_status, length, frame_id, filter, buffer, frame_data, ext);
    }else{
      Serial.print("unknown msg ");
      printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext); 
