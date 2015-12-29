@@ -13,12 +13,13 @@
 
 //ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
 
-#include <CAN.h>
+#include <mcp_can.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
 #include <ubcsolar_can_ids.h>
 
+#define CAN_SS 9
 #define RHEO_THROTTLE_SS 8
 #define RHEO_REGEN_SS 7
 
@@ -39,7 +40,9 @@
 #define SPEED_SENSOR_AVERAGE_MIN_NEW_VALUE_WEIGHT 500000 //microseconds
 
 
-#define BUS_SPEED 125
+#define BUS_SPEED CAN_125KBPS
+
+MCP_CAN CAN(CAN_SS);
 
 byte throttle = 0;
 byte regen = 0;
@@ -57,31 +60,32 @@ void setup() {
   Serial.begin(115200);
 
 /* CAN INIT */
-  // initialize CAN bus class
-  // this class initializes SPI communications with MCP2515
+  int canSSOffset = 0;
 
-  CAN.begin();
-  
-  CAN.setMode(CONFIGURATION);
-  CAN.baudConfig(BUS_SPEED);
-  CAN.toggleRxBuffer0Acceptance(true, false); //set to true,true to disable filtering
-  CAN.toggleRxBuffer1Acceptance(false, false);
-  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
+CAN_INIT:
 
-  /* set mask bit to 1 to turn on filtering for that bit
-                                                   un       DATA        DATA
-                                  ID MSB   ID LSB used     BYTE 0      BYTE 1
-                                  [             ][   ]    [      ]    [      ]  */                                
-  CAN.setMaskOrFilter(MASK_0,   0b11111111, 0b11100000, 0b00000000, 0b00000000); //mask 0 (for buffer 0) controls filters 0 and 1 
-  CAN.setMaskOrFilter(FILTER_0, 0b00001000, 0b10000000, 0b00000000, 0b00000000); //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
-  CAN.setMaskOrFilter(FILTER_1, 0b00000001, 0b00100000, 0b00000000, 0b00000000); //a message will pass if at least one of the filters pass it. 
-  CAN.setMaskOrFilter(MASK_1,   0b11111111, 0b11100000, 0b00000000, 0b00000000); //mask 1 (for buffer 1) controls filters 2 to 5
-  CAN.setMaskOrFilter(FILTER_2, 0b00000000, 0b10000000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_3, 0b00000001, 0b00100000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 0 on printBuf
-  CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 1 on printBuf
-  
-  // we only want 4 (motor ctrl) and 9 (light ctrl)
+  if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate = 125k
+  {
+    Serial.println("CAN BUS Shield init ok!");
+  }
+  else
+  {
+    Serial.println("CAN BUS Shield init fail");
+    Serial.print("Init CAN BUS Shield again with SS pin ");
+    Serial.println(CAN_SS + canSSOffset);
+    delay(100);
+    canSSOffset ^= 1;
+    CAN = MCP_CAN(CAN_SS + canSSOffset);
+    goto CAN_INIT;
+  }
+
+  CAN.init_Mask(0, 0, 0x3ff); //mask 0 (for buffer 0) controls filters 0 and 1
+  CAN.init_Mask(1, 0, 0x3ff); //mask 1 (for buffer 1) controls filters 2 to 5
+
+  //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
+  //a message will pass if at least one of the filters pass it. 
+  CAN.init_Filt(0, 0, CAN_ID_MOTOR_CTRL);
+  CAN.init_Filt(1, 0, CAN_ID_SIGNAL_CTRL);
 
 /* RHEO INIT */
   pinMode(RHEO_THROTTLE_SS,OUTPUT);
@@ -251,8 +255,7 @@ void sendSpeedSensorPacket(){
   frame_data[2] = speedHz.b[2];
   frame_data[3] = speedHz.b[3];
   
-  while(CAN.TX1Busy());
-  CAN.load_ff_1(length,&frame_id,frame_data, false);
+  CAN.sendMsgBuf(frame_id, 0, length, frame_data);
 }
 
 void loop() {
@@ -260,23 +263,12 @@ void loop() {
   byte length,rx_status,filter,ext;
   uint32_t frame_id;
   byte frame_data[8];
-  
-  rx_status = CAN.readStatus();
 
-  if ((rx_status & 0x40) == 0x40) {
+  if(CAN_MSGAVAIL == CAN.checkReceive()){
+    CAN.readMsgBuf(&length, frame_data);
+    frame_id = CAN.getCanId();
 
-    CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
     msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
-    CAN.clearRX0Status();
-    rx_status = CAN.readStatus();
-  }
-      
-  if ((rx_status & 0x80) == 0x80) {
-
-    CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
-    msgHandler(rx_status, length, frame_id, filter, 1, frame_data, ext);
-    CAN.clearRX1Status();
-    rx_status = CAN.readStatus();
   }
 
   // stop motor if the commander is lost
