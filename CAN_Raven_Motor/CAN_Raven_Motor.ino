@@ -85,7 +85,6 @@ CAN_INIT:
   //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
   //a message will pass if at least one of the filters pass it. 
   CAN.init_Filt(0, 0, CAN_ID_MOTOR_CTRL);
-  CAN.init_Filt(1, 0, CAN_ID_SIGNAL_CTRL);
 
 /* RHEO INIT */
   pinMode(RHEO_THROTTLE_SS,OUTPUT);
@@ -121,25 +120,13 @@ CAN_INIT:
   pinMode(SPEED_SENSOR_PIN, INPUT);
 }
 
-void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
+void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
      
-  Serial.print("[Rx] Status:");
-  Serial.print(rx_status,HEX);
+  Serial.print("[Rx] ID: ");
+  Serial.print(frame_id,HEX);
         
   Serial.print(" Len:");
   Serial.print(length,HEX);
-      
-  Serial.print(" Frame:");
-  Serial.print(frame_id,HEX);
-
-  Serial.print(" EXT?:");
-  Serial.print(ext==1,HEX);
-       
-  Serial.print(" Filter:");
-  Serial.print(filter,HEX);
-
-  Serial.print(" Buffer:");
-  Serial.print(buffer,HEX);
       
   Serial.print(" Data:[");
   for (int i=0;i<length;i++) {
@@ -149,7 +136,7 @@ void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte 
   Serial.println("]"); 
 }
 
-void msgHandleMotorCtrl(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext){
+void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
   throttle = frame_data[0];
   regen = frame_data[1];
   if(dir != frame_data[2]){
@@ -168,13 +155,13 @@ void msgHandleMotorCtrl(byte rx_status, byte length, uint32_t frame_id, byte fil
   */
 }
 
-void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
+void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
    
    if(frame_id == CAN_ID_MOTOR_CTRL){
-     msgHandleMotorCtrl(rx_status, length, frame_id, filter, buffer, frame_data, ext);
+     msgHandleMotorCtrl(frame_id, frame_data, length);
    }else{
      Serial.print("unknown msg ");
-     printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext); 
+     printBuf(frame_id, frame_data, length);
    }
 }
 
@@ -260,7 +247,7 @@ void sendSpeedSensorPacket(){
 
 void loop() {
   
-  byte length,rx_status,filter,ext;
+  byte length;
   uint32_t frame_id;
   byte frame_data[8];
 
@@ -268,7 +255,7 @@ void loop() {
     CAN.readMsgBuf(&length, frame_data);
     frame_id = CAN.getCanId();
 
-    msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
+    msgHandler(frame_id, frame_data, length);
   }
 
   // stop motor if the commander is lost
