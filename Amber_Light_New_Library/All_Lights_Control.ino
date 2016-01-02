@@ -1,3 +1,5 @@
+
+
 /*
  *  This code is for receiving messages regarding indicator lights and 
  *  taking action accordingly.
@@ -16,7 +18,7 @@
  *  ID(dec) SYSTEM              LENGHT  FORMAT
  *  0        brake                1     data[0] = brake status (0=OFF, 1=ON)
  *  
- *  1       Emergency Hazard      1     data[0] = hazard status(0=OFF, 1=ON)
+ *  1       Hazard                1     data[0] = hazard status(0=OFF, 1=ON)
  *  
  *  9       signals               1     data[0].0 = left turning signal status (0=OFF, 1=ON)
  *                                      data[0].1 = right turning signal status (0=OFF, 1=ON)
@@ -44,7 +46,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 
 // 4 flages which are actually the message recieved
 boolean Brake=0;
-boolean Hazzard=0;
+boolean Hazard=0;
 boolean Left_Sig=0;
 boolean Right_Sig=0;
 
@@ -121,11 +123,11 @@ void loop() {
             Serial.print("\t");
         }
 
-        if (canID == 0x01)  //Emergency Hazard message
+        if (canID == CAN_ID_HAZARD)  //Emergency Hazard message
         {
             if (buf[0] == 1)  //Emergency Hazard ON
             {
-                Hazzard = TRUE;
+                Hazard = TRUE;
                 Serial.println("leds should start blinking. Emergency Hazard!!!!" );
                 
                 interval = HAZARD_INTERVAL;   // to make the light blink faster
@@ -133,7 +135,7 @@ void loop() {
                 
             else if (buf[0] == 0)  //Emergency Hazard OF
             {
-                Hazzard = FALSE;
+                Hazard = FALSE;
                 Serial.println("leds should stop blinking. Emergency Hazard is over!!" );
 
                 interval = NORMAL_INTERVAL;   // to make the light blink with normal intervals
@@ -177,9 +179,9 @@ void loop() {
     }
 
     // determining the conditions according to flags
-    ledBLINK_ALL = Hazzard;
-    ledBLINK_R = Hazzard || Right_Sig;               
-    ledBLINK_L = Hazzard || Left_Sig;
+    ledBLINK_ALL = Hazard;
+    ledBLINK_R = Hazard || Right_Sig;               
+    ledBLINK_L = Hazard || Left_Sig;
 
     Brake_R= !ledBLINK_R  && Brake;                 // since blinking is in priority, Brake_* value is determined if the light is not to be blinked
     Brake_L= !ledBLINK_L  && Brake;      
