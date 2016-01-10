@@ -21,10 +21,13 @@
 #include <ubcsolar_can_ids.h>
 
 #define DEBUG 0 //print contents of all packets received instead of once per second
-#define PRINT_JSON 1 //print data in json format. only when DEBUG=0
+#define PRINT_DATA_AS_TEXT 0 //print data in human-readable text format, only matters if DEBUG=0
 
 #define BUS_SPEED 125
 #define PRINT_DELAY 1000
+
+#define BINMSG_SEPARATOR 0xFF
+#define BINMSG_MAXVAL 0xFE
 
 BMSConfig bmsConfig = {0}; //set valid to 0
 BMSStatus bmsStatus = {0};
@@ -163,6 +166,94 @@ void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byt
    }
 }
 
+void printJsonMsg(){
+    Serial.print("{\"speed\":");
+    Serial.print(0); //dummy value for now
+    Serial.print(",\"totalVoltage\":");
+    Serial.print(bmsStatus.voltage);
+    Serial.print(",\"stateOfCharge\":");
+    Serial.print(bmsStatus.soc);
+    Serial.print(",\"temperatures\":{\"bms\":");
+    Serial.print(bmsStatus.temperature);
+    Serial.print(",\"motor\":");
+    Serial.print(1); //dummy value for now
+    for(int i=0; i<4; i++){
+      Serial.print(",\"pack");
+      Serial.print(i);
+      Serial.print("\":");
+      Serial.print(bmsTemperatures[i][0]);
+    }
+    Serial.print("}");
+    Serial.print(",\"cellVoltages\":{");
+    bool firstValI = true;
+    bool firstValJ = true;
+    for(int i=0; i<4; i++){
+      if(!firstValI)
+        Serial.print(",");
+      firstValI = false;
+      Serial.print("\"pack");
+      Serial.print(i);
+      Serial.print("\":[");
+      firstValJ = true;
+      for(int j=0; j<12; j++){
+        if(!firstValJ)
+          Serial.print(",");
+        firstValJ = false;
+        Serial.print(cellVoltagesX100[i][j]/100.0);
+      }
+      Serial.print("]");
+    }
+    Serial.print("}}\n");
+}
+
+void printBinMsg(){
+  unsigned char tmp;
+  unsigned char checksum = 0;
+  
+  Serial.write(BINMSG_SEPARATOR); //print twice incase one gets lost
+  Serial.write(BINMSG_SEPARATOR);
+
+  tmp = 0; //TODO: speed
+  Serial.write(tmp);
+  checksum += tmp;
+  
+  tmp = (bmsStatus.voltage < 0 ? 0 : (bmsStatus.voltage > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.voltage));
+  Serial.write(tmp);
+  checksum += tmp;
+  
+  tmp = (bmsStatus.soc < 0 ? 0 : (bmsStatus.soc > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.soc));
+  Serial.write(tmp);
+  checksum += tmp;
+  
+  tmp = (bmsStatus.temperature < 0 ? 0 : (bmsStatus.temperature > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.temperature));
+  Serial.write(tmp);
+  checksum += tmp;
+
+  tmp = 1; //TODO: motor temp
+  Serial.write(tmp);
+  checksum += tmp;
+
+  for(int i=0; i<4; i++){
+    tmp = (bmsTemperatures[i][0] < 0 ? 0 : (bmsTemperatures[i][0] > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsTemperatures[i][0]));
+    Serial.write(tmp);
+    checksum += tmp;
+  }
+
+  for(int i=0; i<4; i++){
+    for(int j=0; j<12; j++){
+      tmp = cellVoltagesX100[i][j]/2;
+      tmp = (tmp < 0 ? 0 : (tmp > BINMSG_MAXVAL ? BINMSG_MAXVAL : tmp));
+      Serial.write(tmp);
+      checksum += tmp;
+    }
+  }
+
+  Serial.write(checksum ^ 0xFF);
+
+  Serial.write(BINMSG_SEPARATOR);
+  Serial.write(BINMSG_SEPARATOR);
+}
+
 void loop() {
   
   byte length,rx_status,filter,ext;
@@ -206,7 +297,7 @@ void loop() {
 #if !DEBUG
   if(millis() - lastPrintTime > PRINT_DELAY){
     lastPrintTime += PRINT_DELAY;
-#if !PRINT_JSON
+#if PRINT_DATA_AS_TEXT
     zevaCoreStatusPrint();
     for(int i=0; i<4; i++){
       int total = 0;
@@ -233,43 +324,7 @@ void loop() {
       Serial.println();
     }
 #else
-    Serial.print("{\"speed\":");
-    Serial.print(0); //dummy value for now
-    Serial.print(",\"totalVoltage\":");
-    Serial.print(bmsStatus.voltage);
-    Serial.print(",\"stateOfCharge\":");
-    Serial.print(bmsStatus.soc);
-    Serial.print(",\"temperatures\":{\"bms\":");
-    Serial.print(bmsStatus.temperature);
-    Serial.print(",\"motor\":");
-    Serial.print(1); //dummy value for now
-    for(int i=0; i<4; i++){
-      Serial.print(",\"pack");
-      Serial.print(i);
-      Serial.print("\":");
-      Serial.print(bmsTemperatures[i][0]);
-    }
-    Serial.print("}");
-    Serial.print(",\"cellVoltages\":{");
-    bool firstValI = true;
-    bool firstValJ = true;
-    for(int i=0; i<4; i++){
-      if(!firstValI)
-        Serial.print(",");
-      firstValI = false;
-      Serial.print("\"pack");
-      Serial.print(i);
-      Serial.print("\":[");
-      firstValJ = true;
-      for(int j=0; j<12; j++){
-        if(!firstValJ)
-          Serial.print(",");
-        firstValJ = false;
-        Serial.print(cellVoltagesX100[i][j]/100.0);
-      }
-      Serial.print("]");
-    }
-    Serial.print("}}\n");
+  printBinMsg();
 #endif
   }
 #endif
