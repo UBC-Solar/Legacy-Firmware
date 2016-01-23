@@ -15,7 +15,7 @@
  *  1 for back right
  *  1 for back center
  *  
- *  ID(dec) SYSTEM              LENGHT  FORMAT
+ *  ID(dec) SYSTEM              LENGTH  FORMAT
  *  0        brake                1     data[0] = brake status (0=OFF, 1=ON)
  *  
  *  1       Hazard                1     data[0] = hazard status(0=OFF, 1=ON)
@@ -42,7 +42,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define BACK_L_PIN   6
 #define BACK_C_PIN   7
 #define FRONT_SIDE_R_PIN   8
-#define FRONT_SIDE_L_PIN   9
+#define FRONT_SIDE_L_PIN   10
 
 // 4 flages which are actually the message recieved
 boolean Brake=0;
@@ -189,21 +189,22 @@ void loop() {
 
 
 // to turn off all the lights which should NOT BLINK or be ON
+    
+    if ( !ledBLINK_R )
+        ledState_FR = LOW;
+        
     if ( !Brake_R && !ledBLINK_R)
-    {
-        ledState_FR=LOW;
         ledState_BR=LOW;
-    }
-    if ( !Brake_L && !ledBLINK_L)
-    {
+    
+    if ( !ledBLINK_L )
         ledState_FL=LOW;
+        
+    if ( !Brake_L && !ledBLINK_L)
         ledState_BL=LOW;
-    }
+    
     if ( !Brake_C && !ledBLINK_ALL)
-    {
         ledState_BC=LOW;
-    }
-
+    
     
     unsigned long currentMillis = millis();
 
@@ -220,19 +221,19 @@ void loop() {
                    Serial.print("Front Right---" );
                    Serial.print(ledState_FR);
                    
-                   ledState_FL =!ledState_FL;
+                   ledState_FL =ledState_FR;
                    Serial.print("--Front Left---" );
                    Serial.print(ledState_FL);
 
-                   ledState_BR =!ledState_BR;
+                   ledState_BR =ledState_FR;
                    Serial.print("--Back Right---" );
                    Serial.print(ledState_BR);
                    
-                   ledState_BL =!ledState_BL;
+                   ledState_BL =ledState_FR;
                    Serial.print("--Back left---" );
                    Serial.print(ledState_BL);
                    
-                   ledState_BC =!ledState_BC;
+                   ledState_BC =ledState_FR;
                    Serial.print("--Back Center---" );
                    Serial.println(ledState_BC);
                 }
@@ -242,7 +243,7 @@ void loop() {
                    Serial.print("Front Right---" );
                    Serial.print(ledState_FR);
                    
-                   ledState_BR =!ledState_BR;
+                   ledState_BR =ledState_FR;
                    Serial.print("--Back Right----" );
                    Serial.println(ledState_BR);
                 }
@@ -252,7 +253,7 @@ void loop() {
                    Serial.print("Front Left---" );
                    Serial.print(ledState_FL);
 
-                   ledState_BL =!ledState_BL;
+                   ledState_BL =ledState_FL;
                    Serial.print("--Back Left----" );
                    Serial.println(ledState_BL);
                 }
