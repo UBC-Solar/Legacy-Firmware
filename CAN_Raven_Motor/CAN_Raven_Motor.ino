@@ -39,14 +39,21 @@
 #define SPEED_SENSOR_AVG_PERIOD 5000000.0 //microseconds, make sure to add .0 to the end to force floating point or it will fail
 #define SPEED_SENSOR_AVERAGE_MIN_NEW_VALUE_WEIGHT 500000 //microseconds
 
+#define DIR_SWITCH_RAMP_STEP_TIME_MS 10
+
 
 #define BUS_SPEED CAN_125KBPS
 
 MCP_CAN CAN(CAN_SS);
 
-byte throttle = 0;
-byte regen = 0;
-byte dir = 0;
+byte target_throttle = 0;
+byte target_regen = 0;
+byte target_dir = 0;
+byte current_throttle = 0;
+byte current_regen = 0;
+byte current_dir = 0;
+byte in_dir_switch = 0;
+byte dir_switch_last_ramp_time = 0;
 unsigned long int lastMotorCtrlRxTime = 0;
 
 union floatbytes {
@@ -137,22 +144,10 @@ void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
 }
 
 void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
-  throttle = frame_data[0];
-  regen = frame_data[1];
-  if(dir != frame_data[2]){
-    dir = frame_data[2];
-    motorSwitchDir(dir);
-  }
-  setRheo(RHEO_THROTTLE_SS, throttle);
-  setRheo(RHEO_REGEN_SS, regen);
+  target_throttle = frame_data[0];
+  target_regen = frame_data[1];
+  target_dir = frame_data[2];
   lastMotorCtrlRxTime = millis();
-  /*
-  Serial.print(throttle);
-  Serial.print(" ");
-  Serial.print(regen);
-  Serial.print(" ");
-  Serial.println(dir);
-  */
 }
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
@@ -183,6 +178,37 @@ void motorSwitchDir(int dir){
     digitalWrite(FORWARD_SWITCH, HIGH);
   else if(dir == 1)
     digitalWrite(REVERSE_SWITCH, HIGH);
+}
+
+void motorCtrlRun(){
+  if(current_dir != target_dir){
+    in_dir_switch = 1;
+    dir_switch_last_ramp_time = millis();
+  }
+  if(in_dir_switch){ // in direction transition
+    if(millis() - dir_switch_last_ramp_time > DIR_SWITCH_RAMP_STEP_TIME_MS){
+      if(current_dir != target_dir){ // ramp down
+        current_throttle--;
+        setRheo(RHEO_THROTTLE_SS, current_throttle);
+        if(current_throttle == 0){
+          current_dir = target_dir;
+          motorSwitchDir(current_dir);
+        }
+      }else{ // ramp up
+        current_throttle++;
+        setRheo(RHEO_THROTTLE_SS, current_throttle);
+        if(current_throttle >= target_throttle){
+          in_dir_switch = 0;
+        }
+      }
+      dir_switch_last_ramp_time += DIR_SWITCH_RAMP_STEP_TIME_MS;
+    }
+  }else{
+    current_throttle = target_throttle;
+    current_regen = target_regen;
+    setRheo(RHEO_THROTTLE_SS, current_throttle);
+    setRheo(RHEO_REGEN_SS, current_regen);
+  }
 }
 
 /* this function detects falling edges */
@@ -260,10 +286,10 @@ void loop() {
 
   // stop motor if the commander is lost
   if(millis() - lastMotorCtrlRxTime > 500){
-    throttle = 0;
-    setRheo(RHEO_THROTTLE_SS, throttle);
+    target_throttle = 0;
   }
   
   speedSensorRun();
+  motorCtrlRun();
 }
 
