@@ -13,7 +13,7 @@
 
 //ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
 
-#include <CAN.h>
+#include <mcp_can.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
@@ -21,10 +21,12 @@
 #include <ubcsolar_can_ids.h>
 
 #define DEBUG 0 //print contents of all packets received instead of once per second
-#define PRINT_DATA_AS_TEXT 0 //print data in human-readable text format, only matters if DEBUG=0
 
-#define BUS_SPEED 125
+#define CAN_SS 9
+
+#define BUS_SPEED CAN_125KBPS
 #define PRINT_DELAY 1000
+#define DIAG_PRINT_DELAY 250
 
 #define BINMSG_SEPARATOR 0xFF
 #define BINMSG_MAXVAL 0xFE
@@ -36,6 +38,8 @@ typedef enum{
   DIAG_OTHERS
 } DiagMode;
 
+MCP_CAN CAN(CAN_SS);
+
 BMSConfig bmsConfig = {0}; //set valid to 0
 BMSStatus bmsStatus = {0};
 int cellVoltagesX100[4][12] = {{0}};
@@ -44,56 +48,46 @@ signed char bmsTemperatures[4][2] = {{0}};
 unsigned char bmsAlive = 0;
 unsigned long int lastPrintTime = 0;
 
+byte target_throttle = 0;
+byte target_regen = 0;
+byte target_dir = 0;
+unsigned long int lastMotorCtrlRxTime = 0;
+byte brake_on = 0;
+
 DiagMode diagnosticMode = DIAG_OFF;
 
 void setup() {  
-  
+/* SERIAL INIT */
   Serial.begin(115200);
-  
-  // initialize CAN bus class
-  // this class initializes SPI communications with MCP2515
 
-  CAN.begin();
-  
-  CAN.setMode(CONFIGURATION);
-  CAN.baudConfig(BUS_SPEED);
-  CAN.toggleRxBuffer0Acceptance(true, true); //set to true,true to disable filtering
-  CAN.toggleRxBuffer1Acceptance(true, true);
-  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
+/* CAN INIT */
+  int canSSOffset = 0;
 
-  /* set mask bit to 1 to turn on filtering for that bit
-                                                   un       DATA        DATA
-                                  ID MSB   ID LSB used     BYTE 0      BYTE 1
-                                  [             ][   ]    [      ]    [      ]  */                                
-  CAN.setMaskOrFilter(MASK_0,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 0 (for buffer 0) controls filters 0 and 1 
-  CAN.setMaskOrFilter(FILTER_0, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
-  CAN.setMaskOrFilter(FILTER_1, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //a message will pass if at least one of the filters pass it. 
-  CAN.setMaskOrFilter(MASK_1,   0b00000000, 0b00000000, 0b00000000, 0b00000000); //mask 1 (for buffer 1) controls filters 2 to 5
-  CAN.setMaskOrFilter(FILTER_2, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_3, 0b00000000, 0b00000000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 0 on printBuf
-  CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00000000, 0b00000000, 0b00000000); //shows up as 1 on printBuf
+CAN_INIT:
+
+  if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate = 125k
+  {
+    Serial.println("CAN BUS Shield init ok!");
+  }
+  else
+  {
+    Serial.println("CAN BUS Shield init fail");
+    Serial.print("Init CAN BUS Shield again with SS pin ");
+    Serial.println(CAN_SS + canSSOffset);
+    delay(100);
+    canSSOffset ^= 1;
+    CAN = MCP_CAN(CAN_SS + canSSOffset);
+    goto CAN_INIT;
+  }
 }
 
-void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
+void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
      
-  Serial.print("[Rx] Status:");
-  Serial.print(rx_status,HEX);
+  Serial.print("[Rx] ID: ");
+  Serial.print(frame_id,HEX);
         
   Serial.print(" Len:");
   Serial.print(length,HEX);
-      
-  Serial.print(" Frame:");
-  Serial.print(frame_id,HEX);
-
-  Serial.print(" EXT?:");
-  Serial.print(ext==1,HEX);
-       
-  Serial.print(" Filter:");
-  Serial.print(filter,HEX);
-
-  Serial.print(" Buffer:");
-  Serial.print(buffer,HEX);
       
   Serial.print(" Data:[");
   for (int i=0;i<length;i++) {
@@ -103,7 +97,7 @@ void printBuf(byte rx_status, byte length, uint32_t frame_id, byte filter, byte 
   Serial.println("]"); 
 }
 
-void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
+void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
   
   uint32_t messageID = frame_id%10;
   
@@ -158,61 +152,50 @@ void msgHandleZevaBms(byte rx_status, byte length, uint32_t frame_id, byte filte
   #endif
 }
 
-void msgHandler(byte rx_status, byte length, uint32_t frame_id, byte filter, byte buffer, byte *frame_data, byte ext) {
-   
-   if(frame_id>=CAN_ID_ZEVA_BMS_BASE && frame_id<CAN_ID_ZEVA_BMS_BASE+40) {
-     msgHandleZevaBms(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   }
-   else if(frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS) {
-     msgHandleZevaCoreStatus(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   }
-   else if(frame_id >= 12 && frame_id <= 17) {
-     msgHandleZevaCoreConfig(rx_status, length, frame_id, filter, buffer, frame_data, ext);
-   }
-   else {
-     Serial.print("unknown msg ");
-     printBuf(rx_status, length, frame_id, filter, buffer, frame_data, ext);     
-   }
+void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
+  target_throttle = frame_data[0];
+  target_regen = frame_data[1];
+  target_dir = frame_data[2];
+  lastMotorCtrlRxTime = millis();
+  Serial.print(frame_data[0]);
+  Serial.print(" ");
+  Serial.print(frame_data[1]);
+  Serial.print(" ");
+  Serial.println(frame_data[2]);
 }
 
-void printJsonMsg(){
-    Serial.print("{\"speed\":");
-    Serial.print(0); //dummy value for now
-    Serial.print(",\"totalVoltage\":");
-    Serial.print(bmsStatus.voltage);
-    Serial.print(",\"stateOfCharge\":");
-    Serial.print(bmsStatus.soc);
-    Serial.print(",\"temperatures\":{\"bms\":");
-    Serial.print(bmsStatus.temperature);
-    Serial.print(",\"motor\":");
-    Serial.print(1); //dummy value for now
-    for(int i=0; i<4; i++){
-      Serial.print(",\"pack");
-      Serial.print(i);
-      Serial.print("\":");
-      Serial.print(bmsTemperatures[i][0]);
+void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
+  brake_on = frame_data[0];
+}
+
+void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
+   
+  if(frame_id>=CAN_ID_ZEVA_BMS_BASE && frame_id<CAN_ID_ZEVA_BMS_BASE+40) {
+    msgHandleZevaBms(frame_id, frame_data, length);
+  }
+  else if(frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS) {
+    msgHandleZevaCoreStatus(frame_id, frame_data, length);
+  }
+  else if(frame_id >= 12 && frame_id <= 17) {
+    msgHandleZevaCoreConfig(frame_id, frame_data, length);
+  }
+  else if(frame_id == CAN_ID_MOTOR_CTRL){
+    msgHandleMotorCtrl(frame_id, frame_data, length);
+  }
+  else if(frame_id == CAN_ID_BRAKE){
+    msgHandleBrake(frame_id, frame_data, length);
+  }
+  else {
+    #if !DEBUG
+    if(diagnosticMode != DIAG_OFF){
+      diag_cursorPosition(19,1);
+    #endif
+    Serial.print("unknown msg ");
+    printBuf(frame_id, frame_data, length);
+    #if !DEBUG
     }
-    Serial.print("}");
-    Serial.print(",\"cellVoltages\":{");
-    bool firstValI = true;
-    bool firstValJ = true;
-    for(int i=0; i<4; i++){
-      if(!firstValI)
-        Serial.print(",");
-      firstValI = false;
-      Serial.print("\"pack");
-      Serial.print(i);
-      Serial.print("\":[");
-      firstValJ = true;
-      for(int j=0; j<12; j++){
-        if(!firstValJ)
-          Serial.print(",");
-        firstValJ = false;
-        Serial.print(cellVoltagesX100[i][j]/100.0);
-      }
-      Serial.print("]");
-    }
-    Serial.print("}}\n");
+    #endif
+  }
 }
 
 void printBinMsg(){
@@ -265,37 +248,15 @@ void printBinMsg(){
 
 void loop() {
   
-  byte length,rx_status,filter,ext;
+  byte length;
   uint32_t frame_id;
   byte frame_data[8];
- 
-  // Rx
-  // clear receive buffers, just in case.
-  for(int i=0;i<8;i++)  frame_data[i] = 0x00;
-      
-  frame_id = 0x0000; 
-  length = 0;
-      
-  rx_status = CAN.readStatus();
 
-  if ((rx_status & 0x40) == 0x40) {
+  if(CAN_MSGAVAIL == CAN.checkReceive()){
+    CAN.readMsgBuf(&length, frame_data);
+    frame_id = CAN.getCanId();
 
-    CAN.readDATA_ff_0(&length,frame_data,&frame_id, &ext, &filter);
-    //printBuf(rx_status, length, frame_id, filter, 0, frame_data, ext);
-    msgHandler(rx_status, length, frame_id, filter, 0, frame_data, ext);
-    CAN.clearRX0Status();
-    rx_status = CAN.readStatus();
-    //Serial.println(rx_status,HEX);
-  }
-      
-  if ((rx_status & 0x80) == 0x80) {
-
-    CAN.readDATA_ff_1(&length,frame_data,&frame_id, &ext, &filter);
-    //printBuf(rx_status, length, frame_id, filter, 1, frame_data, ext);       
-    msgHandler(rx_status, length, frame_id, filter, 1, frame_data, ext);
-    CAN.clearRX1Status();
-    rx_status = CAN.readStatus();
-    //Serial.println(rx_status,HEX);
+    msgHandler(frame_id, frame_data, length);
   }
   
   if(bmsAlive == 1){
@@ -306,25 +267,29 @@ void loop() {
 #if !DEBUG
   if(Serial.available())
     diag_getCmd(Serial.read());
-    
-  if(millis() - lastPrintTime > PRINT_DELAY){
-    lastPrintTime += PRINT_DELAY;
-    switch(diagnosticMode){
-      case DIAG_OFF:
-        printBinMsg();
-        break;
-      case DIAG_BMS_CORE:
-        diag_BMSCore();
-        break;
-      case DIAG_BMS_CELLS:
-        diag_BMSCells();
-        break;
-      case DIAG_OTHERS:
-        diag_others();
-        break;
-      default:
-        diagnosticMode = DIAG_OFF;
-        break;
+
+  if(diagnosticMode == DIAG_OFF){
+    if(millis() - lastPrintTime > PRINT_DELAY){
+      lastPrintTime += PRINT_DELAY;
+      printBinMsg();
+    }
+  }else{
+    if(millis() - lastPrintTime > DIAG_PRINT_DELAY){
+      lastPrintTime += DIAG_PRINT_DELAY;
+      switch(diagnosticMode){
+        case DIAG_BMS_CORE:
+          diag_BMSCore();
+          break;
+        case DIAG_BMS_CELLS:
+          diag_BMSCells();
+          break;
+        case DIAG_OTHERS:
+          diag_others();
+          break;
+        default:
+          diagnosticMode = DIAG_OFF;
+          break;
+      }
     }
   }
 #endif
