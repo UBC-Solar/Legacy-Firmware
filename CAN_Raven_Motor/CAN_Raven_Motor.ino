@@ -1,16 +1,3 @@
-//Code by Patrick Cruce(pcruce_at_igpp.ucla.edu) 
-//Uses CAN extended library, designed for Arduino with 16 Mhz oscillator
-//Library found at: http://code.google.com/p/canduino/source/browse/trunk/#trunk%2FLibrary%2FCAN
-//This runs a simple test of the hardware with the MCP 2515 CAN Controller in loopback mode.
-//If using over physical bus rather than loopback, and you have high bus 
-//utilization, you'll want to turn the baud of the serial port up or log
-//to SD card, because frame drops can occur due to the reader code being
-//occupied with writing to the port.
-//In our testing over a 40 foot cable, we didn't have any problems with
-//synchronization or frame drops due to SPI,controller, or propagation delays
-//even at 1 Megabit.  But we didn't do any tests that required arbitration
-//with multiple nodes.
-
 //ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
 
 #include <mcp_can.h>
@@ -54,6 +41,7 @@ byte current_regen = 0;
 byte current_dir = 0;
 byte in_dir_switch = 0;
 byte dir_switch_last_ramp_time = 0;
+byte brake_on = 0;
 unsigned long int lastMotorCtrlRxTime = 0;
 
 union floatbytes {
@@ -148,12 +136,23 @@ void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
   target_regen = frame_data[1];
   target_dir = frame_data[2];
   lastMotorCtrlRxTime = millis();
+  Serial.print(frame_data[0]);
+  Serial.print(" ");
+  Serial.print(frame_data[1]);
+  Serial.print(" ");
+  Serial.println(frame_data[2]);
+}
+
+void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
+  brake_on = frame_data[0];
 }
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
    
    if(frame_id == CAN_ID_MOTOR_CTRL){
      msgHandleMotorCtrl(frame_id, frame_data, length);
+   }else if(frame_id == CAN_ID_BRAKE){
+     msgHandleBrake(frame_id, frame_data, length);
    }else{
      Serial.print("unknown msg ");
      printBuf(frame_id, frame_data, length);
@@ -205,6 +204,8 @@ void motorCtrlRun(){
     }
   }else{
     current_throttle = target_throttle;
+    if(brake_on)
+      current_throttle = 0; 
     current_regen = target_regen;
     setRheo(RHEO_THROTTLE_SS, current_throttle);
     setRheo(RHEO_REGEN_SS, current_regen);
