@@ -29,6 +29,13 @@
 #define BINMSG_SEPARATOR 0xFF
 #define BINMSG_MAXVAL 0xFE
 
+typedef enum{
+  DIAG_OFF,
+  DIAG_BMS_CORE,
+  DIAG_BMS_CELLS,
+  DIAG_OTHERS
+} DiagMode;
+
 BMSConfig bmsConfig = {0}; //set valid to 0
 BMSStatus bmsStatus = {0};
 int cellVoltagesX100[4][12] = {{0}};
@@ -36,6 +43,8 @@ signed char bmsTemperatures[4][2] = {{0}};
 
 unsigned char bmsAlive = 0;
 unsigned long int lastPrintTime = 0;
+
+DiagMode diagnosticMode = DIAG_OFF;
 
 void setup() {  
   
@@ -295,37 +304,28 @@ void loop() {
   }
   
 #if !DEBUG
+  if(Serial.available())
+    diag_getCmd(Serial.read());
+    
   if(millis() - lastPrintTime > PRINT_DELAY){
     lastPrintTime += PRINT_DELAY;
-#if PRINT_DATA_AS_TEXT
-    zevaCoreStatusPrint();
-    for(int i=0; i<4; i++){
-      int total = 0;
-      Serial.print("BMS #");
-      Serial.print(i);
-      Serial.print(": ");
-      for(int j=0; j<12; j++){
-        total += cellVoltagesX100[i][j];
-        Serial.print("c");
-        Serial.print(j);
-        Serial.print("=");
-        Serial.print(cellVoltagesX100[i][j]);
-        Serial.print(" ");
-      }
-      for(int j=0; j<2; j++){
-        Serial.print("t");
-        Serial.print(j);
-        Serial.print("=");
-        Serial.print(bmsTemperatures[i][j]);
-        Serial.print(" ");
-      }
-      Serial.print("V=");
-      Serial.print(total / 100.0);
-      Serial.println();
+    switch(diagnosticMode){
+      case DIAG_OFF:
+        printBinMsg();
+        break;
+      case DIAG_BMS_CORE:
+        diag_BMSCore();
+        break;
+      case DIAG_BMS_CELLS:
+        diag_BMSCells();
+        break;
+      case DIAG_OTHERS:
+        diag_others();
+        break;
+      default:
+        diagnosticMode = DIAG_OFF;
+        break;
     }
-#else
-  printBinMsg();
-#endif
   }
 #endif
 }
