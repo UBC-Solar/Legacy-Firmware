@@ -1,16 +1,3 @@
-//Code by Patrick Cruce(pcruce_at_igpp.ucla.edu) 
-//Uses CAN extended library, designed for Arduino with 16 Mhz oscillator
-//Library found at: http://code.google.com/p/canduino/source/browse/trunk/#trunk%2FLibrary%2FCAN
-//This runs a simple test of the hardware with the MCP 2515 CAN Controller in loopback mode.
-//If using over physical bus rather than loopback, and you have high bus 
-//utilization, you'll want to turn the baud of the serial port up or log
-//to SD card, because frame drops can occur due to the reader code being
-//occupied with writing to the port.
-//In our testing over a 40 foot cable, we didn't have any problems with
-//synchronization or frame drops due to SPI,controller, or propagation delays
-//even at 1 Megabit.  But we didn't do any tests that required arbitration
-//with multiple nodes.
-
 //ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
 
 #include <mcp_can.h>
