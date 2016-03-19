@@ -102,14 +102,20 @@ CAN_INIT:
   digitalWrite(RELAY4PIN, LOW);
 
 /* MOTOR CONTROLLER INIT */
+  digitalWrite(SEAT_SWITCH, LOW);
+  digitalWrite(FORWARD_SWITCH, LOW);
+  digitalWrite(REVERSE_SWITCH, LOW);
+  digitalWrite(FS1_SWITCH, LOW);
+  delay(1000);
   Serial.println("seat on");
   digitalWrite(SEAT_SWITCH, HIGH);
-  delay(2000);
+  delay(1000);
   Serial.println("fwd on");
   digitalWrite(FORWARD_SWITCH, HIGH);
-  delay(2000);
+  delay(1000);
   Serial.println("fs1 on");
   digitalWrite(FS1_SWITCH, HIGH);
+  delay(1000);
 
 /* SPEED SENSOR INIT */
   pinMode(SPEED_SENSOR_PIN, INPUT);
