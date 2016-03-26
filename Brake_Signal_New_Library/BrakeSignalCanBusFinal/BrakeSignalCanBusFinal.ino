@@ -10,7 +10,8 @@
 #define ROTATION_PIN A1
 #define LED_PIN 8 
 #define ID 0x00
-#define PRESSURE_THRESHOLD 75
+#define PRESSURE_THRESHOLD 100
+#define PRESSURE_DERIVATIVE 75
 #define ROTATION_THRESHOLD 17
 #define TIME_THRESHOLD 100
 
@@ -82,10 +83,10 @@ void loop()
         }
       }
 
-      if((currentPressure - arrayMin) > PRESSURE_THRESHOLD){
+      if((currentPressure - arrayMin) > PRESSURE_DERIVATIVE){
         pressureBraking = true;
       }
-      if((arrayMax - currentPressure) > PRESSURE_THRESHOLD){
+      if(pressureBraking && currentPressure < PRESSURE_THRESHOLD){
         pressureBraking = false;
       }
       
@@ -98,9 +99,12 @@ void loop()
 
       /*The previous block of code is a rough way to determine the derivative of the pressure sensor's readings.
         The pressure sensor does not have a consistent resting value, so to determine when it is detecting a press of the brake pedal,
-        we store the previous 15 readings and compare them to the current reading. If the difference is large enough, we determine that
-        the pedal has been pushed in or released significantly, although we still need to measure the absolute value measured by
-        the rotation sensor to determine whether the brake is fully released or not.*/
+        we store the previous 15 readings and compare them to the current reading. If the difference between the minimum of those previous 15 and the current value
+        is high enough, we determine that the pedal is pushed in, and send the braking message. There were issues doing the same when releasing the pedal slowly,
+        as the derivative would not get low enough (large negative number) if you released the pedal very slowly, so in order to detect a release, we just check
+        to see if the value goes below a certain threshold. When the pedal is resting at the same pressure, the reading trends upwards, which is why we have
+        to use the derivative to determine when it is pressed, but the reading never trends downwards at constant pressure, so we can use a simple threshold
+        to detect the release.*/
 
          
 //      Serial.print(currentPressure);
