@@ -5,7 +5,7 @@
  *  taking action accordingly.
  *  
  *  We have 7 lights on the car
- *  2 front, 2 front sides, 2 back, and 1 back center up
+ *  2 front, 2 front sides, 2 back, and 1 behind driver's seat
  *  
  *  We need 5 outputs to control all the lights
  *  
@@ -23,21 +23,21 @@
  *  9       signals               1     data[0].0 = left turning signal status (0=OFF, 1=ON)
  *                                      data[0].1 = right turning signal status (0=OFF, 1=ON)
  *  
- * 
+ *  ?       Horn                  1     data[0] = horn status (0=OFF, 1=ON)
  */
 
  #include <SPI.h>
 #include <mcp_can.h>
 #include <ubcsolar_can_ids.h>
 
-// SPI_CS_PIN should be 10 for our older version of shield. It is 9 for the newer version.
+// SPI_CS_PIN should be 10 for older version of shield. It is 9 for the newer version.
 const int SPI_CS_PIN = 9;
 MCP_CAN CAN(SPI_CS_PIN); 
 
 #define TRUE 1
 #define FALSE 0
 
-
+// 2 arduino pins are used for horn control to split the current required to turn on the Relay  
 #define HORN1 4 
 #define HORN2 5
 #define CAN_ID_HORN 7
@@ -46,7 +46,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define FRONT_SIDE_R_PIN   3
 #define FRONT_SIDE_L_PIN   2
 
-// 4 flages which are actually the message recieved
+// 3 flages which are actually the message recieved
 boolean Hazard=0;
 boolean Left_Sig=0;
 boolean Right_Sig=0;
@@ -58,7 +58,7 @@ boolean ledBLINK_R=0;        // right side lights
 boolean ledBLINK_L=0;        // left side lights
 boolean ledBLINK_ALL=0;      // all 4 lights
 
-// LED states for the lights. 5 outputs
+// LED states for the lights. 2 outputs
 int ledState_FR =LOW;
 int ledState_FL =LOW;
 

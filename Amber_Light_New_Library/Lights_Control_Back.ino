@@ -31,7 +31,7 @@
 #include <ubcsolar_can_ids.h>
 
 // SPI_CS_PIN should be 10 for our older version of shield. It is 9 for the newer version.
-const int SPI_CS_PIN = 10;
+const int SPI_CS_PIN = 9;
 MCP_CAN CAN(SPI_CS_PIN); 
 
 #define TRUE 1
@@ -62,7 +62,6 @@ boolean Brake_C=0;
 
 
 // LED states for the lights. 3 outputs
-
 int ledState_BR =LOW;
 int ledState_BL =LOW;
 int ledState_BC =LOW;
