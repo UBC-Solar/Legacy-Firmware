@@ -4,6 +4,7 @@
 #include <SPI.h>
 
 #include "bms_defs.h"
+#include "ds1302.h"
 #include <ubcsolar_can_ids.h>
 
 #define DEBUG 0 //print contents of all packets received instead of once per second
@@ -65,6 +66,10 @@ CAN_INIT:
     CAN = MCP_CAN(CAN_SS + canSSOffset);
     goto CAN_INIT;
   }
+
+/* RTC INIT */
+  // must go after CAN init, or need to call SPI.begin()
+  ds1302_init();
 }
 
 void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
