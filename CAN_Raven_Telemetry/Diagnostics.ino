@@ -11,18 +11,18 @@ void diag_cursorPosition(int row, int col){
 
 void diag_clearScreen(void){
   Serial.write(ANSI_ESC);
-  Serial.print("[2J");
+  Serial.print(F("[2J"));
   diag_cursorPosition(1,1);
 }
 
 void diag_help(void){
   diag_cursorPosition(20,1);
-  Serial.println("0: Turn diagnostics off");
-  Serial.println("1: BMS Core Status");
-  Serial.println("2: BMS Cells Status");
-  Serial.println("3: Other Status");
+  Serial.println(F("0: Turn diagnostics off"));
+  Serial.println(F("1: BMS Core Status"));
+  Serial.println(F("2: BMS Cells Status"));
+  Serial.println(F("3: Other Status"));
   Serial.write(ANSI_ESC);
-  Serial.print("[?25l"); //hide cursor
+  Serial.print(F("[?25l")); //hide cursor
 }
 
 void diag_getCmd(byte cmd){
@@ -47,47 +47,55 @@ void diag_getCmd(byte cmd){
 
 void diag_BMSCoreLabels(void){
   diag_clearScreen();
-  Serial.println("DIAGNOSTICS: BMS CORE STATUS");
-  Serial.println("Error Code:");
-  Serial.println("Status Code:");
-  Serial.println("State of Charge (%):");
-  Serial.println("Voltage (V):");
-  Serial.println("Current (A):");
-  Serial.println("Aux Voltage (V):");
-  Serial.println("Temperature (C):");
+  Serial.println(F("DIAGNOSTICS: BMS CORE STATUS"));
+  Serial.println(F("Error Code:"));
+  Serial.println(F("Status Code:"));
+  Serial.println(F("State of Charge (%):"));
+  Serial.println(F("Voltage (V):"));
+  Serial.println(F("Current (A):"));
+  Serial.println(F("Aux Voltage (V):"));
+  Serial.println(F("Temperature (C):"));
   diag_help();
 }
 
 void diag_BMSCore(void){
   diag_cursorPosition(2, 41);
   Serial.print(bmsStatus.error);
+  Serial.print(F("  "));
   diag_cursorPosition(3, 41);
   Serial.print(bmsStatus.status);
+  Serial.print(F("  "));
   diag_cursorPosition(4, 41);
   Serial.print(bmsStatus.soc);
+  Serial.print(F("  "));
   diag_cursorPosition(5, 41);
   Serial.print(bmsStatus.voltage);
+  Serial.print(F("  "));
   diag_cursorPosition(6, 41);
   Serial.print(bmsStatus.current);
+  Serial.print(F("  "));
   diag_cursorPosition(7, 41);
   Serial.print(bmsStatus.aux_voltage);
+  Serial.print(F("  "));
   diag_cursorPosition(8, 41);
   Serial.print(bmsStatus.temperature);
+  Serial.print(F("  "));
 }
 
 void diag_BMSCellsLabels(void){
   diag_clearScreen();
-  Serial.println("DIAGNOSTICS: BMS CELLS STATUS");
+  Serial.println(F("DIAGNOSTICS: BMS CELLS STATUS"));
   //            1         11        21        31        41
-  Serial.println("          PACK0     PACK1     PACK2     PACK3");
+  Serial.println(F("          PACK0     PACK1     PACK2     PACK3"));
   for(int i=0; i<12; i++){
-    Serial.print("CELL");
+    Serial.print(F("CELL"));
     Serial.println(i);
   }
   Serial.println();
   for(int i=0; i<2; i++){
-    Serial.print("TEMP");
+    Serial.print(F("TEMP"));
     Serial.println(i);
+    Serial.print("  ");
   }
   diag_help();
 }
@@ -109,14 +117,14 @@ void diag_BMSCells(void){
 
 void diag_othersLabels(void){
   diag_clearScreen();
-  Serial.println("DIAGNOSTICS: OTHERS");
-  Serial.println("Brake:");
+  Serial.println(F("DIAGNOSTICS: OTHERS"));
+  Serial.println(F("Brake:"));
   Serial.println("");
-  Serial.println("Motor Throttle:");
-  Serial.println("Motor Regen:");
-  Serial.println("Motor Direction:");
+  Serial.println(F("Motor Throttle:"));
+  Serial.println(F("Motor Regen:"));
+  Serial.println(F("Motor Direction:"));
   Serial.println("");
-  Serial.println("MPPT Current:");
+  Serial.println(F("MPPT Current:"));
   diag_help();
 }
 
@@ -125,8 +133,10 @@ void diag_others(void){
   Serial.print(brake_on);
   diag_cursorPosition(4,41);
   Serial.print(target_throttle);
+  Serial.print(F("  "));
   diag_cursorPosition(5,41);
   Serial.print(target_regen);
+  Serial.print(F("  "));
   diag_cursorPosition(6,41);
   Serial.print(target_dir);
 }

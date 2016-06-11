@@ -1,7 +1,6 @@
 //ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
 
 #include <mcp_can.h>
-#include <SoftwareSerial.h>
 #include <SPI.h>
 
 #include "bms_defs.h"
@@ -54,15 +53,15 @@ CAN_INIT:
 
   if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate = 125k
   {
-    Serial.println("CAN BUS Shield init ok!");
+    Serial.println(F("CAN BUS Shield init ok!"));
   }
   else
   {
-    Serial.println("CAN BUS Shield init fail");
-    Serial.print("Init CAN BUS Shield again with SS pin ");
+    Serial.println(F("CAN BUS Shield init fail"));
+    Serial.print(F("Init CAN BUS Shield again with SS pin "));
+    canSSOffset ^= 1;
     Serial.println(CAN_SS + canSSOffset);
     delay(100);
-    canSSOffset ^= 1;
     CAN = MCP_CAN(CAN_SS + canSSOffset);
     goto CAN_INIT;
   }
@@ -70,18 +69,18 @@ CAN_INIT:
 
 void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
      
-  Serial.print("[Rx] ID: ");
+  Serial.print(F("[Rx] ID: "));
   Serial.print(frame_id,HEX);
         
-  Serial.print(" Len:");
+  Serial.print(F(" Len:"));
   Serial.print(length,HEX);
       
-  Serial.print(" Data:[");
+  Serial.print(F(" Data:["));
   for (int i=0;i<length;i++) {
-    if (i>0) Serial.print(" ");
+    if (i>0) Serial.print(F(" "));
     Serial.print(frame_data[i],HEX);
   }
-  Serial.println("]"); 
+  Serial.println(F("]")); 
 }
 
 void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
@@ -92,12 +91,12 @@ void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
   if(messageID%2 == 0) {
     #if DEBUG
     switch (messageID) {
-      case 0: Serial.print("Request for status from Core to Module "); break;
-      case 2: Serial.print("Request for voltages #1 from Core to Module "); break;
-      case 4: Serial.print("Request for voltages #2 from Core to Module "); break;
-      case 6: Serial.print("Request for config info from Core to Module "); break;
-      case 8: Serial.print("Command to set config info from Core to Module "); break;
-      default: Serial.print("Unknown message from Core to Module "); break;
+      case 0: Serial.print(F("Request for status from Core to Module ")); break;
+      case 2: Serial.print(F("Request for voltages #1 from Core to Module ")); break;
+      case 4: Serial.print(F("Request for voltages #2 from Core to Module ")); break;
+      case 6: Serial.print(F("Request for config info from Core to Module ")); break;
+      case 8: Serial.print(F("Command to set config info from Core to Module ")); break;
+      default: Serial.print(F("Unknown message from Core to Module ")); break;
     }
     Serial.print((frame_id - 100 - messageID)/10);  // frameID = 100 + 10 * moduleID + messageID, 0 <= messageID <=8
     Serial.println();
@@ -106,11 +105,11 @@ void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
   }
   
   if(messageID != 3 && messageID != 5){
-    Serial.print("BMS #");
+    Serial.print(F("BMS #"));
     Serial.print((frame_id-100)/10);
-    Serial.print(" packet ");
+    Serial.print(F(" packet "));
     Serial.print(frame_id%10);
-    Serial.println(" parsing not implemented");
+    Serial.println(F(" parsing not implemented"));
     return;
   }
   
@@ -123,17 +122,17 @@ void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
   bmsTemperatures[bmsId][voltGrp] = frame_data[7] - 128;
   
   #if DEBUG
-  Serial.print("BMS #");
+  Serial.print(F("BMS #"));
   Serial.print(bmsId);
   for(int i=0; i<6; i++) {
-    Serial.print(" c");
+    Serial.print(F(" c"));
     Serial.print(i+6*voltGrp);
-    Serial.print("=");
+    Serial.print(F("="));
     Serial.print(cellVoltagesX100[bmsId][voltGrp*6+i]);
   }
-  Serial.print(" t");
+  Serial.print(F(" t"));
   Serial.print(voltGrp);
-  Serial.print("=");
+  Serial.print(F("="));
   Serial.print(bmsTemperatures[bmsId][voltGrp]);
   Serial.println();
   #endif
@@ -144,11 +143,6 @@ void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
   target_regen = frame_data[1];
   target_dir = frame_data[2];
   lastMotorCtrlRxTime = millis();
-  Serial.print(frame_data[0]);
-  Serial.print(" ");
-  Serial.print(frame_data[1]);
-  Serial.print(" ");
-  Serial.println(frame_data[2]);
 }
 
 void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
@@ -177,7 +171,7 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
     if(diagnosticMode != DIAG_OFF){
       diag_cursorPosition(19,1);
     #endif
-    Serial.print("unknown msg ");
+    Serial.print(F("unknown msg "));
     printBuf(frame_id, frame_data, length);
     #if !DEBUG
     }
@@ -234,7 +228,6 @@ void printBinMsg(){
 }
 
 void loop() {
-  
   byte length;
   uint32_t frame_id;
   byte frame_data[8];
