@@ -9,7 +9,7 @@
 
 #define DEBUG 0 //print contents of all packets received instead of once per second
 
-#define CAN_SS 9
+#define CAN_SS 10
 
 #define BUS_SPEED CAN_125KBPS
 #define PRINT_DELAY 1000
@@ -43,6 +43,8 @@ byte brake_on = 0;
 
 DiagMode diagnosticMode = DIAG_OFF;
 
+
+
 void setup() {  
 /* SERIAL INIT */
   Serial.begin(115200);
@@ -61,19 +63,36 @@ CAN_INIT:
     Serial.println(F("CAN BUS Shield init fail"));
     Serial.print(F("Init CAN BUS Shield again with SS pin "));
     canSSOffset ^= 1;
-    Serial.println(CAN_SS + canSSOffset);
+    Serial.println(CAN_SS - canSSOffset);
     delay(100);
-    CAN = MCP_CAN(CAN_SS + canSSOffset);
+    CAN = MCP_CAN(CAN_SS - canSSOffset);
     goto CAN_INIT;
   }
 
 /* RTC INIT */
   // must go after CAN init, or need to call SPI.begin()
+  SPI.begin();
   ds1302_init();
+
+/*
+  struct datetime dt;
+  dt.year = 16;
+  dt.month = 6;
+  dt.day = 9;
+  dt.hour = 23;
+  dt.minute = 56;
+  dt.second = 0;
+  ds1302_writetime(&dt);
+*/
+
+/* SD INIT */
+  // must go after RTC init
+  log_init();
+
+  Serial.println("System initialized");
 }
 
 void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
-     
   Serial.print(F("[Rx] ID: "));
   Serial.print(frame_id,HEX);
         
@@ -242,13 +261,14 @@ void loop() {
     frame_id = CAN.getCanId();
 
     msgHandler(frame_id, frame_data, length);
+    log_can(frame_id, length, frame_data);
   }
   
   if(bmsAlive == 1){
     zevaCoreSetCellNum();
     bmsAlive |= 2;
   }
-  
+
 #if !DEBUG
   if(Serial.available())
     diag_getCmd(Serial.read());
