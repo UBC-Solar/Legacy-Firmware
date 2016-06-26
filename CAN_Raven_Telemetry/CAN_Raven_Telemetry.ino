@@ -2,6 +2,7 @@
 
 #include <mcp_can.h>
 #include <SPI.h>
+#include <avr/pgmspace.h>
 
 #include "bms_defs.h"
 #include "ds1302.h"
@@ -17,6 +18,16 @@
 
 #define BINMSG_SEPARATOR 0xFF
 #define BINMSG_MAXVAL 0xFE
+
+typedef struct DataPacket{
+  byte speed;
+  byte voltage;
+  byte soc;
+  byte bmsTemperature;
+  byte motorTemperature;
+  byte batteryTemperature[4];
+  byte cellVoltageX50[4][12];
+} DataPacket;
 
 typedef enum{
   DIAG_OFF,
@@ -43,11 +54,11 @@ byte brake_on = 0;
 
 DiagMode diagnosticMode = DIAG_OFF;
 
-
+DataPacket dataPacket;
 
 void setup() {  
 /* SERIAL INIT */
-  Serial.begin(115200);
+  Serial.begin(57600);
 
 /* CAN INIT */
   int canSSOffset = 0;
@@ -203,50 +214,61 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
   }
 }
 
+static PROGMEM const uint32_t crc_table[16] = {
+    0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
+    0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+    0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
+    0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
+};
+
+uint32_t crc32_update(uint32_t crc, byte *data, int len)
+{
+    byte tbl_idx;
+    while(len--){
+      tbl_idx = crc ^ (*data >> (0 * 4));
+      crc = pgm_read_dword_near(crc_table + (tbl_idx & 0x0f)) ^ (crc >> 4);
+      tbl_idx = crc ^ (*data >> (1 * 4));
+      crc = pgm_read_dword_near(crc_table + (tbl_idx & 0x0f)) ^ (crc >> 4);
+      data++;
+    }
+    return crc;
+}
+
 void printBinMsg(){
   unsigned char tmp;
-  unsigned char checksum = 0;
-  
-  Serial.write(BINMSG_SEPARATOR); //print twice incase one gets lost
-  Serial.write(BINMSG_SEPARATOR);
+  uint32_t crc = ~0L;
 
-  tmp = 0; //TODO: speed
-  Serial.write(tmp);
-  checksum += tmp;
-  
-  tmp = (bmsStatus.voltage < 0 ? 0 : (bmsStatus.voltage > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.voltage));
-  Serial.write(tmp);
-  checksum += tmp;
-  
-  tmp = (bmsStatus.soc < 0 ? 0 : (bmsStatus.soc > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.soc));
-  Serial.write(tmp);
-  checksum += tmp;
-  
-  tmp = (bmsStatus.temperature < 0 ? 0 : (bmsStatus.temperature > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.temperature));
-  Serial.write(tmp);
-  checksum += tmp;
-
-  tmp = 1; //TODO: motor temp
-  Serial.write(tmp);
-  checksum += tmp;
+  dataPacket.speed = 0;
+  dataPacket.voltage = (bmsStatus.voltage < 0 ? 0 : (bmsStatus.voltage > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.voltage));
+  dataPacket.soc = (bmsStatus.soc < 0 ? 0 : (bmsStatus.soc > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.soc));
+  dataPacket.bmsTemperature = (bmsStatus.temperature < 0 ? 0 : (bmsStatus.temperature > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.temperature));
+  dataPacket.motorTemperature = 1; //TODO: motor temp
 
   for(int i=0; i<4; i++){
-    tmp = (bmsTemperatures[i][0] < 0 ? 0 : (bmsTemperatures[i][0] > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsTemperatures[i][0]));
-    Serial.write(tmp);
-    checksum += tmp;
+    dataPacket.batteryTemperature[i] = (bmsTemperatures[i][0] < 0 ? 0 : (bmsTemperatures[i][0] > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsTemperatures[i][0]));
   }
 
   for(int i=0; i<4; i++){
     for(int j=0; j<12; j++){
       tmp = cellVoltagesX100[i][j]/2;
-      tmp = (tmp < 0 ? 0 : (tmp > BINMSG_MAXVAL ? BINMSG_MAXVAL : tmp));
-      Serial.write(tmp);
-      checksum += tmp;
+      dataPacket.cellVoltageX50[i][j] = (tmp < 0 ? 0 : (tmp > BINMSG_MAXVAL ? BINMSG_MAXVAL : tmp));
     }
   }
 
-  Serial.write(checksum ^ 0xFF);
+  crc = ~0L;
+  crc = crc32_update(crc, (byte*) &dataPacket, sizeof(dataPacket));
+  crc = ~crc;
 
+  Serial.write(BINMSG_SEPARATOR); //print twice incase one gets lost
+  Serial.write(BINMSG_SEPARATOR);
+  
+  Serial.write((unsigned char *)&dataPacket, sizeof(dataPacket));
+  for(int i=24; i>=0; i-=8){
+    tmp = (crc >> i) & 0xff;
+    Serial.print(tmp >> 4, HEX);
+    Serial.print(tmp & 0xf, HEX);
+  }
+  
   Serial.write(BINMSG_SEPARATOR);
   Serial.write(BINMSG_SEPARATOR);
 }
