@@ -21,7 +21,8 @@ void diag_help(void){
   Serial.println(F("1: BMS Core Status"));
   Serial.println(F("2: BMS Cells Status"));
   Serial.println(F("3: Other Status"));
-  Serial.write(ANSI_ESC);
+  Serial.println(F("4: Set RTC Time"));
+  //Serial.write(ANSI_ESC);
   //Serial.print(F("[?25l")); //hide cursor
 }
 
@@ -44,6 +45,10 @@ void diag_getCmd(byte cmd){
       diagnosticMode = DIAG_OTHERS;
       diag_othersLabels();
       diag_others();
+      break;
+    case '4':
+      diagnosticMode = DIAG_SETTIME;
+      diag_setTimeLabels();
       break;
   }
 }
@@ -148,5 +153,65 @@ void diag_others(void){
   struct datetime dt;
   ds1302_readtime(&dt);
   print_time(&dt);
+}
+
+void diag_setTimeLabels(void){
+  diag_clearScreen();
+  Serial.println(F("Enter Date/Time:"));
+  Serial.println(F("YYMMDDHHMMSS"));
+}
+
+void diag_setTime(char c){
+  static char dateStr[12];
+  static int i;
+
+  // ENTER key
+  if(c == 0x0D){
+    goto setTime_do;
+  // ESC key
+  }else if(c == 0x1B){
+    goto setTime_exit;
+  // BACKSPACE key
+  }else if(c == 0x08 || c == 0x7F){
+    if(i > 0){
+      i--;
+      Serial.print(F("\b \b"));
+    }
+  }else if(c >= '0' && c <= '9'){
+    if(i < 12){
+      dateStr[i] = c;
+      i++;
+      Serial.write(c);
+    }
+  }
+  return;
+
+setTime_do:
+  if(i < 12)
+    goto setTime_error;
+    
+  struct datetime dt;
+  dt.year = (dateStr[0]-'0')*10 + (dateStr[1]-'0');
+  dt.month = (dateStr[2]-'0')*10 + (dateStr[3]-'0');
+  dt.day = (dateStr[4]-'0')*10 + (dateStr[5]-'0');
+  dt.hour = (dateStr[6]-'0')*10 + (dateStr[7]-'0');
+  dt.minute = (dateStr[8]-'0')*10 + (dateStr[9]-'0');
+  dt.second = (dateStr[10]-'0')*10 + (dateStr[11]-'0');
+
+  if(!validate_time(&dt))
+    goto setTime_error;
+
+  ds1302_writetime(&dt);
+  Serial.println(F("Time Set."));
+  
+setTime_exit:
+  i = 0;
+  diagnosticMode = DIAG_OFF;
+  lastPrintTime = millis();
+  return;
+
+setTime_error:
+  Serial.println(F("INVALID DATE/TIME!"));
+  goto setTime_exit;
 }
 

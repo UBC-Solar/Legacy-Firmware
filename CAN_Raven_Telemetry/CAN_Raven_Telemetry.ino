@@ -33,7 +33,8 @@ typedef enum{
   DIAG_OFF,
   DIAG_BMS_CORE,
   DIAG_BMS_CELLS,
-  DIAG_OTHERS
+  DIAG_OTHERS,
+  DIAG_SETTIME
 } DiagMode;
 
 MCP_CAN CAN(CAN_SS);
@@ -84,17 +85,6 @@ CAN_INIT:
   // must go after CAN init, or need to call SPI.begin()
   SPI.begin();
   ds1302_init();
-
-/*
-  struct datetime dt;
-  dt.year = 16;
-  dt.month = 8;
-  dt.day = 6;
-  dt.hour = 13;
-  dt.minute = 15;
-  dt.second = 0;
-  ds1302_writetime(&dt);
-*/
 
 /* SD INIT */
   // must go after RTC init
@@ -292,8 +282,15 @@ void loop() {
   }
 
 #if !DEBUG
-  if(Serial.available())
+  if(diagnosticMode == DIAG_SETTIME){
+    if(Serial.available())
+      diag_setTime(Serial.read());
+    return;
+  }
+    
+  if(Serial.available()){
     diag_getCmd(Serial.read());
+  }
 
   if(diagnosticMode == DIAG_OFF){
     if(millis() - lastPrintTime > PRINT_DELAY){

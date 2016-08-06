@@ -87,3 +87,23 @@ void print_time(struct datetime *dt){
   snprintf(tmp, 20, "%02d/%02d/%02d %02d:%02d:%02d", dt->year, dt->month, dt->day, dt->hour, dt->minute, dt->second);
   Serial.print(tmp);
 }
+
+static PROGMEM const byte max_day_number_for_month[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+int validate_time(struct datetime *dt){
+  int max_day_number;
+  
+  if(dt->year > 99 || dt->month > 12 || dt->hour > 23 || dt->minute > 59 || dt->second > 59)
+    return 0;
+
+  if((dt->year % 4) == 0 && dt->month == 2)
+    max_day_number = 29;
+  else
+    max_day_number = pgm_read_byte_near(max_day_number_for_month + dt->month);
+
+  if(dt->day > max_day_number)
+    return 0;
+
+  return 1;
+}
+
