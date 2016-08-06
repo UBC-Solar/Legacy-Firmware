@@ -14,7 +14,7 @@
 
 #define BUS_SPEED CAN_125KBPS
 #define PRINT_DELAY 1000
-#define DIAG_PRINT_DELAY 250
+#define DIAG_PRINT_DELAY 2000
 
 #define BINMSG_SEPARATOR 0xFF
 #define BINMSG_MAXVAL 0xFE
@@ -58,7 +58,7 @@ DataPacket dataPacket;
 
 void setup() {  
 /* SERIAL INIT */
-  Serial.begin(57600);
+  Serial.begin(19200);
 
 /* CAN INIT */
   int canSSOffset = 0;
@@ -88,10 +88,10 @@ CAN_INIT:
 /*
   struct datetime dt;
   dt.year = 16;
-  dt.month = 6;
-  dt.day = 9;
-  dt.hour = 23;
-  dt.minute = 56;
+  dt.month = 8;
+  dt.day = 6;
+  dt.hour = 13;
+  dt.minute = 15;
   dt.second = 0;
   ds1302_writetime(&dt);
 */

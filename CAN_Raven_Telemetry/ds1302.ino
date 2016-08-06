@@ -85,5 +85,5 @@ void ds1302_writetime(struct datetime *dt){
 void print_time(struct datetime *dt){
   char tmp[20];
   snprintf(tmp, 20, "%02d/%02d/%02d %02d:%02d:%02d", dt->year, dt->month, dt->day, dt->hour, dt->minute, dt->second);
-  Serial.println(tmp);
+  Serial.print(tmp);
 }

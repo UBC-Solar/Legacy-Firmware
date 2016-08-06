@@ -22,7 +22,7 @@ void diag_help(void){
   Serial.println(F("2: BMS Cells Status"));
   Serial.println(F("3: Other Status"));
   Serial.write(ANSI_ESC);
-  Serial.print(F("[?25l")); //hide cursor
+  //Serial.print(F("[?25l")); //hide cursor
 }
 
 void diag_getCmd(byte cmd){
@@ -33,14 +33,17 @@ void diag_getCmd(byte cmd){
     case '1':
       diagnosticMode = DIAG_BMS_CORE;
       diag_BMSCoreLabels();
+      diag_BMSCore();
       break;
     case '2':
       diagnosticMode = DIAG_BMS_CELLS;
       diag_BMSCellsLabels();
+      diag_BMSCells();
       break;
     case '3':
       diagnosticMode = DIAG_OTHERS;
       diag_othersLabels();
+      diag_others();
       break;
   }
 }
@@ -125,6 +128,8 @@ void diag_othersLabels(void){
   Serial.println(F("Motor Direction:"));
   Serial.println("");
   Serial.println(F("MPPT Current:"));
+  Serial.println("");
+  Serial.println(F("RTC Time:"));
   diag_help();
 }
 
@@ -139,5 +144,9 @@ void diag_others(void){
   Serial.print(F("  "));
   diag_cursorPosition(6,41);
   Serial.print(target_dir);
+  diag_cursorPosition(10,41);
+  struct datetime dt;
+  ds1302_readtime(&dt);
+  print_time(&dt);
 }
 
