@@ -1,54 +1,40 @@
-//Code by Patrick Cruce(pcruce_at_igpp.ucla.edu) 
-//Uses CAN extended library, designed for Arduino with 16 Mhz oscillator
-//Library found at: http://code.google.com/p/canduino/source/browse/trunk/#trunk%2FLibrary%2FCAN
-//This runs a simple test of the hardware with the MCP 2515 CAN Controller in loopback mode.
-//If using over physical bus rather than loopback, and you have high bus 
-//utilization, you'll want to turn the baud of the serial port up or log
-//to SD card, because frame drops can occur due to the reader code being
-//occupied with writing to the port.
-//In our testing over a 40 foot cable, we didn't have any problems with
-//synchronization or frame drops due to SPI,controller, or propagation delays
-//even at 1 Megabit.  But we didn't do any tests that required arbitration
-//with multiple nodes.
-
-#include <CAN.h>
+#include <mcp_can.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#define BUS_SPEED 125
+#define CAN_SS 9
 #define ZEVA_ID 100
+#define BUS_SPEED CAN_125KBPS
+
+MCP_CAN CAN(CAN_SS);
 
 byte length,rx_status,filter,ext;
 uint32_t frame_id;
 byte frame_data[8];
 
 void setup() {                
-
-  
+/* SERIAL INIT */
   Serial.begin(115200);
-  
-  // initialize CAN bus class
-  // this class initializes SPI communications with MCP2515
-  CAN.begin();
-  
-  CAN.setMode(CONFIGURATION);
-  CAN.baudConfig(BUS_SPEED);
-  
-  /*CAN.setMaskOrFilter(MASK_0,   0b11111111, 0b11100000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(FILTER_0, 0b11111111, 0b11100000, 0b00000000, 0b00000000); //DISALLOW ext packets.
-  CAN.setMaskOrFilter(FILTER_1, 0b10111111, 0b11100000, 0b00000000, 0b00000000);
-  CAN.setMaskOrFilter(MASK_1,   0b00000000, 0b00000000, 0b00001111, 0b11111111);  
-  CAN.setMaskOrFilter(FILTER_2, 0b00000000, 0b00001000, 0b00001101, 0b11111111);
-  CAN.setMaskOrFilter(FILTER_3, 0b00000000, 0b00001000, 0b00001101, 0b11111111);
-  CAN.setMaskOrFilter(FILTER_4, 0b00000000, 0b00001000, 0b00001111, 0b11111111);
-  CAN.setMaskOrFilter(FILTER_5, 0b00000000, 0b00001000, 0b00001101, 0b11111111);*/
 
- 
-  CAN.setMode(NORMAL);  // set to "NORMAL" for standard com
+/* CAN INIT */
+  int canSSOffset = 0;
 
-  CAN.toggleRxBuffer0Acceptance(true, true);
-  CAN.toggleRxBuffer1Acceptance(true, true); 
-  CAN.resetFiltersAndMasks();
+CAN_INIT:
+
+  if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate = 125k
+  {
+    Serial.println("CAN BUS Shield init ok!");
+  }
+  else
+  {
+    Serial.println("CAN BUS Shield init fail");
+    Serial.print("Init CAN BUS Shield again with SS pin ");
+    Serial.println(CAN_SS + canSSOffset);
+    delay(100);
+    canSSOffset ^= 1;
+    CAN = MCP_CAN(CAN_SS + canSSOffset);
+    goto CAN_INIT;
+  }
 }
 
 void printBufTX(byte length, uint32_t frame_id, byte *frame_data, byte ext) {
@@ -110,19 +96,19 @@ void fakeBMSPacket(int bmsId, int voltGrp){
 }
 
 void loop() {
-      fakeCurrentSensorPacket();
-      printBufTX(length, frame_id, frame_data, false); //do not remove this print. the compiler will incorrectly optimize
-      CAN.load_ff_0(length,&frame_id,frame_data, false);
+      //fakeCurrentSensorPacket();
+      //printBufTX(length, frame_id, frame_data, false); //do not remove this print. the compiler will incorrectly optimize
+      //CAN.sendMsgBuf(frame_id, 0, length, frame_data);
       
       for(int i=0; i<4; i++){
         fakeBMSPacket(i,1);
         printBufTX(length, frame_id, frame_data, false); //do not remove this print. the compiler will incorrectly optimize
-        CAN.load_ff_0(length,&frame_id,frame_data, false);
+        CAN.sendMsgBuf(frame_id, 0, length, frame_data);
         fakeBMSPacket(i,2);
         printBufTX(length, frame_id, frame_data, false); //do not remove this print. the compiler will incorrectly optimize
-        CAN.load_ff_0(length,&frame_id,frame_data, false);
+        CAN.sendMsgBuf(frame_id, 0, length, frame_data);
       }
       
-      //delay(1000);
+      delay(100);
 }
 
