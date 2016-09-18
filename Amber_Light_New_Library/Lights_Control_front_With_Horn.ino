@@ -43,8 +43,8 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define CAN_ID_HORN 7
 
 // 2 groups of outputs for 4 lights, output pins can be changed according to pins available
-#define FRONT_SIDE_R_PIN   3
-#define FRONT_SIDE_L_PIN   2
+#define FRONT_SIDE_R_PIN   6
+#define FRONT_SIDE_L_PIN   7
 
 // 3 flages which are actually the message recieved
 boolean Hazard=0;
@@ -81,7 +81,7 @@ void setup() {
     pinMode(FRONT_SIDE_L_PIN,OUTPUT);
 
     pinMode(HORN1, OUTPUT);
-    pinMode(HORN2, OUTPUT);
+   pinMode(HORN2, OUTPUT);
 
 START_INIT:
 
