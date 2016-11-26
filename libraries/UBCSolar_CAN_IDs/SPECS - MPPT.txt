@@ -1,0 +1,7 @@
+Specs - MPPT Node
+
+The MPPT node reports the current drawn through each of the six MPPTs, and connects or disconnects solar panels connected through relays to the MPPTs.
+
+- The MPPT node shall periodically (1 second?) send a status message (ID = 201, length: 6 bytes) containing the current levels (normalized to 8 bits) for each of the MPPTs.
+
+- Upon receiving a control message (ID = 200, length = 1 byte), the MPPT node will connect or disconnect the solar panels. A 1 bit is connected, and 0 is disconnected. The first six bits in the payload correspond to each MPPT.

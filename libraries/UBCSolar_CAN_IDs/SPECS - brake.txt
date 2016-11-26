@@ -1,0 +1,13 @@
+Specs - Brake node
+
+The brake node detects whether the brake is depressed and reports the brake status over CAN.
+
+- When the brake is depressed, the brake node shall send a brake message (ID=0) with a one byte payload containing the value 1.
+
+- When the brake is released, the brake node shall send a brake message (ID=0) with a one byte payload containing the value 0.
+
+As the brake is a critical component of the system, it should be robust against packet loss.
+
+- As such, the brake node shall repeat the "brake on" message roughly every 25ms while the brake is depressed. 
+
+- After the brake is released, the brake node shall repeat the "brake off" message every 25ms for a duration of 250ms.

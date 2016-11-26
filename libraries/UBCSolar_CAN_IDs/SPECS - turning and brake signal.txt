@@ -1,0 +1,11 @@
+Specs - Turning/Brake Signal nodes
+
+The turning/brake signal node receive control messages for the turning and brake signal lights and controls the signal lights accordingly.
+
+- When the turning/brake signal node receives a brake status message (ID=0), it shall turn on/off the brake light accordingly.
+
+- When the turning/brake signal node receives a signal light control message (ID=9), it shall start/stop flashing the turning signals. 
+- For the left turning signal: If the bit at the 2^0 position (the least-significant bit) is 1, then the left turning signal shall start flashing or continue flashing if it is already flashing. If the bit at the 2^0 position is 0, then the left turning signal shall stop flashing. 
+- The right turning signal shall have the same behaviour, except that it reacts to the bit at the 2^1 position instead.
+
+- When the turning/brake signal node receives a emergency hazard signal (ID=1), it shall flash all lights quickly. The emergency hazard flashing overrides the turning flashing.

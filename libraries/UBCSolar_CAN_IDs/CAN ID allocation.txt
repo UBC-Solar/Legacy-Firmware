@@ -1,0 +1,30 @@
+Notation:
+
+data[i] = i'th byte of the packet
+data[i].j = j'th bit from the right of the i'th byte of the packet
+(j=7 is MSB, j=0 is LSB)
+
+
+ID(dec)	SYSTEM	LENGTH	FORMAT
+
+0	brake	1	data[0] = brake status (0=OFF, 1=ON)
+
+1	hazard	1	data[0] = hazard status(0=OFF, 1=ON)
+
+4	motor	3	data[0] = throttle
+			data[1] = regen
+			data[2] = direction (0=FWD, 1=REV)
+
+8	motor	4	data[0..3] = speed (32bit float, in Hz (rotations per s))
+
+9	signals	1	data[0].0 = left turning signal status (0=OFF, 1=ON)
+			data[0].1 = right turning signal status (0=OFF, 1=ON)
+
+10-20	BMS	8	(see ZEVA BMS datasheet)
+
+100-139	BMS	vary	(see ZEVA BMS datasheet)
+
+200	MPPT Relays	4	data[0] = Relay states. (6 bits)
+201 MPPT Current Sensors 4 data[0..6] = MPPT Current
+
+700	UI	?	undecided

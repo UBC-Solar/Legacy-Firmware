@@ -1,0 +1,17 @@
+Specs - Motor node
+
+The motor node receives motor control messages and brake status messages and translates them for the motor-controller's analogue interface with accordingly. It also doubles as a speed sensing node.
+
+- When the motor node receives a motor control message (ID=4), it shall:
+  - immediately set the throttle potentiometer to the value indicated by the first byte in the message unless the direction indicated by the message is different from the current direction.
+  - immediately set the regen potentiometer to the value indicated by the second byte in the message
+  - if the direction indicated by the message is different from the current direction:
+    1. if the current acceleration is not zero, start ramping down the throttle potentiometer until it is zero
+    2. once the acceleration is zero, switch the motor direction
+    3. ramp the acceleration back up to the value indicated by the message
+
+- When the motor node receives a brake status message indicating the brake is depressed, it shall immediately set the acceleration to zero.
+
+- If the motor node has not received a motor control message for more than 500ms, it shall assume a connection failure and immediately set the acceleration to zero
+
+- The motor node shall report its speed reading at least once per 500ms or as soon as its speed reading updates. 
