@@ -3,36 +3,15 @@
 #include <mcp_can.h>
 #include <SPI.h>
 #include <avr/pgmspace.h>
-
-#include "bms_defs.h"
 #include <ubcsolar_can_ids.h>
 
 #define CAN_SS 10
-
 #define BUS_SPEED CAN_125KBPS
-#define PRINT_DELAY 1000
-
-typedef struct DataPacket{
-  byte speed;
-  byte voltage;
-  byte soc;
-  byte bmsTemperature;
-  byte motorTemperature;
-  byte batteryTemperature[4];
-  byte cellVoltageX50[4][12];
-} DataPacket;
 
 MCP_CAN CAN(CAN_SS);
 
-BMSConfig bmsConfig = {0}; //set valid to 0
-BMSStatus bmsStatus = {0};
-int cellVoltagesX100[4][12] = {{0}};
-signed char bmsTemperatures[4][2] = {{0}};
-
 byte bmsAlive = 0;
 unsigned long int lastPrintTime = 0;
-
-DataPacket dataPacket;
 
 void setup() {  
 /* SERIAL INIT */
@@ -86,7 +65,7 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
       Serial.println("bms alive");
     }
   }
-  else if(frame_id >= 12 && frame_id <= 17) {
+  else if(frame_id >= CAN_ID_ZEVA_BMS_CORE_CONFIG_WR1 && frame_id <= CAN_ID_ZEVA_BMS_CORE_CONFIG_RD3) {
     Serial.println("config packet");
     msgHandleZevaCoreConfig(frame_id, frame_data, length);
     bmsAlive |= B1111;
