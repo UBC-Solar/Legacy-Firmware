@@ -83,6 +83,23 @@ void msgHandleZevaCoreConfigData1(uint32_t frame_id, byte *frame_data, byte leng
   Serial.println(frame_data[7]);
 }
 
+void zevaCoreSendConfigData1() {
+  byte length = 8;
+  uint32_t frame_id = CAN_ID_ZEVA_BMS_CORE_CONFIG_WR1;
+  byte frame_data[8];
+
+  frame_data[0] = 20;     // pack capacity is 20 Ah
+  frame_data[1] = 20;     // low state of charge warning is 20%
+  frame_data[2] = 46/2;   // max pack voltage is 46V
+  frame_data[3] = 180/10; // overcurrent warning threshold is 100A (max. continuous discharge)
+  frame_data[4] = 200/10; // overcurrent shutdown threshold is 200A (max. peak discharge)
+  frame_data[5] = 40;     // overtemperature threshold is 40C
+  frame_data[6] = 11;     // minimum auxiliary voltage (from DC/DC or supplemental battery) is 11V
+  frame_data[7] = 50;     // maximum leakage percentage is 50%
+
+  CAN.sendMsgBuf(frame_id, 0, length, frame_data);
+}
+
 void msgHandleZevaCoreConfigData2(uint32_t frame_id, byte *frame_data, byte length) {
   Serial.print(F("Tacho pulses-per-rev (for gauge scaling): "));
   Serial.println(frame_data[0]);
@@ -95,24 +112,55 @@ void msgHandleZevaCoreConfigData2(uint32_t frame_id, byte *frame_data, byte leng
   Serial.print(F("Temp gauge cold: "));
   Serial.println(frame_data[4]);
   Serial.print(F("Peukerts exponent: "));
-  Serial.println(frame_data[5]);
+  Serial.println(frame_data[5]/10.0);
   Serial.print(F("Enable precharge: "));
   Serial.println(frame_data[6]);
   Serial.print(F("Enable contactor auxiliary switches: "));
   Serial.println(frame_data[7]);
 }
+
+void zevaCoreSendConfigData2() {
+  byte length = 8;
+  uint32_t frame_id = CAN_ID_ZEVA_BMS_CORE_CONFIG_WR2;
+  byte frame_data[8];
+
+  frame_data[0] = 1;            // tachometer pulses per revolution (we aren't using this feature)
+  frame_data[1] = 100;          // fuel gauge full percentage (we aren't using this feature)
+  frame_data[2] = 0;            // fuel gauge empty percentage (we aren't using this feature)
+  frame_data[3] = 100;          // temp gauge hot percentage (we aren't using this feature)
+  frame_data[4] = 0;            // temp gauge cold percentage (we aren't using this feature)
+  frame_data[5] = int(1.2*10);  // peukeurt's exponent
+  frame_data[6] = 0;            // enable precharge (0 = disabled, 1 = enabled)
+  frame_data[7] = 0;            // enable contactor auxiliary switches (0 = disabled, 1 = enabled)
+
+  CAN.sendMsgBuf(frame_id, 0, length, frame_data);
+}
   
 void msgHandleZevaCoreConfigData3(uint32_t frame_id, byte *frame_data, byte length) {
   Serial.print(F("BMS minimum cell voltage: "));
-  Serial.println(frame_data[0]);
+  Serial.println(frame_data[0]*0.05);
   Serial.print(F("BMS maximum cell voltage: "));
-  Serial.println(frame_data[1]);
+  Serial.println(frame_data[1]*0.05);
   Serial.print(F("BMS shunt voltage: "));
-  Serial.println(frame_data[2]);
+  Serial.println(frame_data[2]*0.05);
   Serial.print(F("Low temperature warning: "));
   Serial.println(frame_data[3]);
   Serial.print(F("High temperature warning: "));
   Serial.println(frame_data[4]);
+}
+
+void zevaCoreSendConfigData3() {
+  byte length = 8;
+  uint32_t frame_id = CAN_ID_ZEVA_BMS_CORE_CONFIG_WR3;
+  byte frame_data[8];
+
+  frame_data[0] = int(3.0/0.05);  // bms minimum cell voltage is 3.0V (50 mV increments)
+  frame_data[1] = int(4.15/0.05); // bms maximum cell voltage is 4.15V (50 mV increments)
+  frame_data[2] = int(3.8/0.05);  // bms shunt balancers turn on at 3.8V (50 mV increments)
+  frame_data[3] = 0;              // low temperature warning threshold is 0C
+  frame_data[4] = 40;             // high temperature warning threshold is 40C
+
+  CAN.sendMsgBuf(frame_id, 0, length, frame_data);
 }
   
 void msgHandleZevaCoreConfig(uint32_t frame_id, byte *frame_data, byte length) {
@@ -131,17 +179,14 @@ void msgHandleZevaCoreConfig(uint32_t frame_id, byte *frame_data, byte length) {
   }
 }
 
-void zevaCoreSetCellNum(void){
-  byte length;
-  uint32_t frame_id;
+void zevaCoreSetCellNum(void) {
+  byte length = 8;
+  uint32_t frame_id = CAN_ID_ZEVA_BMS_CORE_SET_CELL_NUM;
   byte frame_data[8];
 
   // format is 16 4-bit values
   // ie. 0x0B means module ID 0 has 11 cells
   //     0xBB means module IDs 0 and 1 have 11 cells each
-  
-  Serial.println(F("SEND CELL NUM"));
-  frame_id = CAN_ID_ZEVA_BMS_CORE_SET_CELL_NUM;
   frame_data[0] = 0x0B;
   frame_data[1] = 0;
   frame_data[2] = 0;
@@ -150,11 +195,11 @@ void zevaCoreSetCellNum(void){
   frame_data[5] = 0;
   frame_data[6] = 0;
   frame_data[7] = 0;
-  length = 8;
+  
   CAN.sendMsgBuf(frame_id, 0, length, frame_data);
 }
 
-void zevaCoreStartSetupMode(void){
+void zevaCoreStartSetupMode(void) {
   byte length = 1;
   uint32_t frame_id = CAN_ID_ZEVA_BMS_CORE_SET_STATE;
   byte frame_data[1];
@@ -162,7 +207,7 @@ void zevaCoreStartSetupMode(void){
   CAN.sendMsgBuf(frame_id, 0, length, frame_data);
 }
 
-void zevaCoreEndSetupMode(void){
+void zevaCoreEndSetupMode(void) {
   byte length = 1;
   uint32_t frame_id = CAN_ID_ZEVA_BMS_CORE_SET_STATE;
   byte frame_data[1];

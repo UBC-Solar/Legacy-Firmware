@@ -8,10 +8,15 @@
 #define CAN_SS 10
 #define BUS_SPEED CAN_125KBPS
 
+bool shouldPrintBMS12Messages = true;
+bool shouldPrintCoreStatusMessages = true;
+bool shouldPrintCoreConfigMessages = true;
+bool shouldSendCoreConfigMessages = false;
+
 MCP_CAN CAN(CAN_SS);
 
 byte bmsAlive = 0;
-unsigned long int lastPrintTime = 0;
+int numCoreConfigMessagesReceived = 0;
 
 void setup() {  
 /* SERIAL INIT */
@@ -22,12 +27,10 @@ void setup() {
 
 CAN_INIT:
 
-  if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate = 125k
-  {
+  if(CAN_OK == CAN.begin(BUS_SPEED)) {
     Serial.println(F("CAN BUS Shield init ok!"));
   }
-  else
-  {
+  else {
     Serial.println(F("CAN BUS Shield init fail"));
     Serial.print(F("Init CAN BUS Shield again with SS pin "));
     canSSOffset ^= 1;
@@ -56,10 +59,14 @@ void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
    
   if(frame_id>=CAN_ID_ZEVA_BMS_BASE && frame_id<CAN_ID_ZEVA_BMS_BASE+40) {
-   msgHandleZevaBms(frame_id, frame_data, length);
+    if(shouldPrintBMS12Messages) {
+      msgHandleZevaBms(frame_id, frame_data, length);
+    }
   }
   else if(frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS) {
-    msgHandleZevaCoreStatus(frame_id, frame_data, length);
+    if(shouldPrintCoreStatusMessages) {
+      msgHandleZevaCoreStatus(frame_id, frame_data, length);
+    }
     bmsAlive |= B1;
     if(bmsAlive == B1){
       Serial.println("bms alive");
@@ -67,8 +74,14 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
   }
   else if(frame_id >= CAN_ID_ZEVA_BMS_CORE_CONFIG_WR1 && frame_id <= CAN_ID_ZEVA_BMS_CORE_CONFIG_RD3) {
     Serial.println("config packet");
-    msgHandleZevaCoreConfig(frame_id, frame_data, length);
-    bmsAlive |= B1111;
+    if(shouldPrintCoreConfigMessages) {
+      msgHandleZevaCoreConfig(frame_id, frame_data, length);
+    }
+    numCoreConfigMessagesReceived++;
+    if (numCoreConfigMessagesReceived >= 3) {
+      numCoreConfigMessagesReceived = 0;
+      bmsAlive |= B1111;
+    }
   }
   else {
     Serial.print(F("unknown msg "));
@@ -83,25 +96,36 @@ void loop() {
   uint32_t frame_id;
   byte frame_data[8];
 
-  if(CAN_MSGAVAIL == CAN.checkReceive()){
+  if(CAN_MSGAVAIL == CAN.checkReceive()) {
     CAN.readMsgBuf(&length, frame_data);
     frame_id = CAN.getCanId();
     msgHandler(frame_id, frame_data, length);
   }
   
-  if(bmsAlive == B1){
+  if(bmsAlive == B1) {
     zevaCoreSetCellNum();
     bmsAlive |= B11;
     timer = millis() + 1000;
   }
 
   // enter and exit setup mode to trigger BMS to send current config data
-  else if(bmsAlive == B11 && millis() > timer){
+  else if(bmsAlive == B11 && millis() > timer) {
     Serial.println("starting setup");
     zevaCoreStartSetupMode();
     bmsAlive |= B111;
   }
-  else if(bmsAlive == B1111){
+  else if(bmsAlive == B1111) {
+
+    if(shouldSendCoreConfigMessages) {
+      Serial.println("sending config data");
+      zevaCoreSendConfigData1();
+      delay(5);
+      zevaCoreSendConfigData2();
+      delay(5);
+      zevaCoreSendConfigData3();
+      delay(5);
+    }
+    
     Serial.println("ending setup");
     zevaCoreEndSetupMode();
     bmsAlive = B11111;
