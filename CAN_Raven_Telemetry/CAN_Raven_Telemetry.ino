@@ -10,23 +10,23 @@
 
 #define DEBUG 0 //print contents of all packets received instead of once per second
 
-#define CAN_SS 10
+#define CAN_SS 10 // LS: this is I guess a port of some kind? Or pin?
 
 #define BUS_SPEED CAN_125KBPS
-#define PRINT_DELAY 1000
-#define DIAG_PRINT_DELAY 2000
+#define PRINT_DELAY 1000 // LS: delay? or like, logging interval?
+#define DIAG_PRINT_DELAY 2000 // LS: eh?? probably also a logging interval?
 
 #define BINMSG_SEPARATOR 0xFF
 #define BINMSG_MAXVAL 0xFE
 
-typedef struct DataPacket{
+typedef struct DataPacket{ // LS: this seems to represent a log entry
   byte speed;
   byte voltage;
-  byte soc;
+  byte soc; // LS: state of charge. how is this calculated?
   byte bmsTemperature;
   byte motorTemperature;
-  byte batteryTemperature[4];
-  byte cellVoltageX50[4][12];
+  byte batteryTemperature[4]; // LS: 4 bytes for battery temp
+  byte cellVoltageX50[4][12]; // LS: 48 bytes for cell voltage
 } DataPacket;
 
 typedef enum{
@@ -37,7 +37,10 @@ typedef enum{
   DIAG_SETTIME
 } DiagMode;
 
-MCP_CAN CAN(CAN_SS);
+MCP_CAN CAN(CAN_SS); // LS: I think this initializes the CAN library and points
+                     // it at pin 10
+
+// LS: note BMS = battery monitoring system
 
 BMSConfig bmsConfig = {0}; //set valid to 0
 BMSStatus bmsStatus = {0};
@@ -57,14 +60,16 @@ DiagMode diagnosticMode = DIAG_OFF;
 
 DataPacket dataPacket;
 
-void setup() {  
+void setup() {
 /* SERIAL INIT */
   Serial.begin(19200);
 
 /* CAN INIT */
   int canSSOffset = 0;
 
-CAN_INIT:
+CAN_INIT: // LS: seems like this is sort of a while loop
+          // as in, while CAN is not initialized, switch back and forth between
+          // pin 9 and pin 10 until CAN successfully initializes ?
 
   if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate = 125k
   {
@@ -96,22 +101,22 @@ CAN_INIT:
 void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
   Serial.print(F("[Rx] ID: "));
   Serial.print(frame_id,HEX);
-        
+
   Serial.print(F(" Len:"));
   Serial.print(length,HEX);
-      
+
   Serial.print(F(" Data:["));
   for (int i=0;i<length;i++) {
-    if (i>0) Serial.print(F(" "));
+    if (i>0) Serial.print(F(" ")); // LS: this is a weird way to print everything with a space added in between
     Serial.print(frame_data[i],HEX);
   }
-  Serial.println(F("]")); 
+  Serial.println(F("]"));
 }
 
 void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
-  
+
   uint32_t messageID = frame_id%10;
-  
+
   // even IDs are requests from Core to BMS12
   if(messageID%2 == 0) {
     #if DEBUG
@@ -128,7 +133,8 @@ void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
     #endif
     return;
   }
-  
+
+  // LS: now only odd IDs remain
   if(messageID != 3 && messageID != 5){
     Serial.print(F("BMS #"));
     Serial.print((frame_id-100)/10);
@@ -137,15 +143,17 @@ void msgHandleZevaBms(uint32_t frame_id, byte *frame_data, byte length) {
     Serial.println(F(" parsing not implemented"));
     return;
   }
-  
+
+  // LS: now only 1, 7, 9 remain
   byte bmsId=(frame_id-100)/10;
   byte voltGrp=(frame_id%10)/2-1;
-  
+
+  // LS: these magic numbers mean... what?
   for(int i=0; i<6; i++) {
     cellVoltagesX100[bmsId][voltGrp*6+i] = frame_data[i]+((frame_data[6]>>i)&1 ? 256 : 0);
   }
   bmsTemperatures[bmsId][voltGrp] = frame_data[7] - 128;
-  
+
   #if DEBUG
   Serial.print(F("BMS #"));
   Serial.print(bmsId);
@@ -174,15 +182,16 @@ void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
   brake_on = frame_data[0];
 }
 
+// check for message type & decide what to do
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
-   
-  if(frame_id>=CAN_ID_ZEVA_BMS_BASE && frame_id<CAN_ID_ZEVA_BMS_BASE+40) {
+
+  if(frame_id>=CAN_ID_ZEVA_BMS_BASE && frame_id<CAN_ID_ZEVA_BMS_BASE+40) { // LS: +40 ??
     msgHandleZevaBms(frame_id, frame_data, length);
   }
   else if(frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS) {
     msgHandleZevaCoreStatus(frame_id, frame_data, length);
   }
-  else if(frame_id >= 12 && frame_id <= 17) {
+  else if(frame_id >= 12 && frame_id <= 17) { // LS: 12 ?? 17 ??
     msgHandleZevaCoreConfig(frame_id, frame_data, length);
   }
   else if(frame_id == CAN_ID_MOTOR_CTRL){
@@ -194,7 +203,7 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
   else {
     #if !DEBUG
     if(diagnosticMode != DIAG_OFF){
-      diag_cursorPosition(19,1);
+      diag_cursorPosition(19,1); // LS: wat.
     #endif
     Serial.print(F("unknown msg "));
     printBuf(frame_id, frame_data, length);
@@ -211,6 +220,7 @@ static PROGMEM const uint32_t crc_table[16] = {
     0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
 };
 
+// LS: this is some sort of error checking (I think), ignore it for now
 uint32_t crc32_update(uint32_t crc, byte *data, int len)
 {
     byte tbl_idx;
@@ -228,7 +238,7 @@ void printBinMsg(){
   unsigned char tmp;
   uint32_t crc = ~0L;
 
-  dataPacket.speed = 0;
+  dataPacket.speed = 0; // LS: this is not a todo?
   dataPacket.voltage = (bmsStatus.voltage < 0 ? 0 : (bmsStatus.voltage > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.voltage));
   dataPacket.soc = (bmsStatus.soc < 0 ? 0 : (bmsStatus.soc > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.soc));
   dataPacket.bmsTemperature = (bmsStatus.temperature < 0 ? 0 : (bmsStatus.temperature > BINMSG_MAXVAL ? BINMSG_MAXVAL : bmsStatus.temperature));
@@ -245,20 +255,20 @@ void printBinMsg(){
     }
   }
 
-  crc = ~0L;
+  crc = ~0L; // LS: long is 32 bits
   crc = crc32_update(crc, (byte*) &dataPacket, sizeof(dataPacket));
   crc = ~crc;
 
   Serial.write(BINMSG_SEPARATOR); //print twice incase one gets lost
   Serial.write(BINMSG_SEPARATOR);
-  
+
   Serial.write((unsigned char *)&dataPacket, sizeof(dataPacket));
   for(int i=24; i>=0; i-=8){
-    tmp = (crc >> i) & 0xff;
+    tmp = (crc >> i) & 0xff; // LS: why bitwise and with 0xff? Wouldn't it just stay the same?
     Serial.print(tmp >> 4, HEX);
     Serial.print(tmp & 0xf, HEX);
   }
-  
+
   Serial.write(BINMSG_SEPARATOR);
   Serial.write(BINMSG_SEPARATOR);
 }
@@ -275,10 +285,10 @@ void loop() {
     msgHandler(frame_id, frame_data, length);
     log_can(frame_id, length, frame_data);
   }
-  
+
   if(bmsAlive == 1){
     zevaCoreSetCellNum();
-    bmsAlive |= 2;
+    bmsAlive |= 2; // LS: this seems like a really roundabout way to set a state
   }
 
 #if !DEBUG
@@ -287,7 +297,7 @@ void loop() {
       diag_setTime(Serial.read());
     return;
   }
-    
+
   if(Serial.available()){
     diag_getCmd(Serial.read());
   }
@@ -318,4 +328,3 @@ void loop() {
   }
 #endif
 }
-

@@ -19,7 +19,7 @@ int log_openlogfile(void){
   ds1302_readtime(&dt);
   char filename[20];
   snprintf(filename, 20, "%02d%02d%02d.can", dt.year, dt.month, dt.day);
-  
+
   if (!logfile.open(filename, O_CREAT | O_APPEND | O_WRITE)) {
     Serial.print(F("cannot open logfile "));
     Serial.println(filename);
@@ -41,7 +41,7 @@ void log_init(void){
     Serial.println(F("* did you change the chipSelect pin to match your shield or module?"));
     return;
   }
-  
+
   Serial.println(F("SD card wiring is correct and a card is present."));
 
   log_openlogfile();
@@ -55,6 +55,7 @@ void log_can(uint32_t id, byte length, const byte *data){
   struct datetime dt;
   ds1302_readtime(&dt);
 
+  // LS: When is logfile.write() ever going to return < 0?
   if(logfile.write(&dt, sizeof(dt)) < 0){
     log_onfileerror();
   }
@@ -70,4 +71,3 @@ void log_can(uint32_t id, byte length, const byte *data){
 
   logfile.sync();
 }
-
