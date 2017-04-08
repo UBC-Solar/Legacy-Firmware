@@ -1,6 +1,8 @@
 #include "DataLogger.h"
+#include <ubcsolar_can_ids.h>
 
-DataLogger::DataLogger(uint8t pin) : _pin(pin) {
+DataLogger::DataLogger(uint8_t pin, RTCDriver* timer)
+  : _pin(pin), _timer(timer) {
   _speed = 0;
   _voltage = 0;
   _state_of_charge = 0;
@@ -11,12 +13,12 @@ DataLogger::DataLogger(uint8t pin) : _pin(pin) {
 void DataLogger::begin() {
   if (_sdCard.begin(_pin)) {
     // Get the date
-    DateTime date = timer.getTime();
+    DateTime date = _timer->getTime();
 
     // Open or create log file for writing/appending
-    char name[20];
-    snprintf(name, 20, "log_%d-%d-%d.csv", date.year, date.month, date.day);
-    if (_logFile.open(fileName, O_RDWR | O_CREAT | O_AT_END) {
+    char fileName[20];
+    snprintf(fileName, 20, "log_%d-%d-%d.csv", date.year, date.month, date.day);
+    if (_logFile.open(fileName, O_RDWR | O_CREAT | O_AT_END)) {
       Serial.println(("SD card initialized on pin %d", _pin));
     }
   }
@@ -45,7 +47,7 @@ void DataLogger::receiveData(const uint32_t id, const uint8_t message) {
     // may have to separate the BMS messages into their own handler, for
     // better readability
     default:
-      // ?
+      return;
   }
 }
 

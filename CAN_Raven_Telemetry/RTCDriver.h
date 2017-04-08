@@ -2,6 +2,8 @@
 #define TELEMETRY_RTCDRIVER_H
 
 #include "DataTypes.h"
+#include <Arduino.h>
+#include <SPI.h>
 
 /**
  * @brief Driver for DS1302 real time clock.
@@ -43,6 +45,6 @@ class RTCDriver {
 
   // Get the expected number of days for the month
   uint8_t daysPerMonth(uint8_t month, uint8_t year);
-}
+};
 
 #endif // TELEMETRY_RTCDRIVER_H

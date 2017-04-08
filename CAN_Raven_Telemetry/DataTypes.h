@@ -1,6 +1,8 @@
 #ifndef TELEMETRY_DATATYPES_H
 #define TELEMETRY_DATATYPES_H
 
+#include <stdint.h>
+
 /**
  * Represents an instant in time, to the nearest second
  */

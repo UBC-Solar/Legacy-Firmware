@@ -2,6 +2,7 @@
 #define TELEMETRY_DATALOGGER_H
 
 #include <SdFat.h>
+#include "RTCDriver.h"
 
 /**
  * @brief Holds and logs data.
@@ -12,7 +13,7 @@ class DataLogger {
    * Create a new empty |DataLogger| that holds data and handles its own
    * logging logic.
    */
-  DataLogger(uint8t pin=4, RTCDriver* timer);
+  DataLogger(uint8_t pin, RTCDriver* timer);
 
   /**
    * Initialize the DataLogger so that it can parse and log messages.
@@ -33,9 +34,12 @@ class DataLogger {
 
  private:
   // SD card
-  uint8_t pin;
+  uint8_t _pin;
   SdFat _sdCard;
   SdFile _logFile;
+
+  // Timer
+  RTCDriver* _timer;
 
   // Data fields
   uint8_t _speed;
@@ -48,6 +52,6 @@ class DataLogger {
 
   // Helper function to decide whether it's time to write to log.
   boolean shouldWrite();
-}
+};
 
 #endif // TELEMETRY_DATALOGGER_H

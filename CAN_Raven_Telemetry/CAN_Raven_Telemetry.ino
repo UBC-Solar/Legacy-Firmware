@@ -4,9 +4,9 @@
 
 #define SERIAL_BAUDRATE 19200
 
-CANDriver driver = CANDDriver();
+CANDriver driver = CANDriver();
 RTCDriver timer = RTCDriver();
-DataLogger logger = DataLogger();
+DataLogger logger = DataLogger(4, &timer);
 
 void setup() {
   Serial.begin(SERIAL_BAUDRATE);
@@ -22,7 +22,7 @@ void setup() {
   timer.begin();
 
   // start logger last
-  logger.begin()
+  logger.begin();
 }
 
 void loop() {

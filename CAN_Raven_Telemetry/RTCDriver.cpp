@@ -59,7 +59,7 @@ void RTCDriver::getTime(struct DateTime* dateTime) {
 
 struct DateTime RTCDriver::getTime() {
   struct DateTime dateTime;
-  RTCDRiver::getTime(&dateTime);
+  RTCDriver::getTime(&dateTime);
   return dateTime;
 }
 

@@ -44,6 +44,6 @@ class CANDriver {
   uint8_t _message[8];
 
   boolean shouldLog();
-}
+};
 
 #endif // TELEMETRY_CANDRIVER_H
