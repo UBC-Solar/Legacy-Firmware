@@ -17,7 +17,7 @@ void CANDriver::begin() {
   Serial.println(("CAN initialized on pin %d", activePin));
 }
 
-void CANDriver::getMessage(DataLogger* logger) {
+void CANDriver::checkMessage(DataLogger* logger) {
   if (_can.checkReceive() == CAN_MSGAVAIL) {
     _can.readMsgBufID(&_frameId, &_msgLength, _message);
     logger->receiveData(_frameId, _message);

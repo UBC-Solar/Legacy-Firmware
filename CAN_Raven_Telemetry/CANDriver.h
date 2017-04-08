@@ -24,7 +24,7 @@ class CANDriver {
    * Reads a CAN message, if there is one.
    * @param logger The |DataLogger| that will handle the message.
    */
-  void getMessage(DataLogger* logger);
+  void checkMessage(DataLogger* logger);
 
   /**
    * Initializes the CANDriver so that it can read messages.

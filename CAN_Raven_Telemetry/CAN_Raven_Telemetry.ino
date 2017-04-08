@@ -5,7 +5,7 @@
 #define SERIAL_BAUDRATE 19200
 
 CANDriver driver = CANDDriver();
-RTCdriver timer = RTCdriver();
+RTCDriver timer = RTCDriver();
 DataLogger logger = DataLogger();
 
 void setup() {

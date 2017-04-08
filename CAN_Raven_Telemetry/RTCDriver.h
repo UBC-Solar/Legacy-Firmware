@@ -23,17 +23,26 @@ class RTCDriver {
    * Get the current date and time.
    * @return A |DateTime| struct containing the current date and time.
    */
-  DateTime getTime();
+  struct DateTime getTime();
 
   /**
    * Write the current date and time to pre-existing DateTime struct.
    * @param dateTime Pointer to the struct.
    */
-  void getTime(DateTime* dateTime);
+  void getTime(struct DateTime* dateTime);
+
+  /**
+   * Check that the DateTime struct represents a valid date and time.
+   * @param dateTime Pointer to the struct.
+   */
+  bool isValid(struct DateTime* dateTime);
 
  private:
   uint8_t _pin;
   uint32_t _maxClock;
+
+  // Get the expected number of days for the month
+  uint8_t daysPerMonth(uint8_t month, uint8_t year);
 }
 
 #endif // TELEMETRY_RTCDRIVER_H
