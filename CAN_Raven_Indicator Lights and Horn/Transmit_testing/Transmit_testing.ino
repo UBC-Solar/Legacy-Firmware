@@ -111,5 +111,33 @@ void loop()
               stmp[0]=0;
               CAN.sendMsgBuf(CAN_ID_HORN, 0, 1, stmp);
           }
+          else if (c== 'c')
+          {
+              Serial.println("c");
+              Serial.println(" OverCurrent Error from BMS");
+              stmp[0]=3 + 2*16; //5th bit is for status = running
+              CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, stmp);              
+          }
+          else if (c== 'v')
+          {
+              Serial.println("v");
+              Serial.println(" UnderVoltage Error from BMS");
+              stmp[0]=5 + 2*16;//5th bit is for status = running
+              CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, stmp);              
+          }
+          else if (c== 't')
+          {
+              Serial.println("t");
+              Serial.println(" OverTemperature Error from BMS");
+              stmp[0]=8 + 2*16;//5th bit is for status = running
+              CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, stmp);              
+          }          
+          else if (c== 'o')
+          {
+              Serial.println("o");
+              Serial.println(" NO ERROR Error from BMS");
+              stmp[0]=0+ 2*16;//5th bit is for status = running
+              CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, stmp);              
+          }          
       }
 }
