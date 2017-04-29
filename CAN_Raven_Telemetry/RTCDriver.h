@@ -3,7 +3,6 @@
 
 #include "DataTypes.h"
 #include <Arduino.h>
-#include <SPI.h>
 
 /**
  * @brief Driver for DS1302 real time clock.

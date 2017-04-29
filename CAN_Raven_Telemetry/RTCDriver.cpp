@@ -14,11 +14,13 @@
 #define DS1302_CLOCKBURST 0xbe
 
 #include "RTCDriver.h"
+#include <SPI.h>
 
 RTCDriver::RTCDriver(uint8_t pin, uint32_t maxClock)
   : _pin(pin), _maxClock(maxClock) { }
 
 void RTCDriver::begin() {
+  SPI.begin();
   pinMode(_pin, OUTPUT);
   digitalWrite(_pin, LOW);
   delay(1);
@@ -58,8 +60,34 @@ void RTCDriver::getTime(struct DateTime* dateTime) {
 }
 
 struct DateTime RTCDriver::getTime() {
-  struct DateTime dateTime;
+  /*struct DateTime dateTime = {0, 0, 0, 0, 0, 0};
   RTCDriver::getTime(&dateTime);
+  return dateTime;*/
+
+  uint8_t temp;
+  uint8_t ss, mm, hh, day, month, year;
+  
+  SPI.beginTransaction(SPISettings(_maxClock, LSBFIRST, SPI_MODE0));
+  digitalWrite(_pin, HIGH);
+  SPI.transfer(DS1302_CLOCKBURST | DS1302_RD); //start burst
+  temp = SPI.transfer(0x00);
+  ss = (temp & 0x0f) + ((temp & 0x70) >> 4) * 10;
+  temp = SPI.transfer(0x00);
+  mm = (temp & 0x0f) + ((temp & 0x70) >> 4) * 10;
+  temp = SPI.transfer(0x00);
+  hh = (temp & 0x0f) + ((temp & 0x30) >> 4) * 10;
+  temp = SPI.transfer(0x00);
+  day = (temp & 0x0f) + ((temp & 0x30) >> 4) * 10;
+  temp = SPI.transfer(0x00);
+  month = (temp & 0x0f) + ((temp & 0x10) >> 4) * 10;
+  temp = SPI.transfer(0x00); // ignore weekday
+  temp = SPI.transfer(0x00);
+  year = (temp & 0x0f) + ((temp & 0xf0) >> 4) * 10;
+  temp = SPI.transfer(0x00); // ignore write protect
+  digitalWrite(_pin, LOW);
+  SPI.endTransaction();
+
+  struct DateTime dateTime = {year, month, day, hh, mm, ss};
   return dateTime;
 }
 

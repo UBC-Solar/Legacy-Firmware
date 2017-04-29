@@ -12,7 +12,8 @@ void CANDriver::begin() {
     _can = MCP_CAN(activePin);
   }
 
-  Serial.println(("CAN initialized on pin %d", activePin));
+  Serial.print("CAN initialized on pin ");
+  Serial.println(activePin);
 }
 
 void CANDriver::checkMessage(DataLogger* logger) {

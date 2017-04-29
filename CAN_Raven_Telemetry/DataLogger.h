@@ -1,8 +1,8 @@
 #ifndef TELEMETRY_DATALOGGER_H
 #define TELEMETRY_DATALOGGER_H
 
-#include <SdFat.h>
 #include "RTCDriver.h"
+#include <SdFat.h>
 
 /**
  * @brief Holds and logs data.
@@ -12,6 +12,8 @@ class DataLogger {
   /**
    * Create a new empty |DataLogger| that holds data and handles its own
    * logging logic.
+   * @param pin The Arduino pin for reading/writing.
+   * @param timer Point to the |RTCDriver| object that handles the timer.
    */
   DataLogger(uint8_t pin, RTCDriver* timer);
 
@@ -28,9 +30,14 @@ class DataLogger {
   void receiveData(const uint32_t id, const uint8_t message);
 
   /**
-   * Write data to the SD card.
+   * Log a datapoint to the SD card.
    */
   void log();
+
+  /**
+   * Write a message to the SD card.
+   */
+  void write(const String msg);
 
  private:
   // SD card

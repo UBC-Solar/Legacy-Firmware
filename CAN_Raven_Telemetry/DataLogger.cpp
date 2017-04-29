@@ -11,19 +11,24 @@ DataLogger::DataLogger(uint8_t pin, RTCDriver* timer)
 }
 
 void DataLogger::begin() {
-  if (_sdCard.begin(_pin)) {
+  if (_sdCard.begin(_pin, SPI_HALF_SPEED)) {
     // Get the date
-    DateTime date = _timer->getTime();
+    struct DateTime date = _timer->getTime();
 
     // Open or create log file for writing/appending
     char fileName[20];
     snprintf(fileName, 20, "log_%d-%d-%d.csv", date.year, date.month, date.day);
     if (_logFile.open(fileName, O_RDWR | O_CREAT | O_AT_END)) {
-      Serial.println(("SD card initialized on pin %d", _pin));
+      Serial.print("SD card initialized on pin ");
+      Serial.println(_pin);
+
+      // print test line to the file
+      DataLogger::write("File was opened for writing.");
+      return;
     }
   }
-
-  Serial.println(("Failed to initialize SD card on pin %d", _pin));
+  
+  Serial.println("Failed to initialize SD card");
 }
 
 void DataLogger::receiveData(const uint32_t id, const uint8_t message) {
@@ -52,7 +57,26 @@ void DataLogger::receiveData(const uint32_t id, const uint8_t message) {
 }
 
 void DataLogger::log() {
-  // write data to SD card
+  if (!_logFile.isOpen()) {
+    Serial.println("Failed to write to SD.");
+  }
+
+  struct DateTime date = _timer->getTime();
+
+  // for now, just write the time
+  char timeStamp[20];
+  snprintf(timeStamp, 20, "%d:%d:%d", date.hour, date.minute, date.second);
+  _logFile.println(timeStamp);
+}
+
+void DataLogger::write(const String msg) {
+  if (!_logFile.isOpen()) {
+    Serial.println("Failed to write to SD.");
+    return;
+  }
+  
+  _logFile.println(msg);
+  _logFile.sync();
 }
 
 boolean DataLogger::shouldWrite() {
