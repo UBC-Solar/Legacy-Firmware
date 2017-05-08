@@ -16,62 +16,62 @@ class Message {
 };
 
 // all known information about driver interface and status
-class HeartbeatMessage : Message {
+class HeartbeatMessage : public Message {
   private:
     // byte indices in payload
     static const uint8_t FORWARD_THROTTLE_INDEX = 0;
     static const uint8_t REVERSE_THROTTLE_INDEX = 1;
     static const uint8_t DIRECTION_STATUS_INDEX = 2;
     static const uint8_t INTERFACE_STATUS_INDEX = 3;
+    static const uint8_t MESSAGE_LENGTH = 3;
     // bitmasks for status indices
     static const uint8_t RIGHT_SIGNAL_MASK = 0x1;
     static const uint8_t LEFT_SIGNAL_MASK = 0x1 << 1;
 
   public:
+    HeartbeatMessage(const uint8_t& forwardThrottle,
+      const uint8_t& reverseThrottle, const uint8_t& throttleDirection,
+      const uint8_t& signalValues);
     static const uint8_t CAN_ID = CAN_ID_HEARTBEAT;
     static const uint32_t HEARTBEAT_PERIOD = 100; // milliseconds
 
-    enum class Direction : uint8_t {
-      forward = 0,
-      reverse = 1,
-      neutral = 2,
-    };
-
-    enum class Signal : uint8_t {
-      right = 1,
-      left = 2,
-      hazard = 3,
-    };
+    // enum-like
+    static const uint8_t DIRECTION_FORWARD = 0;
+    static const uint8_t DIRECTION_REVERSE = 1;
+    static const uint8_t DIRECTION_NEUTRAL = 2;
+    static const uint8_t SIGNAL_RIGHT = 1;
+    static const uint8_t SIGNAL_LEFT = 2;
+    static const uint8_t SIGNAL_HAZARD = SIGNAL_RIGHT | SIGNAL_LEFT;
 
     uint8_t getForwardThrottle();
     uint8_t getRegen();
-    Direction getThrottleDirection();
-    Signal getSignals();
+    uint8_t getThrottleDirection();
+    uint8_t getSignals();
 };
 
 // sent by nodes that do not receive heartbeats, for logging
-class CommErrorMessage : Message {
+class CommErrorMessage : public Message {
   private:
     // byte indices in payload
     static const uint8_t SYSTEM_ID_INDEX = 0;
     static const uint8_t TIMESTAMP_INDEX = 1;
+    static const uint8_t MESSAGE_LENGTH = 5;
 
   public:
+    CommErrorMessage(const uint8_t& systemId, uint32_t millisSinceLast);
     static const uint8_t CAN_ID = CAN_ID_COMM_ERROR;
+    // enum-like
+    static const uint8_t SYSTEM_HANDBRAKE = 0;
+    static const uint8_t SYSTEM_COMMANDER = 1;
+    static const uint8_t SYSTEM_MOTOR_CONTROL = 2;
+    // TODO more systems needed
 
-    enum class SystemId : uint8_t {
-      handbrake = 0,
-      commander = 1,
-      motorControl = 2,
-      // TODO more systems
-    };
-
-    SystemId getSystemId();
-    uint32_t getTimestamp();
+    uint8_t getSystemId();
+    uint32_t getMillisSinceLast();
 };
 
 // signals application of the handbrake
-class HandbrakeMessage : Message {
+class HandbrakeMessage : public Message {
   public:
     static const uint8_t CAN_ID = CAN_ID_HANDBRAKE;
 
@@ -79,7 +79,7 @@ class HandbrakeMessage : Message {
 };
 
 // encoder output updates for speed measurement
-class EncoderMessage : Message {
+class EncoderMessage : public Message {
   public:
     static const uint8_t CAN_ID = CAN_ID_SPEED;
 
@@ -113,6 +113,8 @@ class CANDriver {
    * Initializes the CANDriver so that it can read messages.
    */
   void begin();
+
+  void send(Message& message);
 
  private:
   // Initialization fields
