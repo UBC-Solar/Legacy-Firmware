@@ -1,5 +1,5 @@
 #define ANSI_ESC 0x1B
-
+/*
 void diag_cursorPosition(int row, int col){
   Serial.write(ANSI_ESC);
   Serial.write('[');
@@ -214,4 +214,4 @@ setTime_error:
   Serial.println(F("INVALID DATE/TIME!"));
   goto setTime_exit;
 }
-
+*/

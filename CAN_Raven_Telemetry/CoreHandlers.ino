@@ -1,5 +1,5 @@
 #include <ubcsolar_can_ids.h>
-
+/*
 void zevaCoreStatusPrint(){
   Serial.print(F("Error: "));
   Serial.println(bmsStatus.error);
@@ -154,4 +154,64 @@ void zevaCoreSetCellNum(void){
   frame_data[7] = 0;
   length = 8;
   CAN.sendMsgBuf(frame_id, 0, length, frame_data);
+}*/
+
+void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
+  brake_on = frame_data[0];
+}
+
+void msgHandleHazard(uint32_t frame_id, byte* frame_data, byte length) {
+  hazard = frame_data[0];
+}
+
+void msgHandleMotor(uint32_t frame_id, byte* frame_data, byte length) {
+  motor.target_throttle = frame_data[0];
+  motor.target_regen = frame_data[1];
+  motor.target_dir = frame_data[2];
+}
+
+void msgHandleSpeed(uint32_t frame_id, byte* frame_data, byte length) {
+  unsigned long temp = ((unsigned long) frame_data[0] << 24)|((unsigned long) frame_data[1] << 16)|((unsigned long) frame_data[2] << 8)|((unsigned long) frame_data[3]);
+  freq = *((float*) &temp);
+}
+
+void msgHandleSignal(uint32_t frame_id, byte* frame_data, byte length) {
+  left_signal = frame_data[0]&0x1;
+  right_signal = frame_data[1]&0x2;
+}
+
+void msgHandleCoreStatus(uint32_t frame_id, byte* frame_data, byte length) {
+  bms_status.status = frame_data[0] >> 4;
+  bms_status.error = frame_data[0]&0xF;
+  bms_status.soc = frame_data[1];
+  bms_status.voltage = ((unsigned long) frame_data[2])|(((unsigned long) frame_data[3]&0xF0) << 4);
+  bms_status.current = (((unsigned long) frame_data[3]&0xF)|((unsigned long) frame_data[4] << 4)) - 2048;
+  bms_status.aux_voltage = frame_data[5]/10.0;
+  bms_status.temperature = frame_data[7];
+}
+
+void msgHandleBmsStatus(uint32_t frame_id, byte* frame_data, byte length) {
+  
+}
+
+void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
+  switch (frame_id) {
+    case CAN_ID_BRAKE:
+      msgHandleBrake(frame_id, frame_data, length);
+      break;
+    case CAN_ID_HAZARD:
+      msgHandleHazard(frame_id, frame_data, length);
+      break;
+    case CAN_ID_MOTOR_CTRL:
+      msgHandleMotor(frame_id, frame_data, length);
+      break;
+    case CAN_ID_SPEED_SENSOR:
+      msgHandleSpeed(frame_id, frame_data, length);
+      break;
+     case CAN_ID_SIGNAL_CTRL:
+      msgHandleSpeed(frame_id, frame_data, length);
+      break;
+    default:
+      break;
+  }
 }

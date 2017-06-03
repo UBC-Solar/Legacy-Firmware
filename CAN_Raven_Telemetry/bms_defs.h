@@ -1,4 +1,4 @@
-struct BMSConfig {
+/*struct BMSConfig {
   byte valid;
   
   byte pack_capacity;
@@ -24,9 +24,9 @@ struct BMSConfig {
   byte bms_shunt_voltage; // x0.05V to get real value
   byte low_temperature_warn;
   byte high_temperature_warn;
-};
+};*/
 
-struct BMSStatus {
+struct BMSCoreStatus {
   byte status;
   byte error;
   int soc;
@@ -35,3 +35,18 @@ struct BMSStatus {
   float aux_voltage;
   int temperature;
 };
+
+struct battery {
+  uint32_t volt_warn;
+  uint16_t volt_shun_warn;
+  byte temp_warn;
+  byte cellVoltagesX100[12];
+  byte temp[2];
+};
+
+struct Motor {
+  byte target_throttle;
+  byte target_regen;
+  byte target_dir;
+};
+
