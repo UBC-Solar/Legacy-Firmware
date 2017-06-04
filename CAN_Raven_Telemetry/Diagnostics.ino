@@ -1,4 +1,91 @@
 #define ANSI_ESC 0x1B
+void printONOFF(int input) {
+  if (input) {
+    Serial.print("ON");
+  }
+  else {
+    Serial.print("OFF");
+  }
+}
+
+void printBMSCoreStatus() {
+  switch(bms_status.status) {
+    case IDLE:
+      Serial.print("IDLE");
+      break;
+    case PRECHARGING:
+      Serial.print("PRECHARGING");
+      break;
+    case RUNNING:
+      Serial.print("RUNNING");
+      break;
+   case CHARGING:
+      Serial.print("CHARGING");
+      break;
+    case SETUP:
+      Serial.print("SETUP");
+      break;
+    default:
+      break;
+  }
+}
+
+void printBMSCoreError() {
+  switch(bms_status.error) {
+	case NOERR:
+		Serial.print("NONE");
+		break;
+    case CORRUPT:
+		Serial.print("SETTINGS CORRUPTED");
+		break;
+	case OVERCURRENTWARNING:
+		Serial.print("OVERCURRENT WARNING");
+		break;
+	case OVERCURRENTSD:
+		Serial.print("OVERCURRENT SHUTDOWN");
+		break;
+	case LOWCELLWARNING:
+		Serial.print("LOW CELL VOLTAGE WARNING");
+		break;
+	case BMSSD:
+		Serial.print("LOW CELL VOLTAGE SHUTDOWN");
+		break;
+	case HIGHCELLWARNING:
+		Serial.print("HIGH CELL VOLTAGE WARNING");
+		break;
+	case BMSENDEDCHARGE:
+		Serial.print("HIGH CELL VOLTAGE SHUTDOWN" );
+		break;
+	case BMSOVERTEMP:
+		Serial.print("BMS OVERTEMPERATURE");
+		break;
+	case LOWSOCWARNING:
+		Serial.print("LOW STATE OF CHARGE WARNING");
+		break;
+	case OVERTEMPERATURE:
+		Serial.print("TEMPERATURE EXCEEDED WARNING LEVEL");
+		break;
+	case CHASISLEAK:
+		Serial.print("CHASSIS LEAKAGE");
+		break;
+	case LOW12V:
+		Serial.print("AUX BATTERY VOLTAGE BELOW WARNING LEVEL");
+		break;
+	case PRECHARGEFAIL:
+		Serial.print("PRECHARGE FAILED");
+		break;
+	case CONTRATORSWITCHERROR:
+		Serial.print("CONTATOR SWITCH ERROR");
+		break;
+	case CANERROR:
+		Serial.print("CANBUS COMMUNICATION ERROR");
+		break;
+  default:
+    break;
+  }
+}
+
+
 /*
 void diag_cursorPosition(int row, int col){
   Serial.write(ANSI_ESC);
@@ -215,3 +302,9 @@ setTime_error:
   goto setTime_exit;
 }
 */
+
+
+
+
+
+

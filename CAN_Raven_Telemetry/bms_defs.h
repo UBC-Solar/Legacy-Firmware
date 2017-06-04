@@ -25,6 +25,28 @@
   byte low_temperature_warn;
   byte high_temperature_warn;
 };*/
+#define IDLE 0
+#define PRECHARGING 1
+#define RUNNING 2
+#define CHARGING 3
+#define SETUP 4
+
+#define NOERR 0
+#define CORRUPT 1
+#define OVERCURRENTWARNING 2
+#define OVERCURRENTSD 3
+#define LOWCELLWARNING 4 
+#define BMSSD 5
+#define HIGHCELLWARNING 6
+#define BMSENDEDCHARGE 7 
+#define BMSOVERTEMP 8
+#define LOWSOCWARNING 9
+#define OVERTEMPERATURE 10
+#define CHASISLEAK 11
+#define LOW12V 12 
+#define PRECHARGEFAIL 13
+#define CONTRATORSWITCHERROR 14
+#define CANERROR 15
 
 struct BMSCoreStatus {
   byte status;
@@ -36,11 +58,12 @@ struct BMSCoreStatus {
   int temperature;
 };
 
-struct battery {
+struct Battery {
   uint32_t volt_warn;
   uint16_t volt_shun_warn;
   byte temp_warn;
-  byte cellVoltagesX100[12];
+  
+  unsigned int cellVolts[12];
   byte temp[2];
 };
 

@@ -28,20 +28,23 @@ bool right_signal;
 
 struct Motor motor; 
 struct BMSCoreStatus bms_status = {0};
+struct Battery packs[4] = {0};
 
 String filename;
-File myFile;
+File logFile;
 
 #define DS1302_SCLK_PIN   7    // Arduino pin for the Serial Clock
 #define DS1302_IO_PIN     5    // Arduino pin for the Data I/O
 #define DS1302_CE_PIN     6    // Arduino pin for the Chip Enable
 
 // Creation of the Real Time Clock Object
-//SCLK -> 13, I/O -> 12, CE -> 6
 virtuabotixRTC myRTC(DS1302_SCLK_PIN, DS1302_IO_PIN, DS1302_CE_PIN);
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length);
 void SD_init();
+void printONOFF(int input);
+void printBMSCoreStatus();
+void printBMSCoreError();
 
 void setup() {  
 /* SERIAL INIT */
@@ -90,14 +93,13 @@ void SD_init() {
   myRTC.updateTime();
 
   char filenamearr[13];
-  int year = myRTC.year;
   int month = myRTC.month;
   int day = myRTC.dayofmonth;
   int hour = myRTC.hours;
   int minute = myRTC.minutes;
   sprintf(filenamearr, "%02u%02u%02u%02u.txt", month, day, hour, minute);
 
-  String filename = filenamearr;
+  filename = filenamearr;
 
   Serial.print("filename: ");
   Serial.println(filename);
@@ -109,42 +111,6 @@ void SD_init() {
     return;
   }
   Serial.println("initialization done.");
-
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  
-  myFile = SD.open(filename, FILE_WRITE);
-
-  // if the file opened okay, write to it:
-  if (myFile) {
-    Serial.print("Writing to ");
-    Serial.println(filename);
-    myFile.println("testing 1, 2, 3.");
-    // close the file:
-    myFile.close();
-    Serial.println("done.");
-  } else {
-    // if the file didn't open, print an error:
-    Serial.print("error opening ");
-    Serial.println(filename);
-  }
-
-  // re-open the file for reading:
-  myFile = SD.open(filename);
-  if (myFile) {
-    Serial.println(filename);
-
-    // read from the file until there's nothing else in it:
-    while (myFile.available()) {
-      Serial.write(myFile.read());
-    }
-    // close the file:
-    myFile.close();
-  } else {
-    // if the file didn't open, print an error:
-    Serial.print("error opening ");
-    Serial.println(filename);
-  }
 }
 
 
