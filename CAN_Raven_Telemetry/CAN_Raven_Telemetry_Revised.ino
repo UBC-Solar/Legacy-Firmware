@@ -29,6 +29,7 @@ bool right_signal;
 struct Motor motor; 
 struct BMSCoreStatus bms_status = {0};
 
+String filename;
 File myFile;
 
 #define DS1302_SCLK_PIN   7    // Arduino pin for the Serial Clock
@@ -40,7 +41,7 @@ File myFile;
 virtuabotixRTC myRTC(DS1302_SCLK_PIN, DS1302_IO_PIN, DS1302_CE_PIN);
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length);
-void SD_init(String filename);
+void SD_init();
 
 void setup() {  
 /* SERIAL INIT */
@@ -66,14 +67,7 @@ CAN_INIT:
     goto CAN_INIT;
   }
 
-/* RTC INIT */
-  // must go after CAN init, or need to call SPI.begin()
-  SPI.begin();
-  SD_init("newtest.txt");
-
-/* SD INIT */
-  // must go after RTC init
-  //log_init();
+  SD_init();
 
   Serial.println("System initialized");
 }
@@ -92,24 +86,21 @@ void loop() {
 //  }
 }
 
-void SD_init(String filename) {
+void SD_init() {
   myRTC.updateTime();
-  
-  String filename = "";
-  filename = filename + myRTC.year;
-  filename = filename + "-";
-  filename = filename + myRTC.month;
-  filename = filename + "-";
-  filename = filename + myRTC.dayofmonth;
-  filename = filename + "-";
-  filename = filename + myRTC.hours;
-  filename = filename + "-";
-  filename = filename + myRTC.minutes;
-  filename = filename + ".txt";
+
+  char filenamearr[13];
+  int year = myRTC.year;
+  int month = myRTC.month;
+  int day = myRTC.dayofmonth;
+  int hour = myRTC.hours;
+  int minute = myRTC.minutes;
+  sprintf(filenamearr, "%02u%02u%02u%02u.txt", month, day, hour, minute);
+
+  String filename = filenamearr;
 
   Serial.print("filename: ");
   Serial.println(filename);
-
   
   Serial.print("Initializing SD card...");
 
