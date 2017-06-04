@@ -1,4 +1,3 @@
-#include <SdFat.h>
 /*
 // change this to match your SD shield or module;
 // Arduino Ethernet shield: pin 4

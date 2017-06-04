@@ -270,6 +270,12 @@ void msgHandleBms(uint32_t frame_id, byte* frame_data, byte length) {
 
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
+  Serial.print("timestamp: ");
+  Serial.print(myRTC.hours);
+  Serial.print(":");
+  Serial.print(myRTC.minutes);
+  Serial.print(":");
+  Serial.println(myRTC.seconds);
   switch (frame_id) {
     case CAN_ID_BRAKE:
       msgHandleBrake(frame_id, frame_data, length);
