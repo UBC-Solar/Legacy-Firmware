@@ -98,7 +98,7 @@ void SD_init() {
   int day = myRTC.dayofmonth;
   int hour = myRTC.hours;
   int minute = myRTC.minutes;
-  sprintf(filenamearr, "%02u%02u%02u%02u.txt", month, day, hour, minute);
+  sprintf(filenamearr, "%02u%02u%02u%02u.csv", month, day, hour, minute);
 
   filename = filenamearr;
 
