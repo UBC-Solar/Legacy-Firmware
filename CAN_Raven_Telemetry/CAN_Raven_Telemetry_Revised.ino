@@ -27,12 +27,16 @@ bool right_signal;
 
 struct Motor motor; 
 struct BMSCoreStatus bms_status = {0};
+struct Battery packs[4] = {0};
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length);
+void printONOFF(int input);
+void printBMSCoreStatus();
+void printBMSCoreError();
 
 void setup() {  
 /* SERIAL INIT */
-  Serial.begin(19200);
+  Serial.begin(9600);
 
 /* CAN INIT */
   int canSSOffset = 0;

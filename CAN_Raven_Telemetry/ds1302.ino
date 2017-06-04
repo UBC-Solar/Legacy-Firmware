@@ -1,5 +1,5 @@
 // Code to interact with the DS1302 RTC
-
+/*
 #define DS1302PIN 6
 #define DS1302_MAXCLK 1000000 // spec sheet says up to 2.0MHz, but that doesn't work.
 
@@ -105,5 +105,5 @@ int validate_time(struct datetime *dt){
     return 0;
 
   return 1;
-}
+}*/
 
