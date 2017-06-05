@@ -8,21 +8,32 @@ void printONOFF(int input) {
   }
 }
 
+void printTime() {
+  myRTC.updateTime();
+  Serial.print("[");
+  Serial.print(myRTC.hours);
+  Serial.print(":");
+  Serial.print(myRTC.minutes);
+  Serial.print(":");
+  Serial.print(myRTC.seconds);
+  Serial.print("]");
+}
+
 void printBMSCoreStatus() {
   switch(bms_status.status) {
-    case IDLE:
+    case 0:
       Serial.print("IDLE");
       break;
-    case PRECHARGING:
+    case 1:
       Serial.print("PRECHARGING");
       break;
-    case RUNNING:
+    case 2:
       Serial.print("RUNNING");
       break;
-   case CHARGING:
+   case 3:
       Serial.print("CHARGING");
       break;
-    case SETUP:
+    case 4:
       Serial.print("SETUP");
       break;
     default:
@@ -30,59 +41,61 @@ void printBMSCoreStatus() {
   }
 }
 
+
+
 void printBMSCoreError() {
-  switch(bms_status.error) {
-	case NOERR:
-		Serial.print("NONE");
+ /* switch(bms_status.error) {
+	case 0:
+		Serial.print(F("NONE"));
 		break;
-    case CORRUPT:
-		Serial.print("SETTINGS CORRUPTED");
+    case 1:
+		Serial.print(F("SETTINGS CORRUPTED"));
 		break;
-	case OVERCURRENTWARNING:
-		Serial.print("OVERCURRENT WARNING");
+	case 2:
+		Serial.print(F("OVERCURRENT WARNING"));
 		break;
-	case OVERCURRENTSD:
-		Serial.print("OVERCURRENT SHUTDOWN");
+	case 3:
+		Serial.print(F("OVERCURRENT SHUTDOWN"));
 		break;
-	case LOWCELLWARNING:
-		Serial.print("LOW CELL VOLTAGE WARNING");
+	case 4:
+		Serial.print(F("LOW CELL VOLTAGE WARNING"));
 		break;
-	case BMSSD:
-		Serial.print("LOW CELL VOLTAGE SHUTDOWN");
+	case 5:
+		Serial.print(F("LOW CELL VOLTAGE SHUTDOWN"));
 		break;
-	case HIGHCELLWARNING:
-		Serial.print("HIGH CELL VOLTAGE WARNING");
+	case 6:
+		Serial.print(F("HIGH CELL VOLTAGE WARNING"));
 		break;
-	case BMSENDEDCHARGE:
-		Serial.print("HIGH CELL VOLTAGE SHUTDOWN" );
+	case 7:
+		Serial.print(F("HIGH CELL VOLTAGE SHUTDOWN"));
 		break;
-	case BMSOVERTEMP:
-		Serial.print("BMS OVERTEMPERATURE");
+	case 8:
+		Serial.print(F("BMS OVERTEMPERATURE"));
 		break;
-	case LOWSOCWARNING:
-		Serial.print("LOW STATE OF CHARGE WARNING");
+	case 9:
+		Serial.print(F("LOW STATE OF CHARGE WARNING"));
 		break;
-	case OVERTEMPERATURE:
-		Serial.print("TEMPERATURE EXCEEDED WARNING LEVEL");
+	case 10:
+		Serial.print(F("TEMPERATURE EXCEEDED WARNING LEVEL"));
 		break;
-	case CHASISLEAK:
-		Serial.print("CHASSIS LEAKAGE");
+	case 11:
+		Serial.print(F("CHASSIS LEAKAGE"));
 		break;
-	case LOW12V:
-		Serial.print("AUX BATTERY VOLTAGE BELOW WARNING LEVEL");
+	case 12:
+		Serial.print(F("AUX BATTERY VOLTAGE BELOW WARNING LEVEL"));
 		break;
-	case PRECHARGEFAIL:
-		Serial.print("PRECHARGE FAILED");
+	case 13:
+		Serial.print(F("PRECHARGE FAILED"));
 		break;
-	case CONTRATORSWITCHERROR:
-		Serial.print("CONTATOR SWITCH ERROR");
+	case 14:
+		Serial.print(F("CONTATOR SWITCH ERROR"));
 		break;
-	case CANERROR:
-		Serial.print("CANBUS COMMUNICATION ERROR");
+	case 15:
+		Serial.print(F("CANBUS COMMUNICATION ERROR"));
 		break;
   default:
     break;
-  }
+  }*/
 }
 
 

@@ -10,14 +10,12 @@
 
 #define CAN_SS 10
 
-#define CAN_SS 10
-
 #define BUS_SPEED CAN_125KBPS
-#define PRINT_DELAY 1000
-#define DIAG_PRINT_DELAY 2000
+//#define PRINT_DELAY 1000
+//#define DIAG_PRINT_DELAY 2000
 
-#define BINMSG_SEPARATOR 0xFF
-#define BINMSG_MAXVAL 0xFE
+//#define BINMSG_SEPARATOR 0xFF
+//#define BINMSG_MAXVAL 0xFE
 MCP_CAN CAN(CAN_SS);
 byte brake_on = 0;
 byte hazard = 0;
@@ -45,10 +43,13 @@ void SD_init();
 void printONOFF(int input);
 void printBMSCoreStatus();
 void printBMSCoreError();
+void printTime();
 
 void setup() {  
 /* SERIAL INIT */
   Serial.begin(9600);
+  Serial.write(0x1B);
+  Serial.print("[?3h");
 
 /* CAN INIT */
   int canSSOffset = 0;
@@ -73,20 +74,21 @@ CAN_INIT:
   SD_init();
 
   Serial.println("System initialized");
+  
 }
 
 void loop() {
   
-  //  byte length;
-//  uint32_t frame_id;
-//  byte frame_data[8];
-//
-//  if(CAN_MSGAVAIL == CAN.checkReceive()){
-//    CAN.readMsgBuf(&length, frame_data);
-//    frame_id = CAN.getCanId();
-//    
-//    msgHandler(frame_id, frame_data, length);
-//  }
+    byte length;
+  uint32_t frame_id;
+  byte frame_data[8];
+
+  if(CAN_MSGAVAIL == CAN.checkReceive()){
+    CAN.readMsgBuf(&length, frame_data);
+    frame_id = CAN.getCanId();
+    
+    msgHandler(frame_id, frame_data, length);
+  }
 }
 
 void SD_init() {

@@ -158,7 +158,9 @@ void zevaCoreSetCellNum(void){
 
 void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
   brake_on = frame_data[0];
-  Serial.print("[UPDATE] ");
+  printTime();
+  Serial.print(" [UPDATE] ");
+  
   Serial.print("Brake: "); 
   printONOFF(brake_on);
   Serial.println();
@@ -167,7 +169,8 @@ void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
 
 void msgHandleHazard(uint32_t frame_id, byte* frame_data, byte length) {
   hazard = frame_data[0];
-  Serial.print("[UPDATE] ");
+  printTime();
+  Serial.print(" [UPDATE] ");
   Serial.print("Hazard: ");
   printONOFF(hazard);
   Serial.println();
@@ -183,7 +186,8 @@ void msgHandleSpeed(uint32_t frame_id, byte* frame_data, byte length) {
   unsigned long temp = ((unsigned long) frame_data[0] << 24)|((unsigned long) frame_data[1] << 16)|((unsigned long) frame_data[2] << 8)|((unsigned long) frame_data[3]);
   freq = *((float*) &temp);
 
-  Serial.print("[UPDATE] ");
+  printTime();
+  Serial.print(" [UPDATE] ");
   Serial.print("Frequency: ");  
   Serial.print(freq);
   Serial.println(" rps");
@@ -193,7 +197,8 @@ void msgHandleSignal(uint32_t frame_id, byte* frame_data, byte length) {
   left_signal = frame_data[0]&0x1;
   right_signal = frame_data[0]&0x2;
 
-  Serial.print("[UPDATE] ");
+  printTime();
+  Serial.print(" [UPDATE] ");
   Serial.print("Left signal: ");
   printONOFF(left_signal);
   Serial.print("  Right signal: ");
@@ -209,14 +214,15 @@ void msgHandleCoreStatus(uint32_t frame_id, byte* frame_data, byte length) {
   bms_status.current = (((unsigned long) frame_data[3]&0xF)|((unsigned long) frame_data[4] << 4)) - 2048;
   bms_status.aux_voltage = frame_data[5]/10.0;
   bms_status.temperature = frame_data[7];
+  printTime();
   if (!bms_status.error) {
-    Serial.print("[UPDATE] ");
+    Serial.print(" [UPDATE] ");
   }
   else if (bms_status.error == 2 || bms_status.error == 4 || bms_status.error == 6 || bms_status.error == 9) {
-    Serial.print("[WARNING] ");
+    Serial.print(" [WARNING] ");
   }
   else {
-    Serial.print("[ERROR] ");
+    Serial.print(" [ERROR] ");
   }
   Serial.print("Status: ");
   printBMSCoreStatus();
@@ -237,20 +243,21 @@ void msgHandleBmsReply(uint32_t frame_id, byte* frame_data, byte length) {
   int pack_num = (frame_id%100)/10;
   int reply_type = frame_id%10 == 3 ? 0 : 1;
 
-  Serial.print("[UPDATE] ");
+  printTime();
+  Serial.print(" [UPDATE] ");
   Serial.print("Battery pack ");
   Serial.print(pack_num);
   Serial.println(" info:");
   
   for (int i = reply_type*6; i < 6*(1 + reply_type); i++) {
     packs[pack_num].cellVolts[i] = ((unsigned int) frame_data[i%6]) | (frame_data[6]&((unsigned int) 1<<i%6)) << 8 - i%6;
-    Serial.print("Cell ");
+    Serial.print("\t\t    Cell ");
     Serial.print(i);
     Serial.print(" Voltage: ");
     Serial.println(packs[pack_num].cellVolts[i]/100.0);
   }
   packs[pack_num].temp[reply_type] = frame_data[7] - 128;
-  Serial.print("Temperature: ");
+  Serial.print("\t\t    Temperature: ");
   Serial.println(packs[pack_num].temp[reply_type]); 
 }
 
