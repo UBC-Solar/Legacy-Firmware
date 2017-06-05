@@ -6,11 +6,18 @@
 #ifndef UBCSOLAR_CAN_IDS //include only once
 #define UBCSOLAR_CAN_IDS
 
+/* Begin deprecated Ids */
 #define CAN_ID_BRAKE 0
 #define CAN_ID_HAZARD 1
 #define CAN_ID_MOTOR_CTRL 4
 #define CAN_ID_SPEED_SENSOR 8
 #define CAN_ID_SIGNAL_CTRL 9
+/* End deprecated Ids */
+
+#define CAN_ID_HANDBRAKE 1
+#define CAN_ID_COMM_ERROR 5
+#define CAN_ID_HEARTBEAT 6
+#define CAN_ID_SPEED 8
 
 #define CAN_ID_ZEVA_BMS_CORE_STATUS 10
 #define CAN_ID_ZEVA_BMS_CORE_SET_STATE 11
