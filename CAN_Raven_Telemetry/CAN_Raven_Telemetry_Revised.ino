@@ -36,6 +36,7 @@ File logFile;
 #define DS1302_CE_PIN     6    // Arduino pin for the Chip Enable
 
 // Creation of the Real Time Clock Object
+
 virtuabotixRTC myRTC(DS1302_SCLK_PIN, DS1302_IO_PIN, DS1302_CE_PIN);
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length);
@@ -78,8 +79,8 @@ CAN_INIT:
 }
 
 void loop() {
-  
-    byte length;
+  myRTC.updateTime();
+  byte length;
   uint32_t frame_id;
   byte frame_data[8];
 
@@ -99,7 +100,7 @@ void SD_init() {
   int day = myRTC.dayofmonth;
   int hour = myRTC.hours;
   int minute = myRTC.minutes;
-  sprintf(filenamearr, "%02u%02u%02u%02u.txt", month, day, hour, minute);
+  sprintf(filenamearr, "%02u%02u%02u%02u.csv", month, day, hour, minute);
 
   filename = filenamearr;
 

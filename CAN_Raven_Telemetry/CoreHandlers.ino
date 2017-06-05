@@ -275,8 +275,42 @@ void msgHandleBms(uint32_t frame_id, byte* frame_data, byte length) {
   }
 }
 
+void logToSD() {
+  logFile = SD.open(filename, FILE_WRITE);
+  
+  if (logFile) {
+    logFile.print(myRTC.hours);
+    logFile.print(":");
+    logFile.print(myRTC.minutes);
+    logFile.print(":");
+    logFile.print(myRTC.seconds);
+    logFile.print(",");
+    logFile.print("PUT SPEED HERE");//TODO: PUT SPEED HERE
+    logFile.print(",");
+    logFile.print(bms_status.soc);
+    logFile.print(",");
+    logFile.print(bms_status.temperature);
+    logFile.print(",");
+    logFile.print("PUT MOTOR TEMP HERE");//TODO: PUT MOTOR TEMP HERE
+    logFile.print(",");
+    logFile.print(bms_status.voltage);
+    logFile.print(",");
+   
+    logFile.close();
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error logging to SD");
+  }
+}
+
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
+  Serial.print("timestamp: ");
+  Serial.print(myRTC.hours);
+  Serial.print(":");
+  Serial.print(myRTC.minutes);
+  Serial.print(":");
+  Serial.println(myRTC.seconds);
   switch (frame_id) {
     case CAN_ID_BRAKE:
       msgHandleBrake(frame_id, frame_data, length);
@@ -304,4 +338,5 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
       }
         break;
   }
+  logToSD();
 }

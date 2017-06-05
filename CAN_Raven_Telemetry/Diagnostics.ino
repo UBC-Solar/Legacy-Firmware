@@ -44,7 +44,7 @@ void printBMSCoreStatus() {
 
 
 void printBMSCoreError() {
- /* switch(bms_status.error) {
+  switch(bms_status.error) {
 	case 0:
 		Serial.print(F("NONE"));
 		break;
@@ -95,7 +95,7 @@ void printBMSCoreError() {
 		break;
   default:
     break;
-  }*/
+  }
 }
 
 
