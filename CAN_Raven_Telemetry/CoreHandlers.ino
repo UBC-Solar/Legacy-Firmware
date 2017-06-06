@@ -183,6 +183,13 @@ void msgHandleHazard(uint32_t frame_id, byte* frame_data, byte length) {
   Serial.print(F("[UPDATE] "));
   Serial.print(F("Hazard: "));
 
+  serialFile = SD.open(serialFilename, FILE_WRITE);
+  if(serialFile){
+    serialFile.print(F("[UPDATE] "));
+    serialFile.print(F("Brake: "));
+    serialFile.close();
+  }
+
   printONOFF(hazard);
   Serial.println();
 }
@@ -203,6 +210,15 @@ void msgHandleSpeed(uint32_t frame_id, byte* frame_data, byte length) {
 
   Serial.print(freq);
   Serial.println(F(" rps"));
+
+  serialFile = SD.open(serialFilename, FILE_WRITE);
+  if(serialFile){
+    serialFile.print(F("[UPDATE] "));
+    serialFile.print(F("Frequency: "));
+    serialFile.print(freq);
+    serialFile.println(F(" rps"));
+    serialFile.close();
+  }
 }
 
 void msgHandleSignal(uint32_t frame_id, byte* frame_data, byte length) {
