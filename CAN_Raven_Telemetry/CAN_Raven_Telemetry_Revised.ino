@@ -28,8 +28,9 @@ struct Motor motor;
 struct BMSCoreStatus bms_status = {0};
 struct Battery packs[4] = {0};
 
-String filename;
-File logFile;
+String logFilename;
+String serialFilename;
+File serialFile;
 
 #define DS1302_SCLK_PIN   7    // Arduino pin for the Serial Clock
 #define DS1302_IO_PIN     5    // Arduino pin for the Data I/O
@@ -74,12 +75,7 @@ CAN_INIT:
 
   SD_init();
 
-<<<<<<< HEAD
   Serial.println(F("System initialized"));
-=======
-  Serial.println("System initialized");
-  
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
 }
 
 void loop() {
@@ -98,18 +94,25 @@ void loop() {
 
 void SD_init() {
   myRTC.updateTime();
-
-  char filenamearr[13];
   int month = myRTC.month;
+  
   int day = myRTC.dayofmonth;
   int hour = myRTC.hours;
   int minute = myRTC.minutes;
-  sprintf(filenamearr, "%02u%02u%02u%02u.csv", month, day, hour, minute);
+  
+  char logFilenameArr[13];
+  sprintf(logFilenameArr, "%02u%02u%02u%02u.csv", month, day, hour, minute);
+  logFilename = logFilenameArr;
+  
+  Serial.print(F("logFilename: "));
+  Serial.println(logFilename);
 
-  filename = filenamearr;
+  char serialFilenameArr[13];
+  sprintf(serialFilenameArr, "%02u%02u%02u%02u.txt", month, day, hour, minute);
+  serialFilename = serialFilenameArr;
 
-  Serial.print(F("filename: "));
-  Serial.println(filename);
+  Serial.print(F("serialFilename: "));
+  Serial.println(serialFilename);
   
   Serial.print(F("Initializing SD card..."));
 

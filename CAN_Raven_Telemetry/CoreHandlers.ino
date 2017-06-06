@@ -158,15 +158,19 @@ void zevaCoreSetCellNum(void){
 
 void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
   brake_on = frame_data[0];
-<<<<<<< HEAD
-  Serial.print(F("[UPDATE] "));
-  Serial.print(F("Brake: ")); 
-=======
+
   printTime();
-  Serial.print(" [UPDATE] ");
-  
-  Serial.print("Brake: "); 
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
+
+  Serial.print(F("[UPDATE] "));
+  Serial.print(F("Brake: "));
+
+  serialFile = SD.open(serialFilename, FILE_WRITE);
+  if(serialFile){
+    serialFile.print(F("[UPDATE] "));
+    serialFile.print(F("Brake: "));
+    serialFile.close();
+  }
+
   printONOFF(brake_on);
   Serial.println();
   
@@ -174,14 +178,11 @@ void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
 
 void msgHandleHazard(uint32_t frame_id, byte* frame_data, byte length) {
   hazard = frame_data[0];
-<<<<<<< HEAD
+
+  printTime();
   Serial.print(F("[UPDATE] "));
   Serial.print(F("Hazard: "));
-=======
-  printTime();
-  Serial.print(" [UPDATE] ");
-  Serial.print("Hazard: ");
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
+
   printONOFF(hazard);
   Serial.println();
 }
@@ -196,14 +197,10 @@ void msgHandleSpeed(uint32_t frame_id, byte* frame_data, byte length) {
   unsigned long temp = ((unsigned long) frame_data[0] << 24)|((unsigned long) frame_data[1] << 16)|((unsigned long) frame_data[2] << 8)|((unsigned long) frame_data[3]);
   freq = *((float*) &temp);
 
-<<<<<<< HEAD
+  printTime();
   Serial.print(F("[UPDATE] "));
   Serial.print(F("Frequency: "));  
-=======
-  printTime();
-  Serial.print(" [UPDATE] ");
-  Serial.print("Frequency: ");  
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
+
   Serial.print(freq);
   Serial.println(F(" rps"));
 }
@@ -212,14 +209,9 @@ void msgHandleSignal(uint32_t frame_id, byte* frame_data, byte length) {
   left_signal = frame_data[0]&0x1;
   right_signal = frame_data[0]&0x2;
 
-<<<<<<< HEAD
+  printTime();
   Serial.print(F("[UPDATE] "));
   Serial.print(F("Left signal: "));
-=======
-  printTime();
-  Serial.print(" [UPDATE] ");
-  Serial.print("Left signal: ");
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
   printONOFF(left_signal);
   Serial.print(F("  Right signal: "));
   printONOFF(right_signal);
@@ -236,7 +228,6 @@ void msgHandleCoreStatus(uint32_t frame_id, byte* frame_data, byte length) {
   bms_status.temperature = frame_data[7];
   printTime();
   if (!bms_status.error) {
-<<<<<<< HEAD
     Serial.print(F("[UPDATE] "));
   }
   else if (bms_status.error == 2 || bms_status.error == 4 || bms_status.error == 6 || bms_status.error == 9) {
@@ -244,15 +235,6 @@ void msgHandleCoreStatus(uint32_t frame_id, byte* frame_data, byte length) {
   }
   else {
     Serial.print(F("[ERROR] "));
-=======
-    Serial.print(" [UPDATE] ");
-  }
-  else if (bms_status.error == 2 || bms_status.error == 4 || bms_status.error == 6 || bms_status.error == 9) {
-    Serial.print(" [WARNING] ");
-  }
-  else {
-    Serial.print(" [ERROR] ");
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
   }
   Serial.print(F("Status: "));
   printBMSCoreStatus();
@@ -273,34 +255,24 @@ void msgHandleBmsReply(uint32_t frame_id, byte* frame_data, byte length) {
   int pack_num = (frame_id%100)/10;
   int reply_type = frame_id%10 == 3 ? 0 : 1;
 
-<<<<<<< HEAD
+  printTime();
   Serial.print(F("[UPDATE] "));
   Serial.print(F("Battery pack "));
-=======
-  printTime();
-  Serial.print(" [UPDATE] ");
-  Serial.print("Battery pack ");
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
+
   Serial.print(pack_num);
   Serial.println(F(" info:"));
   
   for (int i = reply_type*6; i < 6*(1 + reply_type); i++) {
     packs[pack_num].cellVolts[i] = ((unsigned int) frame_data[i%6]) | (frame_data[6]&((unsigned int) 1<<i%6)) << 8 - i%6;
-<<<<<<< HEAD
-    Serial.print(F("Cell "));
-=======
-    Serial.print("\t\t    Cell ");
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
+
+    Serial.print(F("\t\t    Cell "));
     Serial.print(i);
     Serial.print(F(" Voltage: "));
     Serial.println(packs[pack_num].cellVolts[i]/100.0);
   }
   packs[pack_num].temp[reply_type] = frame_data[7] - 128;
-<<<<<<< HEAD
-  Serial.print(F("Temperature: "));
-=======
-  Serial.print("\t\t    Temperature: ");
->>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
+
+  Serial.print(F("\t\t    Temperature: "));
   Serial.println(packs[pack_num].temp[reply_type]); 
 }
 
@@ -319,7 +291,7 @@ void msgHandleBms(uint32_t frame_id, byte* frame_data, byte length) {
 }
 
 void logToSD() {
-  logFile = SD.open(filename, FILE_WRITE);
+  File logFile = SD.open(logFilename, FILE_WRITE);
   
   if (logFile) {
     logFile.print(myRTC.hours);
@@ -337,7 +309,7 @@ void logToSD() {
     logFile.print(F("PUT MOTOR TEMP HERE"));//TODO: PUT MOTOR TEMP HERE
     logFile.print(F(","));
     logFile.print(bms_status.voltage);
-    logFile.print(F(","));
+    logFile.println();
    
     logFile.close();
   } else {
@@ -348,12 +320,6 @@ void logToSD() {
 
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
-  Serial.print(F("timestamp: "));
-  Serial.print(myRTC.hours);
-  Serial.print(F(":"));
-  Serial.print(myRTC.minutes);
-  Serial.print(F(":"));
-  Serial.println(myRTC.seconds);
   switch (frame_id) {
     case CAN_ID_BRAKE:
       msgHandleBrake(frame_id, frame_data, length);

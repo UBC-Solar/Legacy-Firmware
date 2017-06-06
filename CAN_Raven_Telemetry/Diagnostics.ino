@@ -6,38 +6,85 @@ void printONOFF(int input) {
   else {
     Serial.print("OFF");
   }
+
+  serialFile = SD.open(serialFilename, FILE_WRITE);
+  if(serialFile) {
+    if (input) {
+      serialFile.print("ON");
+    }
+    else {
+      serialFile.print("OFF");
+    }
+    serialFile.close();
+  }
 }
 
 void printTime() {
   myRTC.updateTime();
-  Serial.print("[");
+  Serial.print(F("["));
   Serial.print(myRTC.hours);
-  Serial.print(":");
+  Serial.print(F(":"));
   Serial.print(myRTC.minutes);
-  Serial.print(":");
+  Serial.print(F(":"));
   Serial.print(myRTC.seconds);
-  Serial.print("]");
+  Serial.print(F("]"));
+
+  serialFile = SD.open(serialFilename, FILE_WRITE);
+  if(serialFile){
+    serialFile.println();
+    serialFile.print(F("["));
+    serialFile.print(myRTC.hours);
+    serialFile.print(F(":"));
+    serialFile.print(myRTC.minutes);
+    serialFile.print(F(":"));
+    serialFile.print(myRTC.seconds);
+    serialFile.print(F("]"));
+    serialFile.close();
+  }
 }
 
 void printBMSCoreStatus() {
   switch(bms_status.status) {
     case 0:
-      Serial.print("IDLE");
+      Serial.print(F("IDLE"));
       break;
     case 1:
-      Serial.print("PRECHARGING");
+      Serial.print(F("PRECHARGING"));
       break;
     case 2:
-      Serial.print("RUNNING");
+      Serial.print(F("RUNNING"));
       break;
    case 3:
-      Serial.print("CHARGING");
+      Serial.print(F("CHARGING"));
       break;
     case 4:
-      Serial.print("SETUP");
+      Serial.print(F("SETUP"));
       break;
     default:
       break;
+  }
+  serialFile = SD.open(serialFilename, FILE_WRITE);
+  if(serialFile){
+    switch(bms_status.status) {
+      case 0:
+        serialFile.print(F("IDLE"));
+        break;
+      case 1:
+        serialFile.print(F("PRECHARGING"));
+        break;
+      case 2:
+        serialFile.print(F("RUNNING"));
+        break;
+     case 3:
+        serialFile.print(F("CHARGING"));
+        break;
+      case 4:
+        serialFile.print(F("SETUP"));
+        break;
+      default:
+        break;
+    }
+    serialFile.close();
   }
 }
 
@@ -45,56 +92,113 @@ void printBMSCoreStatus() {
 
 void printBMSCoreError() {
   switch(bms_status.error) {
-	case 0:
-		Serial.print(F("NONE"));
-		break;
+  	case 0:
+  		Serial.print(F("NONE"));
+  		break;
     case 1:
-		Serial.print(F("SETTINGS CORRUPTED"));
-		break;
-	case 2:
-		Serial.print(F("OVERCURRENT WARNING"));
-		break;
-	case 3:
-		Serial.print(F("OVERCURRENT SHUTDOWN"));
-		break;
-	case 4:
-		Serial.print(F("LOW CELL VOLTAGE WARNING"));
-		break;
-	case 5:
-		Serial.print(F("LOW CELL VOLTAGE SHUTDOWN"));
-		break;
-	case 6:
-		Serial.print(F("HIGH CELL VOLTAGE WARNING"));
-		break;
-	case 7:
-		Serial.print(F("HIGH CELL VOLTAGE SHUTDOWN"));
-		break;
-	case 8:
-		Serial.print(F("BMS OVERTEMPERATURE"));
-		break;
-	case 9:
-		Serial.print(F("LOW STATE OF CHARGE WARNING"));
-		break;
-	case 10:
-		Serial.print(F("TEMPERATURE EXCEEDED WARNING LEVEL"));
-		break;
-	case 11:
-		Serial.print(F("CHASSIS LEAKAGE"));
-		break;
-	case 12:
-		Serial.print(F("AUX BATTERY VOLTAGE BELOW WARNING LEVEL"));
-		break;
-	case 13:
-		Serial.print(F("PRECHARGE FAILED"));
-		break;
-	case 14:
-		Serial.print(F("CONTATOR SWITCH ERROR"));
-		break;
-	case 15:
-		Serial.print(F("CANBUS COMMUNICATION ERROR"));
-		break;
-  default:
-    break;
+  		Serial.print(F("SETTINGS CORRUPTED"));
+  		break;
+  	case 2:
+  		Serial.print(F("OVERCURRENT WARNING"));
+  		break;
+  	case 3:
+  		Serial.print(F("OVERCURRENT SHUTDOWN"));
+  		break;
+  	case 4:
+  		Serial.print(F("LOW CELL VOLTAGE WARNING"));
+  		break;
+  	case 5:
+  		Serial.print(F("LOW CELL VOLTAGE SHUTDOWN"));
+  		break;
+  	case 6:
+  		Serial.print(F("HIGH CELL VOLTAGE WARNING"));
+  		break;
+  	case 7:
+  		Serial.print(F("HIGH CELL VOLTAGE SHUTDOWN"));
+  		break;
+  	case 8:
+  		Serial.print(F("BMS OVERTEMPERATURE"));
+  		break;
+  	case 9:
+  		Serial.print(F("LOW STATE OF CHARGE WARNING"));
+  		break;
+  	case 10:
+  		Serial.print(F("TEMPERATURE EXCEEDED WARNING LEVEL"));
+  		break;
+  	case 11:
+  		Serial.print(F("CHASSIS LEAKAGE"));
+  		break;
+  	case 12:
+  		Serial.print(F("AUX BATTERY VOLTAGE BELOW WARNING LEVEL"));
+  		break;
+  	case 13:
+  		Serial.print(F("PRECHARGE FAILED"));
+  		break;
+  	case 14:
+  		Serial.print(F("CONTATOR SWITCH ERROR"));
+  		break;
+  	case 15:
+  		Serial.print(F("CANBUS COMMUNICATION ERROR"));
+  		break;
+    default:
+      break;
+  }
+
+  serialFile = SD.open(serialFilename, FILE_WRITE);
+  if(serialFile) {
+    switch(bms_status.error) {
+      case 0:
+        serialFile.print(F("NONE"));
+        break;
+      case 1:
+        serialFile.print(F("SETTINGS CORRUPTED"));
+        break;
+      case 2:
+        serialFile.print(F("OVERCURRENT WARNING"));
+        break;
+      case 3:
+        serialFile.print(F("OVERCURRENT SHUTDOWN"));
+        break;
+      case 4:
+        serialFile.print(F("LOW CELL VOLTAGE WARNING"));
+        break;
+      case 5:
+        serialFile.print(F("LOW CELL VOLTAGE SHUTDOWN"));
+        break;
+      case 6:
+        serialFile.print(F("HIGH CELL VOLTAGE WARNING"));
+        break;
+      case 7:
+        serialFile.print(F("HIGH CELL VOLTAGE SHUTDOWN"));
+        break;
+      case 8:
+        serialFile.print(F("BMS OVERTEMPERATURE"));
+        break;
+      case 9:
+        serialFile.print(F("LOW STATE OF CHARGE WARNING"));
+        break;
+      case 10:
+        serialFile.print(F("TEMPERATURE EXCEEDED WARNING LEVEL"));
+        break;
+      case 11:
+        serialFile.print(F("CHASSIS LEAKAGE"));
+        break;
+      case 12:
+        serialFile.print(F("AUX BATTERY VOLTAGE BELOW WARNING LEVEL"));
+        break;
+      case 13:
+        serialFile.print(F("PRECHARGE FAILED"));
+        break;
+      case 14:
+        serialFile.print(F("CONTATOR SWITCH ERROR"));
+        break;
+      case 15:
+        serialFile.print(F("CANBUS COMMUNICATION ERROR"));
+        break;
+      default:
+        break;
+    }  
+    serialFile.close();
   }
 }
 
