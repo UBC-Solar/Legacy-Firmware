@@ -10,14 +10,12 @@
 
 #define CAN_SS 10
 
-#define CAN_SS 10
-
 #define BUS_SPEED CAN_125KBPS
-#define PRINT_DELAY 1000
-#define DIAG_PRINT_DELAY 2000
+//#define PRINT_DELAY 1000
+//#define DIAG_PRINT_DELAY 2000
 
-#define BINMSG_SEPARATOR 0xFF
-#define BINMSG_MAXVAL 0xFE
+//#define BINMSG_SEPARATOR 0xFF
+//#define BINMSG_MAXVAL 0xFE
 MCP_CAN CAN(CAN_SS);
 byte brake_on = 0;
 byte hazard = 0;
@@ -46,10 +44,13 @@ void SD_init();
 void printONOFF(int input);
 void printBMSCoreStatus();
 void printBMSCoreError();
+void printTime();
 
 void setup() {  
 /* SERIAL INIT */
   Serial.begin(9600);
+  Serial.write(0x1B);
+  Serial.print("[?3h");
 
 /* CAN INIT */
   int canSSOffset = 0;
@@ -73,7 +74,12 @@ CAN_INIT:
 
   SD_init();
 
+<<<<<<< HEAD
   Serial.println(F("System initialized"));
+=======
+  Serial.println("System initialized");
+  
+>>>>>>> 00079c18eb341f6be307e2bff2da6ecbca73628f
 }
 
 void loop() {

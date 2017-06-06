@@ -24,7 +24,7 @@
   byte bms_shunt_voltage; // x0.05V to get real value
   byte low_temperature_warn;
   byte high_temperature_warn;
-};*/
+};*//*
 #define IDLE 0
 #define PRECHARGING 1
 #define RUNNING 2
@@ -46,7 +46,7 @@
 #define LOW12V 12 
 #define PRECHARGEFAIL 13
 #define CONTRATORSWITCHERROR 14
-#define CANERROR 15
+#define CANERROR 15*/
 
 struct BMSCoreStatus {
   byte status;
