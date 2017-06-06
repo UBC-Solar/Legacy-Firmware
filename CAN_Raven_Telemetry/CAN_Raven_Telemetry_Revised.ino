@@ -73,7 +73,7 @@ CAN_INIT:
 
   SD_init();
 
-  Serial.println("System initialized");
+  Serial.println(F("System initialized"));
 }
 
 void loop() {
@@ -81,7 +81,7 @@ void loop() {
   byte length;
   uint32_t frame_id;
   byte frame_data[8];
-
+  
   if(CAN_MSGAVAIL == CAN.checkReceive()){
     CAN.readMsgBuf(&length, frame_data);
     frame_id = CAN.getCanId();
@@ -102,16 +102,16 @@ void SD_init() {
 
   filename = filenamearr;
 
-  Serial.print("filename: ");
+  Serial.print(F("filename: "));
   Serial.println(filename);
   
-  Serial.print("Initializing SD card...");
+  Serial.print(F("Initializing SD card..."));
 
   if (!SD.begin(4)) {
-    Serial.println("initialization failed!");
+    Serial.println(F("initialization failed!"));
     return;
   }
-  Serial.println("initialization done.");
+  Serial.println(F("initialization done."));
 }
 
 
