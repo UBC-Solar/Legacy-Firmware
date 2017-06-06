@@ -44,11 +44,14 @@ void loop()
 {
       char c;
       byte stmp[8] = {0xA, 0x2B, 0xC, 0xDD, 0x1, 0x2, 0x2D, 0xA3};
+      Serial.println("huh???");
+      CAN.sendMsgBuf(123, 0, 8, stmp);
       if(Serial.available())
       {
-          c = Serial.read();
-          CAN.sendMsgBuf(123 , 0, 8, stmp);
+          Serial.println("transmitting");
+          
 
           
       }
+      delay(20000);
 }

@@ -11,6 +11,7 @@
 #define CAN_SS 10
 
 #define BUS_SPEED CAN_125KBPS
+#define NEW_LINE true
 //#define PRINT_DELAY 1000
 //#define DIAG_PRINT_DELAY 2000
 
@@ -46,6 +47,7 @@ void printONOFF(int input);
 void printBMSCoreStatus();
 void printBMSCoreError();
 void printTime();
+void printHelper(String message, boolean newLine = false);
 
 void setup() {  
 /* SERIAL INIT */
@@ -121,6 +123,29 @@ void SD_init() {
     return;
   }
   Serial.println(F("initialization done."));
+}
+
+void printHelper(String message, boolean newLine){
+  if(newLine) {
+    Serial.println(message);
+    serialFile = SD.open(serialFilename, FILE_WRITE);
+    if(serialFile){
+      serialFile.println(message);
+      serialFile.close();
+    } else {
+      Serial.println(F("unable to open serial file"));
+    }
+  } else {
+    Serial.print(message);
+    serialFile = SD.open(serialFilename, FILE_WRITE);
+    if(serialFile){
+      serialFile.print(message);
+      serialFile.close();
+    } else {
+      Serial.println(F("unable to open serial file"));
+    }
+  }
+
 }
 
 
