@@ -43,15 +43,12 @@ START_INIT:
 void loop()
 {
       char c;
-      byte stmp[8] = {0xA, 0x2B, 0xC, 0xDD, 0x1, 0x2, 0x2D, 0xA3};
-      Serial.println("huh???");
-      CAN.sendMsgBuf(123, 0, 8, stmp);
+      byte stmp[8] = {0x10, 0x01, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00};
       if(Serial.available())
       {
-          Serial.println("transmitting");
-          
+          c = Serial.read();
+          CAN.sendMsgBuf(131 , 0, 8, stmp);
 
           
       }
-      delay(20000);
 }

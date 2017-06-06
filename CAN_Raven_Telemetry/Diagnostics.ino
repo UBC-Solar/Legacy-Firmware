@@ -1,15 +1,15 @@
 #define ANSI_ESC 0x1B
 
-void printONOFF(int input) {
+void printONOFF(int input, bool new_line) {
   if (input) {
-    printHelper("ON", NEW_LINE);
+    printHelper("ON", new_line);
   }
   else {
-    printHelper("OFF", NEW_LINE);
+    printHelper("OFF", new_line);
   }
 }
 
-void printTime() {
+void printLogHeader(int log_type) {
   myRTC.updateTime();
   printHelper(F("["));
   printHelper(String(myRTC.hours));
@@ -17,7 +17,23 @@ void printTime() {
   printHelper(String(myRTC.minutes));
   printHelper(F(":"));
   printHelper(String(myRTC.seconds));
-  printHelper(F("]"));
+  printHelper(F("] ["));
+  switch (log_type) {
+    case 0:
+      printHelper(F("UPDATE] "));
+      return;
+    case 1:
+      printHelper(F("WARNING] "));
+      return;
+    case 2:
+      printHelper(F("ERROR] "));
+      return;
+    case 3:
+      printHelper(F("REQUEST] "));
+      return;
+    default:
+      return;
+  }
 }
 
 void printBMSCoreStatus() {
@@ -41,8 +57,6 @@ void printBMSCoreStatus() {
       break;
   }
 }
-
-
 
 void printBMSCoreError() {
   switch(bms_status.error) {

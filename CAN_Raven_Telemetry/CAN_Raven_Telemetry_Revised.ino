@@ -43,10 +43,10 @@ virtuabotixRTC myRTC(DS1302_SCLK_PIN, DS1302_IO_PIN, DS1302_CE_PIN);
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length);
 void SD_init();
-void printONOFF(int input);
+void printONOFF(int input, bool new_line);
 void printBMSCoreStatus();
 void printBMSCoreError();
-void printTime();
+void printLogHeader(int log_type);
 void printHelper(String message, boolean newLine = false);
 
 void setup() {  
@@ -128,22 +128,22 @@ void SD_init() {
 void printHelper(String message, boolean newLine){
   if(newLine) {
     Serial.println(message);
-    serialFile = SD.open(serialFilename, FILE_WRITE);
+    /*serialFile = SD.open(serialFilename, FILE_WRITE);
     if(serialFile){
       serialFile.println(message);
       serialFile.close();
     } else {
       Serial.println(F("unable to open serial file"));
-    }
+    }*/
   } else {
     Serial.print(message);
-    serialFile = SD.open(serialFilename, FILE_WRITE);
+    /*serialFile = SD.open(serialFilename, FILE_WRITE);
     if(serialFile){
       serialFile.print(message);
       serialFile.close();
     } else {
       Serial.println(F("unable to open serial file"));
-    }
+    }*/
   }
 
 }
