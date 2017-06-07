@@ -240,24 +240,24 @@ void msgHandleBmsStatus(uint32_t frame_id, byte* frame_data, byte length) {
   int pack_num = (frame_id % 100) / 10;
 
   packs[pack_num].volt_warn = ((unsigned long) frame_data[2]) << 16 | ((unsigned long) frame_data[1]) << 8 | ((unsigned long) frame_data[0]);
-  packs[pack_num].volt_shun_warn = frame_data[4] & 0x0F << 4 | (unsigned char) frame_data[3];
+  packs[pack_num].volt_shun_warn = (frame_data[4] & 0x0F) << 8 | (unsigned char) frame_data[3];
   packs[pack_num].temp_warn = frame_data[4] >> 4;
   printLogHeader((packs[pack_num].volt_warn | packs[pack_num].volt_shun_warn | packs[pack_num].temp_warn) == 0 ? 0 : 2);
   printHelper(F("Status of battery pack "));
   printHelper(String(pack_num) + ": ", NEW_LINE);
-  Serial.println(packs[pack_num].volt_warn);
+  Serial.println(packs[pack_num].volt_shun_warn);
 
   for (int i = 0; i < 12; i++) {
     printHelper("Cell " + String(i) + ": ");
     printHelper("Voltage: ");
-    printHelper((packs[pack_num].volt_warn & (0x01001 << i)) == 0 ? "OK" : (packs[pack_num].volt_warn & (0x01 << i)) == 0 ? "HIGH" : "LOW");
+    printHelper((packs[pack_num].volt_warn & ((unsigned long) 0x1001 << i)) == 0 ? "OK" : ( packs[pack_num].volt_warn & ((unsigned long) 0x1 << i)) == 0 ? "HIGH" : "LOW");
     printHelper("/");
-    printHelper((packs[pack_num].volt_shun_warn & (0x01 << i)) == 0 ? "OK" : "SHUN", NEW_LINE);
+    printHelper((packs[pack_num].volt_shun_warn & ((unsigned int) 0x1 << i)) == 0 ? "OK" : "SHUN", NEW_LINE);
   }
 
   for (int i = 0; i < 2; i++) {
     printHelper("Temperature " + String(i) + ": ");
-    printHelper((packs[pack_num].temp_warn & (0x03 << i)) == 0 ? "OK" : packs[pack_num].temp_warn & (0x1 << i) == 0 ? "HIGH" : "LOW", NEW_LINE);
+    printHelper((packs[pack_num].temp_warn & (0x5 << i)) == 0 ? "OK" : ((packs[pack_num].temp_warn & ( 0x1 << i*2)) == 0 ? "HIGH" : "LOW"), NEW_LINE);
   }
 }
 

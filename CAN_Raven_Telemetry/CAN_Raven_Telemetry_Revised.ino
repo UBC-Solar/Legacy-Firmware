@@ -1,5 +1,5 @@
 #include <mcp_can.h>
-#include <mcp_can_dfs.h>
+//#include <mcp_can_dfs.h>
 #include <SPI.h>
 #include <SD.h>
 #include <avr/pgmspace.h>
@@ -12,11 +12,7 @@
 
 #define BUS_SPEED CAN_125KBPS
 #define NEW_LINE true
-//#define PRINT_DELAY 1000
-//#define DIAG_PRINT_DELAY 2000
 
-//#define BINMSG_SEPARATOR 0xFF
-//#define BINMSG_MAXVAL 0xFE
 MCP_CAN CAN(CAN_SS);
 byte brake_on = 0;
 byte hazard = 0;
