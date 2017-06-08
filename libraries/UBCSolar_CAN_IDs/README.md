@@ -63,7 +63,7 @@ the driver interface and can be interpreted by any CAN node.
 #### Structure of the message
 - Byte0: forward throttle value
 - Byte1: reverse throttle value
-- Byte2: throttle direction
+- Byte2: throttle direction (values - 0:forward, 1: reverse, 2: neutral)
 - Byte3: driver interface status register
   - bit0: right turn signal status
   - bit1: left turn signal status
@@ -94,4 +94,4 @@ debugging the communication system down the road.
 #### Structure of the message
 - Byte0: value to identify node
 - Bytes1-4: seconds since last received heartbeat
-  - I think 4 bytes is sufficient to not worry about overflow with millisecond-resolution
+  - I think 4 bytes is sufficient to not worry about overflow with seconds-resolution
