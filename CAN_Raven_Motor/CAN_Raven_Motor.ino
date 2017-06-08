@@ -1,12 +1,10 @@
 //ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
-#include <Arduino.h>
 
 #include <mcp_can.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
 #include <ubcsolar_can_ids.h>
-#include <ubcsolar_can.h>
 
 #define CAN_SS 9
 #define RHEO_THROTTLE_SS 8
@@ -34,8 +32,6 @@
 #define BUS_SPEED CAN_125KBPS
 
 MCP_CAN CAN(CAN_SS);
-void sendSpeedSensorPacket();
-void setRheo(int ss, byte r);
 
 byte target_throttle = 0;
 byte target_regen = 0;
@@ -54,7 +50,7 @@ union floatbytes {
 } speedHz;
 
 
-void setup() {
+void setup() {  
 /* SERIAL INIT */
   Serial.begin(115200);
 
@@ -82,7 +78,7 @@ CAN_INIT:
   CAN.init_Mask(1, 0, 0x3ff); //mask 1 (for buffer 1) controls filters 2 to 5
 
   //to pass a filter, all bits in the msg id that are "masked" must be the same as in the filter.
-  //a message will pass if at least one of the filters pass it.
+  //a message will pass if at least one of the filters pass it. 
   CAN.init_Filt(0, 0, CAN_ID_MOTOR_CTRL);
 
 /* RHEO INIT */
@@ -126,19 +122,19 @@ CAN_INIT:
 }
 
 void printBuf(uint32_t frame_id, byte *frame_data, byte length) {
-
+     
   Serial.print("[Rx] ID: ");
   Serial.print(frame_id,HEX);
-
+        
   Serial.print(" Len:");
   Serial.print(length,HEX);
-
+      
   Serial.print(" Data:[");
   for (int i=0;i<length;i++) {
     if (i>0) Serial.print(" ");
     Serial.print(frame_data[i],HEX);
   }
-  Serial.println("]");
+  Serial.println("]"); 
 }
 
 void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
@@ -158,7 +154,7 @@ void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
 }
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
-
+   
    if(frame_id == CAN_ID_MOTOR_CTRL){
      msgHandleMotorCtrl(frame_id, frame_data, length);
    }else if(frame_id == CAN_ID_BRAKE){
@@ -215,7 +211,7 @@ void motorCtrlRun(){
   }else{
     current_throttle = target_throttle;
     if(brake_on)
-      current_throttle = 0;
+      current_throttle = 0; 
     current_regen = target_regen;
     setRheo(RHEO_THROTTLE_SS, current_throttle);
     setRheo(RHEO_REGEN_SS, current_regen);
@@ -273,17 +269,17 @@ void sendSpeedSensorPacket(){
   uint32_t frame_id = CAN_ID_SPEED_SENSOR;
   byte frame_data[8];
   byte length = 4;
-
+  
   frame_data[0] = speedHz.b[0];
   frame_data[1] = speedHz.b[1];
   frame_data[2] = speedHz.b[2];
   frame_data[3] = speedHz.b[3];
-
+  
   CAN.sendMsgBuf(frame_id, 0, length, frame_data);
 }
 
 void loop() {
-
+  
   byte length;
   uint32_t frame_id;
   byte frame_data[8];
@@ -299,7 +295,8 @@ void loop() {
   if(millis() - lastMotorCtrlRxTime > 500){
     target_throttle = 0;
   }
-
+  
   speedSensorRun();
   motorCtrlRun();
 }
+
