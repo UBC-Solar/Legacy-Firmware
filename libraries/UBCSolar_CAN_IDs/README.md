@@ -93,5 +93,5 @@ debugging the communication system down the road.
 
 #### Structure of the message
 - Byte0: value to identify node
-- Bytes1-4: seconds since last received heartbeat
-  - I think 4 bytes is sufficient to not worry about overflow with seconds-resolution
+- Bytes1-7: seconds since last received heartbeat
+  - I think 7 bytes is sufficient to not worry about overflow with seconds-resolution
