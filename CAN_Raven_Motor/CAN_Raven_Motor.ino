@@ -110,6 +110,7 @@ void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
   target_regen = frame_data[1];
   target_dir = frame_data[2];
   lastMotorCtrlRxTime = millis();
+  Serial.println("motor");
   Serial.print(frame_data[0]);
   Serial.print(" ");
   Serial.print(frame_data[1]);
@@ -122,8 +123,9 @@ void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
 }
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
-   
-   if(frame_id == CAN_ID_MOTOR_CTRL){
+   Serial.print("frame_id: ");
+   Serial.println(frame_id);
+   if(frame_id == CAN_ID_HEARTBEAT){
      msgHandleMotorCtrl(frame_id, frame_data, length);
    }else if(frame_id == CAN_ID_BRAKE){
      msgHandleBrake(frame_id, frame_data, length);

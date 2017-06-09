@@ -8,6 +8,8 @@
 
 #define CAN_ID_BRAKE 0
 #define CAN_ID_HAZARD 1
+#define CAN_ID_HEARTBEAT 6
+
 #define CAN_ID_MOTOR_CTRL 4
 #define CAN_ID_SPEED_SENSOR 8
 #define CAN_ID_SIGNAL_CTRL 9

@@ -11,7 +11,7 @@
 //even at 1 Megabit.  But we didn't do any tests that required arbitration
 //with multiple nodes.
 
-#include <CAN.h>
+#include <mcp_can.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
