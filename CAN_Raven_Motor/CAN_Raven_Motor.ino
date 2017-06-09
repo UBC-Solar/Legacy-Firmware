@@ -110,11 +110,11 @@ void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
   target_regen = frame_data[1];
   target_dir = frame_data[2];
   lastMotorCtrlRxTime = millis();
-  Serial.println("motor");
+  Serial.print("target throttle: ");
   Serial.print(frame_data[0]);
-  Serial.print(" ");
+  Serial.print(" target regen: ");
   Serial.print(frame_data[1]);
-  Serial.print(" ");
+  Serial.print(" target direction: ");
   Serial.println(frame_data[2]);
 }
 
@@ -123,8 +123,6 @@ void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
 }
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
-   Serial.print("frame_id: ");
-   Serial.println(frame_id);
    if(frame_id == CAN_ID_HEARTBEAT){
      msgHandleMotorCtrl(frame_id, frame_data, length);
    }else if(frame_id == CAN_ID_BRAKE){

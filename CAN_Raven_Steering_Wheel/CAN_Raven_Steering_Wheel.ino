@@ -52,7 +52,7 @@ void msgHandler() {
 }
 
 void sendHeartbeatMessage() {
-  Serial.println("sending message");
+  Serial.println("heartbeat");
   CANbus.write(txmsg);
   for(int i = 0; i < 8; i++){
     bitClear(txmsg.buf[BYTE_SIGNAL_STATUS], i);
@@ -76,8 +76,6 @@ void processSignals() {
 
 int processThrottle() {
   int rawThrottle = analogRead(THROTTLE_PIN);
-  //Serial.println("throttle value is: ");
-  //Serial.println(rawThrottle);
   if(rawThrottle > THROTTLE_THRESHOLD) {
     return THROTTLE_MULTIPLIER * rawThrottle;
   } else {
