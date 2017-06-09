@@ -1,12 +1,7 @@
 #include <FlexCAN.h>
 #include <kinetis_flexcan.h>
 
-#include <mcp_can.h>
-#include <SoftwareSerial.h>
-#include <SPI.h>
 #include <ubcsolar_can_ids.h>
-
-#define BUS_SPEED CAN_125KBPS
 
 //TODO: figure out what pins we're using
 #define HORN_PIN 0

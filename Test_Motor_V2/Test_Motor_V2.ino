@@ -60,7 +60,7 @@ CAN_INIT:
 
 void sendMotorControlPacket(void){
   
-  frame_id = CAN_ID_MOTOR_CTRL;
+  frame_id = CAN_ID_HEARTBEAT;
   length = 3;
   
   frame_data[0] = motor_acceleration;
