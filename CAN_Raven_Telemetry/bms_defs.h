@@ -47,7 +47,7 @@
 #define PRECHARGEFAIL 13
 #define CONTRATORSWITCHERROR 14
 #define CANERROR 15*/
-
+/*
 struct BMSCoreStatus {
   byte status;
   byte error;
@@ -71,5 +71,15 @@ struct Motor {
   byte target_throttle;
   byte target_regen;
   byte target_dir;
+};*/
+
+struct DataPacket {
+  float speed;
+  byte soc;
+  int voltage;
+  byte temperature;
+  byte motor_temp;
 };
+
+
 

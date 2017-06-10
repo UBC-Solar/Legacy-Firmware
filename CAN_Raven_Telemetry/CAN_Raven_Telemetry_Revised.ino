@@ -14,19 +14,10 @@
 #define NEW_LINE true
 
 MCP_CAN CAN(CAN_SS);
-byte brake_on = 0;
-byte hazard = 0;
-float freq;
-
-bool left_signal;
-bool right_signal;
-
-struct Motor motor; 
-struct BMSCoreStatus bms_status = {0};
-struct Battery packs[4] = {0};
 
 String logFilename;
 String serialFilename;
+struct DataPacket packet;
 File serialFile;
 
 #define DS1302_SCLK_PIN   7    // Arduino pin for the Serial Clock
@@ -40,17 +31,17 @@ virtuabotixRTC myRTC(DS1302_SCLK_PIN, DS1302_IO_PIN, DS1302_CE_PIN);
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length);
 void SD_init();
 void printONOFF(int input, bool new_line);
-void printBMSCoreStatus();
-void printBMSCoreError();
+void printBMSCoreStatus(byte);
+void printBMSCoreError(byte);
 void printLogHeader(int log_type);
 void printHelper(String message, boolean newLine = false);
+void create_table();
+void diag_cursorPosition(int row, int col);
+void  position_log(int);
 
 void setup() {  
 /* SERIAL INIT */
   Serial.begin(9600);
-  Serial.write(0x1B);
-  Serial.print("[?3h");
-
 /* CAN INIT */
   int canSSOffset = 0;
 
@@ -123,25 +114,26 @@ void SD_init() {
 
 void printHelper(String message, boolean newLine){
   if(newLine) {
-    Serial.println(message);
-    /*serialFile = SD.open(serialFilename, FILE_WRITE);
+    
+    serialFile = SD.open(serialFilename, FILE_WRITE);
     if(serialFile){
       serialFile.println(message);
       serialFile.close();
     } else {
-      Serial.println(F("unable to open serial file"));
-    }*/
+    //  Serial.println(F("unable to open serial file"));
+    }
+    Serial.println(message);
   } else {
-    Serial.print(message);
-    /*serialFile = SD.open(serialFilename, FILE_WRITE);
+    
+    serialFile = SD.open(serialFilename, FILE_WRITE);
     if(serialFile){
       serialFile.print(message);
       serialFile.close();
     } else {
-      Serial.println(F("unable to open serial file"));
-    }*/
+   //   Serial.println(F("unable to open serial file"));
+    }
+    Serial.print(message);
   }
-
 }
 
 

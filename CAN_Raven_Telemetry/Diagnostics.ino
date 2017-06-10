@@ -1,8 +1,7 @@
-#define ANSI_ESC 0x1B
 
 void printONOFF(int input, bool new_line) {
   if (input) {
-    printHelper("ON", new_line);
+    printHelper("ON ", new_line);
   }
   else {
     printHelper("OFF", new_line);
@@ -17,7 +16,7 @@ void printLogHeader(int log_type) {
   printHelper(String(myRTC.minutes));
   printHelper(F(":"));
   printHelper(String(myRTC.seconds));
-  printHelper(F("] ["));
+  printHelper(F("]["));
   switch (log_type) {
     case 0:
       printHelper(F("UPDATE] "));
@@ -36,8 +35,8 @@ void printLogHeader(int log_type) {
   }
 }
 
-void printBMSCoreStatus() {
-  switch(bms_status.status) {
+void printBMSCoreStatus(byte status) {
+  switch(status) {
     case 0:
       printHelper(F("IDLE"));
       break;
@@ -58,8 +57,8 @@ void printBMSCoreStatus() {
   }
 }
 
-void printBMSCoreError() {
-  switch(bms_status.error) {
+void printBMSCoreError(byte error) {
+  switch(error) {
   	case 0:
   		printHelper(F("NONE"));
   		break;
@@ -112,7 +111,28 @@ void printBMSCoreError() {
       break;
   }
 }
+/*
+void create_table() {
+  Serial.print(F("Time modified: "));
+  Serial.println(String(myRTC.hours) + ":" + String(myRTC.minutes) + ":" + String(myRTC.seconds));
+  Serial.println(F("Brake:\t  Hazard:"));
+  Serial.println(F("Left signal:\t  Right signal:"));
+  Serial.println(F("Motor: \t\t\tSpeed:"));
+  Serial.println(F("Core:"));
+  Serial.println(F("Status:\t\tError:"));
+  Serial.println(F("Voltage:\t\tCurrent:"));
+  Serial.println(F("Aux Voltage:\t\tTemperature:\n"));
 
+  for (int pack = 0; pack < 4; pack++) {
+    Serial.println("Pack " + String(pack));
+    Serial.println(F("Cell 0:\t\t\tCell 1:\t\t\tCell 2:"));
+    Serial.println(F("Cell 3:\t\t\tCell 4:\t\t\tCell 5:"));
+    Serial.println(F("Cell 6:\t\t\tCell 7:\t\t\tCell 8:"));
+    Serial.println(F("Cell 9:\t\t\tCell 10:\t\tCell 11:"));
+    Serial.println(F("Temperature 1:\t\tTemperature 2:"));
+    Serial.println();
+  } 
+}
 
 /*
 void diag_cursorPosition(int row, int col){
@@ -121,9 +141,9 @@ void diag_cursorPosition(int row, int col){
   Serial.print(row);
   Serial.write(';');
   Serial.print(col);
-  Serial.write('H');
+  Serial.write('f');
 }
-
+/*
 void diag_clearScreen(void){
   Serial.write(ANSI_ESC);
   Serial.print(F("[2J"));
