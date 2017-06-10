@@ -38,8 +38,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define FALSE 0
 
 // 2 arduino pins are used for horn control to split the current required to turn on the Relay  
-#define HORN1 4 
-#define HORN2 5
+#define HORN_PIN 4 
 #define CAN_ID_HORN 7
 
 // 2 groups of outputs for 4 lights, output pins can be changed according to pins available
@@ -80,8 +79,7 @@ void setup() {
     pinMode(FRONT_SIDE_R_PIN,OUTPUT);
     pinMode(FRONT_SIDE_L_PIN,OUTPUT);
 
-    pinMode(HORN1, OUTPUT);
-   pinMode(HORN2, OUTPUT);
+    pinMode(HORN_PIN, OUTPUT);
 
 START_INIT:
 
@@ -105,8 +103,10 @@ START_INIT:
 }
 
 void loop() {
-  
-    unsigned char len=0, buf[8], canID;
+
+    uint32_t canID;
+    byte *buf;
+    byte len;
     
     if(CAN_MSGAVAIL == CAN.checkReceive())            // check if data is coming
     {
@@ -145,43 +145,39 @@ void loop() {
             }
         }
         
-        else if (canID == CAN_ID_SIGNAL_CTRL)   // Turning Indicator message
+        else if (canID == CAN_ID_HEARTBEAT){   // Turning Indicator message
+        byte signalStatus = buf[3];
+        int leftSignalStatus = bitRead(signalStatus, 0);
+        int rightSignalStatus = bitRead(signalStatus, 1);
+        int hornStatus = bitRead(signalStatus, 3);
+    
+        if (leftSignalStatus == 1)  //Turning left side Indicators ON
         {
-            if (buf[0] == 1)  //Turning left side Indicators ON
-            {
-                Left_Sig = TRUE;
-                Serial.println("LEFT side lights should start blinking. Turning Indicator ON" );
-            }
-            else if (buf[0] == 2) //Turning right side Indicators ON
-            {
-                Right_Sig = TRUE;
-                Serial.println("RIGHT side lights should start blinking. Turning Indicator ON" );
-            }                    
-            else if (buf[0] == 0) //Turning Indicators OFF
-            {
-                Right_Sig = FALSE;
-                Left_Sig = FALSE;
-                Serial.println("led should stop blinking. Turning Indicator OFF" );
-            }
-        }
-        else if (canID == CAN_ID_HORN)   //Horn message
-        {             
-
-            if(buf[0] == 0)
-            {
-              Serial.println("Horn is off");
-              digitalWrite(HORN1, LOW);
-              digitalWrite(HORN2, LOW);
-            }
-            
-            else if(buf[0] == 1)
-            {
-              Serial.println("Horn is on");
-              digitalWrite(HORN1, HIGH);
-              digitalWrite(HORN2, HIGH);
-            }
+            Left_Sig = TRUE;
+            Serial.println("LEFT side lights should start blinking. Turning Indicator ON" );
+        } else {
+            Left_Sig = FALSE;
         }
         
+        if (rightSignalStatus == 1) //Turning right side Indicators ON
+        {
+            Right_Sig = TRUE;
+            Serial.println("RIGHT side lights should start blinking. Turning Indicator ON" );
+        } else {
+            Right_Sig = FALSE;
+        }    
+        if (hornStatus == 1)
+        {
+          Serial.println("Horn is off");
+          digitalWrite(HORN_PIN, LOW);
+        }
+        else
+        {
+          Serial.println("Horn is on");
+          digitalWrite(HORN_PIN, HIGH);
+        }
+    }
+    
     }
 
     // determining the conditions according to flags
