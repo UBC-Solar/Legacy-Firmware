@@ -13,9 +13,22 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "BMS OVERTEMPERATURE", "LOW STATE OF CHARGE WARNING", "TEMPERATURE EXCEEDED WARNING LEVEL", "CHASSIS LEAKAGE", \
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
+connected = False;
+
+while not connected:
+        print("Enter COM port: ");
+        port_num = input();
+
+        try:
+                ser = serial.Serial('COM' + port_num, 9600);
+                connected = True;
+
+        except:
+                print("COM" + port_num +" is not connected\n");
+        
 root = Tk();
 
-ser = serial.Serial('COM5', 9600);
+
 
 brake = StringVar();
 brake.set("OFF");
@@ -109,6 +122,7 @@ voltage_label.grid(row = 2, column = 4);
 
 battery_frame = Frame(root);
 battery_frame.grid(row = 4, column = 0);
+pack_details = [];
 
 
 for i in range(4):
@@ -119,13 +133,21 @@ for i in range(4):
         detail_frame = Frame(pack_frame);
         detail_frame.grid(row = 1);
         Label(title_frame, text = "Pack " + str(i + 1) + ":", font = 40, width = 50).grid(row = 0);
-        Label(detail_frame, text = "Cell number: " , font = 40, width = 12).grid(row = 0, column = 0);
-        Label(detail_frame, text = "Voltage: " , font = 40, width = 14).grid(row = 0, column = 1);
-        Label(detail_frame, text = "Volt warning: " , font = 40, width = 12).grid(row = 0, column = 2);
-        Label(detail_frame, text = "Shun warning: " , font = 40, width = 12).grid(row = 0, column = 3);
+        Label(detail_frame, text = "Cell: " , font = 40, width = 5).grid(row = 0, column = 0);
+        Label(detail_frame, text = "Voltage: (V)" , font = 40, width = 15).grid(row = 0, column = 1);
+        Label(detail_frame, text = "Volt warning: " , font = 40, width = 15).grid(row = 0, column = 2);
+        Label(detail_frame, text = "Shun warning: " , font = 40, width = 15).grid(row = 0, column = 3);
+        pack_details.append([]);
 
         for j in range(12):
-                Label(detail_frame, text = str(j) + ":", font = 40, width = 12).grid(row = j + 1, column = 0); 
+                Label(detail_frame, text = str(j) + ":", font = 40, width = 12).grid(row = j + 1, column = 0);
+                pack_details[i].append((StringVar(), StringVar(), StringVar(),));
+                pack_details[i][j][0].set("N/A");
+                pack_details[i][j][1].set("OK");
+                pack_details[i][j][2].set("OK");
+                Label(detail_frame, text = pack_details[i][j][0], textvariable = pack_details[i][j][0], font = 40, width = 14).grid(row = j + 1, column = 1);
+                Label(detail_frame, text = pack_details[i][j][1], textvariable = pack_details[i][j][1] , font = 40, width = 12).grid(row = j + 1, column = 2);
+                Label(detail_frame, text = pack_details[i][j][2], textvariable = pack_details[i][j][2] , font = 40, width = 12).grid(row = j + 1, column = 3);
 
 def update(log_msg):
         id = int(log_msg[13:log_msg.find("] ")]);
@@ -158,7 +180,7 @@ def update(log_msg):
                       "A Aux Voltage: " + str(int(values[5])/10.0) + "V Temperature: " + \
                       values[6][:len(values[6]) - 5]);
                 
-        #elif id >= 100 and id < 140:
+       # elif id >= 100 and id < 140:
                 
 
 
