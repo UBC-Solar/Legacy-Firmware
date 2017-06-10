@@ -30,14 +30,9 @@ virtuabotixRTC myRTC(DS1302_SCLK_PIN, DS1302_IO_PIN, DS1302_CE_PIN);
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length);
 void SD_init();
-void printONOFF(int input, bool new_line);
-void printBMSCoreStatus(byte);
-void printBMSCoreError(byte);
 void printLogHeader(int log_type);
 void printHelper(String message, boolean newLine = false);
-void create_table();
-void diag_cursorPosition(int row, int col);
-void  position_log(int);
+
 
 void setup() {  
 /* SERIAL INIT */
@@ -81,60 +76,6 @@ void loop() {
   }
 }
 
-void SD_init() {
-  myRTC.updateTime();
-  int month = myRTC.month;
-  
-  int day = myRTC.dayofmonth;
-  int hour = myRTC.hours;
-  int minute = myRTC.minutes;
-  
-  char logFilenameArr[13];
-  sprintf(logFilenameArr, "%02u%02u%02u%02u.csv", month, day, hour, minute);
-  logFilename = logFilenameArr;
-  
-  Serial.print(F("logFilename: "));
-  Serial.println(logFilename);
-
-  char serialFilenameArr[13];
-  sprintf(serialFilenameArr, "%02u%02u%02u%02u.txt", month, day, hour, minute);
-  serialFilename = serialFilenameArr;
-
-  Serial.print(F("serialFilename: "));
-  Serial.println(serialFilename);
-  
-  Serial.print(F("Initializing SD card..."));
-
-  if (!SD.begin(4)) {
-    Serial.println(F("initialization failed!"));
-    return;
-  }
-  Serial.println(F("initialization done."));
-}
-
-void printHelper(String message, boolean newLine){
-  if(newLine) {
-    
-    serialFile = SD.open(serialFilename, FILE_WRITE);
-    if(serialFile){
-      serialFile.println(message);
-      serialFile.close();
-    } else {
-    //  Serial.println(F("unable to open serial file"));
-    }
-    Serial.println(message);
-  } else {
-    
-    serialFile = SD.open(serialFilename, FILE_WRITE);
-    if(serialFile){
-      serialFile.print(message);
-      serialFile.close();
-    } else {
-   //   Serial.println(F("unable to open serial file"));
-    }
-    Serial.print(message);
-  }
-}
 
 
 
