@@ -138,6 +138,19 @@ void loop()
               Serial.println(" NO ERROR Error from BMS");
               stmp[0]=0+ 2*16;//5th bit is for status = running
               CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, stmp);              
-          }          
+          }     
+          else if (c== 'h')
+          {
+            Serial.println("h");
+            Serial.println(" Heartbeat message from steering wheel");
+            stmp[0] = 200;
+            stmp[1] = 0;
+            stmp[2] = 1;
+            bitSet(stmp[3], 0);
+            CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, stmp);
+            for(int i = 0; i < 8; i++){
+              bitClear(stmp[3], i);   
+            }
+          }
       }
 }

@@ -8,6 +8,7 @@ void msgHandleHeartbeat(uint32_t frame_id, byte* frame_data, byte length) {
   printHelper(String(frame_data[2]));
   printHelper(F("S"));
   printHelper(String(frame_data[3]));
+  printHelper(F("E"),1);
 }
 
 void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length) {
