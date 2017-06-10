@@ -1,3 +1,5 @@
+
+
 /* Current Sensor, Relay, and Array Temperature Sensor Code
  *  UBC Solar
  *  Purpose: 1. To read the current output of the panels on the MPPT, determine whether the batteries are fully charged, and disconnect the panels from the MPPT if necessary
@@ -5,14 +7,13 @@
  *           3. Periodically (every second) send status message containing current levels and temperatures (201, length = 6 bytes)
  *           4. Recieves control message to connect or disconnect solar panels (200, length = 1 byte)
  *           
- *           
- *  Last Update: 06/04/2017
+ *  Last Update: 06/09/2017
  *  Board: Arduino Mega 2560
- *  Analog Pins: A0 to A11
+ *  Analog Pins: A0 to A15
  *  Digital Pins: 
  *  
- *  Output: 1. Current read, I_p +/-20mA, of each of the 6 current sensor
- *          2. Each MPPT relay status 
+ *  Output: 1. Current+/-20mA of each of the 6 current sensors
+ *          2. Status of 6 MPPT relays 
  *          3. Each temperature sensor status
  *          4. Battery charge status
  *          
@@ -30,21 +31,24 @@
  * 198      TEMP SENSORS 2      5              frame_data[0-4] = tempCelsius[5-9]
  * 197      WARNING CURRENT     1              frame_data[0] = statu(0 = OK, 1 = SHIT)
  * 196      WARNING TEMP        1              frame_data[0] = status(0 = OK, 1 = SHIT)
+ * 195      RELAY STATUS        6              frame_data[0-5] = relay[0-5]
  * 
  * 
  */
 
 #include <ubcsolar_can_ids.h>
 #include <SPI.h>
-#include <mcp_can.h>
 #include <math.h>
+#include <mcp_can.h>
+#include <mcp_can_dfs.h>
 
 #define CAN_ID_MPPT_CURRENT 201
 #define CAN_ID_MPPT_CONTROL 200           // External control of relay (independent from kil switch
 #define CAN_ID_MPPT_TEMP1 199             // TSensors 0-4
-#define CAN_ID_MPPT_TEMP2 198             // TSensors 5-9
+#define CAN_ID_MPPT_TEMP2 198             // TSensors 5-9 
+#define CAN_ID_MPPT_CURRENT_WARNING 197
 #define CAN_ID_MPPT_TEMP_WARNING 196     
-#define CAN_ID_MPPT_CURRENT_WARNING 197   
+#define CAN_ID_MPPT_RELAY_STATUS 195  
 #define MAX_CURRENT  8000.0
 #define MAX_TEMP 80.0                     // Celsius
 #define BUS_SPEED CAN_125KBPS
@@ -85,7 +89,7 @@ byte warning_temp = 0;                    // Overtemperature state when LSB is 1
 int data_length_current = 6;              // In bytes
 int data_length_temp = 5;           
 
-const int SPI_CS_PIN = 9;
+const int SPI_CS_PIN = 10;
 
 MCP_CAN CAN(SPI_CS_PIN);
 
@@ -102,7 +106,7 @@ void setup() {
   }
   
   for (int x = 0; x < 10; x++) {
-    pinMode(temp_sensor[i],INPUT);
+    pinMode(temp_sensor[x],INPUT);
   }
   
 // Initialize CAN bus serial communications
@@ -131,10 +135,11 @@ void loop() {
   uint32_t frame_id;
   byte frame_data[8];   // Max length
   
-  if(CAN_MSGAVAIL == CAN.checkRecieve()) {
+  if(CAN_MSGAVAIL == CAN.checkReceive()) {
     CAN.readMsgBuf(&length, frame_data);
-    frame_id = CAN.getCANId();   
+    frame_id = CAN.getCanId();   
     msgHandler(frame_id, frame_data, length);
+    
   }
   
   // reading and displaying current levels, as well as relay logic
@@ -220,10 +225,10 @@ void loop() {
     }
      
   for (int c = 0; c < 6; c++) {
-    frame_data_current[z] = currentOut[c];  
+    frame_data_current[c] = currentOut[c];  
   }
   
-  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT, 0, data_length_current, frame_data_current);  // Don't know if float values will work for this, ALSO look into signed values
+  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT, 0, data_length_current, frame_data_current);  
   CAN.sendMsgBuf(CAN_ID_MPPT_TEMP1, 0, data_length_temp, frame_data_temperature1);
   CAN.sendMsgBuf(CAN_ID_MPPT_TEMP2, 0, data_length_temp, frame_data_temperature2);
 
@@ -246,7 +251,6 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte frame_length) {
     } else {
         Serial.print("unknown message");
       }
-    }
 }
 
 
