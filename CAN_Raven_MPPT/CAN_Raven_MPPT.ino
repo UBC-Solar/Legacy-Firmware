@@ -24,10 +24,13 @@
  * 
  * ID       SYSTEM            LENGTH (BYTE)    FORMAT
  * 
+ * 201      CURRENT SENSORS     6              frame_data[0-5] = currentOut[0-5]
  * 200      RELAY CONTROL       6              frame_data[0-5] = relay [0-5] status (0 = OFF, 1 = ON)
- * 201      SENSOR INFO         10             frame_data[0-9] = temp_sensor [0-9] 
- * 199      WARNING TEMP        10             frame_data[0-9] = status(0 = OK, 1 = SHIT)
- * 198      WARNING CURRENT     6
+ * 199      TEMP SENSORS 1      5              frame_data[0-4] = tempCelsius[0-4]
+ * 198      TEMP SENSORS 2      5              frame_data[0-4] = tempCelsius[5-9]
+ * 197      WARNING CURRENT     1              frame_data[0] = statu(0 = OK, 1 = SHIT)
+ * 196      WARNING TEMP        1              frame_data[0] = status(0 = OK, 1 = SHIT)
+ * 
  * 
  */
 
