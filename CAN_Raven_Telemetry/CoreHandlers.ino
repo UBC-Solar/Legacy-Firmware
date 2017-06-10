@@ -145,5 +145,5 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
       }
       break;
   }
- // logToSD();
+  logToSD();
 }
