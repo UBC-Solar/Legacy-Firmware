@@ -47,7 +47,11 @@ void loop()
       if(Serial.available())
       {
           c = Serial.read();
-          CAN.sendMsgBuf(131 , 0, 8, stmp);
+          Serial.println("Sending signal 1" + String(c) + "0");
+          CAN.sendMsgBuf(100 + (int(c) - 48)*10 , 0, 8, stmp);
+          Serial.println("Sending signal 1" + String(c) + "1");
+          CAN.sendMsgBuf(101 + (int(c) - 48)*10 , 0, 8, stmp);
+          
 
           
       }
