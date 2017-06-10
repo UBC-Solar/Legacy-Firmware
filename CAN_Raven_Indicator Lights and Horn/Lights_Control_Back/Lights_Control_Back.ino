@@ -126,26 +126,25 @@ void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
             Serial.print("\t");
         }
     // ******************* setting flags based on CAN msg *********************   
-    if (frame_id == CAN_ID_HAZARD)  //Emergency Hazard message
+    if (frame_id == CAN_ID_HEARTBEAT)   // Turning Indicator message
     {
-        if (buf[0] == 1)  //Emergency Hazard ON
+        byte signalStatus = buf[3];
+        int leftSignalStatus = bitRead(signalStatus, 0);
+        int rightSignalStatus = bitRead(signalStatus, 1);
+        int hazardSignalStatus = bitRead(signalStatus, 4);
+
+        if (hazardSignalStatus == 1)  //Emergency Hazard ON
         {
             Hazard_flg = TRUE;
             Serial.println("leds should start blinking. Emergency Hazard!!!!" );
             blink_Interval = HAZARD_INTERVAL;   // to make the light blink faster
         }     
-        else if (buf[0] == 0)  //Emergency Hazard OF
+        else  //Emergency Hazard OFF
         {
             Hazard_flg = FALSE;
             Serial.println("leds should stop blinking. Emergency Hazard is over!!" );
             blink_Interval = NORMAL_INTERVAL;   // to make the light blink with normal intervals
         }
-    }
-    else if (frame_id == CAN_ID_HEARTBEAT)   // Turning Indicator message
-    {
-        byte signalStatus = buf[3];
-        int leftSignalStatus = bitRead(signalStatus, 0);
-        int rightSignalStatus = bitRead(signalStatus, 1);
                 
         if (leftSignalStatus)  //Turning left side Indicators ON
         {

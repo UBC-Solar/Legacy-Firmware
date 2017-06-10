@@ -124,59 +124,53 @@ void loop() {
             Serial.print(buf[i]);
             Serial.print("\t");
         }
-
         
-        if (canID == CAN_ID_HAZARD)  //Emergency Hazard message
-        {
-            if (buf[0] == 1)  //Emergency Hazard ON
-            {
-                Hazard = TRUE;
-                Serial.println("leds should start blinking. Emergency Hazard!!!!" );
-                
-                interval = HAZARD_INTERVAL;   // to make the light blink faster
-            }
-                
-            else if (buf[0] == 0)  //Emergency Hazard OF
-            {
-                Hazard = FALSE;
-                Serial.println("leds should stop blinking. Emergency Hazard is over!!" );
-
-                interval = NORMAL_INTERVAL;   // to make the light blink with normal intervals
-            }
-        }
-        
-        else if (canID == CAN_ID_HEARTBEAT){   // Turning Indicator message
-        byte signalStatus = buf[3];
-        int leftSignalStatus = bitRead(signalStatus, 0);
-        int rightSignalStatus = bitRead(signalStatus, 1);
-        int hornStatus = bitRead(signalStatus, 3);
-    
-        if (leftSignalStatus == 1)  //Turning left side Indicators ON
-        {
-            Left_Sig = TRUE;
-            Serial.println("LEFT side lights should start blinking. Turning Indicator ON" );
-        } else {
-            Left_Sig = FALSE;
-        }
-        
-        if (rightSignalStatus == 1) //Turning right side Indicators ON
-        {
-            Right_Sig = TRUE;
-            Serial.println("RIGHT side lights should start blinking. Turning Indicator ON" );
-        } else {
-            Right_Sig = FALSE;
-        }    
-        if (hornStatus == 1)
-        {
-          Serial.println("Horn is off");
-          digitalWrite(HORN_PIN, LOW);
-        }
-        else
-        {
-          Serial.println("Horn is on");
-          digitalWrite(HORN_PIN, HIGH);
-        }
-    }
+        if (canID == CAN_ID_HEARTBEAT){   // Turning Indicator message
+          byte signalStatus = buf[3];
+          int leftSignalStatus = bitRead(signalStatus, 0);
+          int rightSignalStatus = bitRead(signalStatus, 1);
+          int hornStatus = bitRead(signalStatus, 3);
+          int hazardStatus = bitRead(signalStatus, 4);
+  
+          if(hazardStatus == 1)            
+          {
+              Hazard = TRUE;
+              Serial.println("leds should start blinking. Emergency Hazard!!!!" );
+              
+              interval = HAZARD_INTERVAL;   // to make the light blink faster
+          } else {
+              Hazard = FALSE;
+              Serial.println("leds should stop blinking. Emergency Hazard is over!!" );
+  
+              interval = NORMAL_INTERVAL;   // to make the light blink with normal intervals
+          }
+  
+          if (leftSignalStatus == 1)  //Turning left side Indicators ON
+          {
+              Left_Sig = TRUE;
+              Serial.println("LEFT side lights should start blinking. Turning Indicator ON" );
+          } else {
+              Left_Sig = FALSE;
+          }
+          
+          if (rightSignalStatus == 1) //Turning right side Indicators ON
+          {
+              Right_Sig = TRUE;
+              Serial.println("RIGHT side lights should start blinking. Turning Indicator ON" );
+          } else {
+              Right_Sig = FALSE;
+          }    
+          if (hornStatus == 1)
+          {
+            Serial.println("Horn is off");
+            digitalWrite(HORN_PIN, LOW);
+          }
+          else
+          {
+            Serial.println("Horn is on");
+            digitalWrite(HORN_PIN, HIGH);
+          }
+      }
     
     }
 
