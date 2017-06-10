@@ -3,6 +3,7 @@ from tkinter import *
 
 BRAKE_SIGNAL = 0;
 HAZARD_SIGNAL = 1;
+HEARTBEAT_SIGNAL = 6;
 DIR_SIGNAL = 9;
 BMS_CORE_STATUS = 10;
 
@@ -150,20 +151,25 @@ for i in range(4):
                 Label(detail_frame, text = pack_details[i][j][2], textvariable = pack_details[i][j][2] , font = 40, width = 12).grid(row = j + 1, column = 3);
 
 def update(log_msg):
-        id = int(log_msg[13:log_msg.find("] ")]);
+        timestamp_end = log_msg.find("]")+1;
+        data_start = log_msg.find("}")+1;
+        id = int(log_msg[log_msg.find("{")+1:log_msg.find("}")]);#are we sure this parsing will work? think it might cause problems for values between 0-9
 
         if id == BRAKE_SIGNAL:
-                brake.set("ON" if int(log_msg[16]) else "OFF");
-                print(log_msg[2:12] + "[UPDATE] Brake: " + brake.get());
+                brake.set("ON" if int(log_msg[data_start]) else "OFF");
+                print(log_msg[2:timestamp_end] + "[UPDATE] Brake: " + brake.get());
+
+        elif id == HEARTBEAT_SIGNAL:
+
 
         elif id == HAZARD_SIGNAL:
-                hazard.set("ON" if int(log_msg[16]) else "OFF");
-                print(log_msg[2:12] + "[UPDATE] Hazard: " + hazard.get());
+                hazard.set("ON" if int(log_msg[data_start]) else "OFF");
+                print(log_msg[2:timestamp_end] + "[UPDATE] Hazard: " + hazard.get());
         
         elif id == DIR_SIGNAL:
-                left_signal.set("ON" if int(log_msg[16]) else "OFF");
-                right_signal.set("ON" if int(log_msg[17]) else "OFF");
-                print(log_msg[2:12] + "[UPDATE] Left Signal: " + left_signal.get() + "\tRight Signal: " + right_signal.get());
+                left_signal.set("ON" if int(log_msg[data_start]) else "OFF");
+                right_signal.set("ON" if int(log_msg[data_start + 1]) else "OFF");
+                print(log_msg[2:timestamp_end] + "[UPDATE] Left Signal: " + left_signal.get() + "\tRight Signal: " + right_signal.get());
 
         elif id == BMS_CORE_STATUS:
                 values = log_msg.split("] ")[1].split(" ");
@@ -174,7 +180,7 @@ def update(log_msg):
                 current.set(int(values[4]));
                 aux_voltage.set(int(values[5])/10.0);
                 temperature.set(int(values[6][:len(values[6]) - 5]));
-                print(log_msg[2:12] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]") +\
+                print(log_msg[2:timestamp_end] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]") +\
                       " Status: " + STATES[int(values[0])] + " Error: " + ERRORS[int(values[1])] + \
                       " SoC: " + values[2] + "% Voltage: " + values[3] + "V Current: " + values[4] +\
                       "A Aux Voltage: " + str(int(values[5])/10.0) + "V Temperature: " + \

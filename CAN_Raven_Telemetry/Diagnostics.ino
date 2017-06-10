@@ -6,9 +6,9 @@ void printLogHeader(int frame_id) {
   printHelper(String(myRTC.minutes));
   printHelper(F(":"));
   printHelper(String(myRTC.seconds));
-  printHelper(F("]["));
+  printHelper(F("]{"));
   printHelper(String(frame_id));
-  printHelper("] ");
+  printHelper("} ");
 }
 
 
