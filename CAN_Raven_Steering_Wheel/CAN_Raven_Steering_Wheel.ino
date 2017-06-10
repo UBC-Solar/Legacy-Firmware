@@ -29,8 +29,10 @@ FlexCAN CANbus(baudRate);
 static CAN_message_t txmsg, rxmsg;
 
 unsigned long int previousMillis;
+unsigned long int previousSignalCheck;
 bool jumpHeartbeat = false;
-byte stmp[8] = {0,0,0,0,0,0,0,0};
+bool leftSignalOn = false;
+bool rightSignalOn = false;
 
 void setup() {
   Serial.begin(9600);
@@ -61,10 +63,13 @@ void sendHeartbeatMessage() {
 }
 
 void processSignals() {
-  if(digitalRead(LEFT_SIGNAL_PIN)){
+  if(leftSignalOn && rightSignalOn) {
+    bitSet(txmsg.buf[BYTE_SIGNAL_STATUS], 4);
+  }
+  else if(leftSignalOn){
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],0);
   }
-  if(digitalRead(RIGHT_SIGNAL_PIN)){
+  else if(rightSignalOn){
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],1);
   }
   if(analogRead(REGEN_PIN) > REGEN_THRESHOLD){
@@ -101,6 +106,13 @@ void loop() {
   txmsg.buf[BYTE_THROTTLE_ACCEL] = processThrottle();
   txmsg.buf[BYTE_THROTTLE_DIR] = digitalRead(DIRECTION_PIN);
   txmsg.buf[BYTE_THROTTLE_REGEN] = processRegen();
+
+  if(digitalRead(LEFT_SIGNAL_PIN)){
+    leftSignalOn = !leftSignalOn;
+  }
+  if(digitalRead(RIGHT_SIGNAL_PIN)){
+    rightSignalOn = !rightSignalOn;
+  }
 
   processSignals();
   
