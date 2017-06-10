@@ -54,6 +54,33 @@ right_label_caption.grid(row = 0, column = 2);
 right_label = Label(dir_frame, text = right_signal, textvariable = right_signal, font = (40), width = 25);
 right_label.grid(row = 0, column = 3);
 
+acceleration = StringVar();
+acceleration.set("N/A");
+
+regen = StringVar();
+regen.set("N/A");
+
+direction = StringVar();
+direction.set("FORWARD");
+
+motor_frame = Frame(root);
+motor_frame.grid(row = 2, column = 0);
+
+acceleration_label_caption = Label(motor_frame, text = "Acceleration: ", font = (40), width = 25);
+acceleration_label_caption.grid(row = 0, column = 0);
+acceleration_label = Label(motor_frame, text = acceleration, textVariable = acceleration, font = (40), width = 25);
+acceleration_label.grid(row = 0, column = 1);
+
+regen_label_caption = Label(motor_frame, text = "Regen: ", font = (40), width = 25);
+regen_label_caption.grid(row = 0, column = 2);
+regen_label = Label(motor_frame, text = regen, textVariable = regen, font = (40), width = 25);
+regen_label.grid(row = 0, column = 3);
+
+direction_label_caption = Label(motor_frame, text = "Direction: ", font = (40), width = 25);
+direction_label_caption.grid(row = 0, column = 4);
+direction_label = Label(motor_frame, text = direction, textVariable = direction, font = (40), width = 25);
+direction_label.grid(row = 0, column = 5);
+
 status = StringVar();
 status.set("N/A");
 error = StringVar();
@@ -70,7 +97,7 @@ temperature = StringVar();
 temperature.set("N/A");
 
 status_frame1 = Frame(root);
-status_frame1.grid(row = 2, column = 0);
+status_frame1.grid(row = 3, column = 0);
 status_label_caption = Label(status_frame1, text = "Status: ",font = 40, width = 15);
 status_label_caption.grid(row = 0, column = 0);
 status_label = Label(status_frame1, text = status, textvariable = status, font = (40), width = 35);
@@ -82,7 +109,7 @@ error_label = Label(status_frame1, text = error, textvariable = error, font = (4
 error_label.grid(row = 0, column = 3);
 
 status_frame2 = Frame(root);
-status_frame2.grid(row = 3, column = 0);
+status_frame2.grid(row = 4, column = 0);
 soc_label_caption = Label(status_frame2, text = "State of Charge: (%) ", font = 40, width = 20);
 soc_label_caption.grid(row = 1, column = 0);
 soc_label = Label(status_frame2, text = state_of_charge, textvariable = state_of_charge, font = (40), width = 20);
@@ -109,7 +136,7 @@ voltage_label = Label(status_frame2, text = temperature, textvariable = temperat
 voltage_label.grid(row = 2, column = 4);
 
 battery_frame = Frame(root);
-battery_frame.grid(row = 4, column = 0);
+battery_frame.grid(row = 5, column = 0);
 
 
 for i in range(4):
@@ -138,16 +165,17 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[UPDATE] Brake: " + brake.get());
 
         elif id == HEARTBEAT_SIGNAL:
+                acceleration.set(str(double(log_msg[log_msg.find("A")+1:log_msg("R")]) / 255.0 * 100.0));
+                regen.set(str(double(log_msg[log_msg.find("R")+1:log_msg("D")]) / 255.0 * 100.0));
+                direction.set("FORWARD" if int(log_msg[log_msg.find("D")+1:log_msg.find("S")]) else "REVERSE")
 
-
-        elif id == HAZARD_SIGNAL:
-                hazard.set("ON" if int(log_msg[data_start]) else "OFF");
-                print(log_msg[2:timestamp_end] + "[UPDATE] Hazard: " + hazard.get());
-        
-        elif id == DIR_SIGNAL:
-                left_signal.set("ON" if int(log_msg[data_start]) else "OFF");
-                right_signal.set("ON" if int(log_msg[data_start + 1]) else "OFF");
-                print(log_msg[2:timestamp_end] + "[UPDATE] Left Signal: " + left_signal.get() + "\tRight Signal: " + right_signal.get());
+                signals = log_msg[log_msg.find("S")+1:log_msg.find("E")];
+                hazard.set("ON" if int(signals[3]) else "OFF");
+                left_signal.set("ON" if int(signals[7]) else "OFF");
+                right_signal.set("ON" if int(signals[6]) else "OFF");
+                print(log_msg[2:timestamp_end] + "[HEARTBEAT] ");
+                print("Acceleration%: " + acceleration.get() + "\tRegen%: " + regen.get() + "\tDirection: " + direction.get());
+                print("Left signal: " + left_signal.get() + "\tRight signal: " + right_signal.get() + "\tHazard: " + hazard.get());
 
         elif id == BMS_CORE_STATUS:
                 values = log_msg.split("] ")[1].split(" ");
