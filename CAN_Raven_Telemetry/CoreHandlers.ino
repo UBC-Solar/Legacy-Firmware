@@ -1,33 +1,18 @@
+void msgHandleHeartbeat(uint32_t frame_id, byte* frame_data, byte length) {
+  printLogHeader(frame_id);
+  printHelper(F("A"));
+  printHelper(String(frame_data[0]));
+  printHelper(F("R"));
+  printHelper(String(frame_data[1]));
+  printHelper(F("D"));
+  printHelper(String(frame_data[2]));
+  printHelper(F("S"));
+  printHelper(String(frame_data[3]));
+}
+
 void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length) {
   printLogHeader(frame_id);
   printHelper(String(frame_data[0]), 1);
-}
-
-void msgHandleHazard(uint32_t frame_id, byte* frame_data, byte length) {
-  printLogHeader(frame_id);
-  printHelper(String(frame_data[0]), 1);
-}
-
-void msgHandleMotor(uint32_t frame_id, byte* frame_data, byte length) {
-  printLogHeader(frame_id);
-  printHelper(String(frame_data[0]));
-  printHelper(String(frame_data[1]));
-  printHelper(String(frame_data[2]), NEW_LINE);
-}
-
-void msgHandleSpeed(uint32_t frame_id, byte* frame_data, byte length) {
-  unsigned long temp = ((unsigned long) frame_data[0] << 24) | ((unsigned long) frame_data[1] << 16) | ((unsigned long) frame_data[2] << 8) | ((unsigned long) frame_data[3]);
-  printLogHeader(frame_id);
-  printHelper(String(temp), 1);
-}
-
-void msgHandleSignal(uint32_t frame_id, byte* frame_data, byte length) {
-  byte left_signal = frame_data[0] & 0x1;
-  byte right_signal = frame_data[0] & 0x2;
-
-  printLogHeader(frame_id);
-  printHelper(String(left_signal));
-  printHelper(String(right_signal), 1);
 }
 
 void msgHandleCoreStatus(uint32_t frame_id, byte* frame_data, byte length) {
@@ -121,20 +106,11 @@ void logToSD() {
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
   switch (frame_id) {
+    case CAN_ID_HEARTBEAT:
+      msgHandleHeartbeat(frame_id, frame_data, length);
+      break;
     case CAN_ID_BRAKE:
       msgHandleBrake(frame_id, frame_data, length);
-      break;
-    case CAN_ID_HAZARD:
-      msgHandleHazard(frame_id, frame_data, length);
-      break;
-    case CAN_ID_MOTOR_CTRL:
-      msgHandleMotor(frame_id, frame_data, length);
-      break;
-    case CAN_ID_SPEED_SENSOR:
-      msgHandleSpeed(frame_id, frame_data, length);
-      break;
-    case CAN_ID_SIGNAL_CTRL:
-      msgHandleSignal(frame_id, frame_data, length);
       break;
     case CAN_ID_ZEVA_BMS_CORE_STATUS:
       msgHandleCoreStatus(frame_id, frame_data, length);
