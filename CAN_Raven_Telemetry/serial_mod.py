@@ -197,11 +197,11 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[UPDATE] Brake: " + brake.get());
 
         elif id == HEARTBEAT_SIGNAL:
-                acceleration.set(str(double(log_msg[log_msg.find("A")+1:log_msg("R")]) / 255.0 * 100.0));
-                regen.set(str(double(log_msg[log_msg.find("R")+1:log_msg("D")]) / 255.0 * 100.0));
+                acceleration.set((float(log_msg[log_msg.find("A")+1:log_msg.find("R")]) / 255.0 * 100.0));
+                regen.set((float(log_msg[log_msg.find("R")+1:log_msg.find("D")]) / 255.0 * 100.0));
                 direction.set("FORWARD" if int(log_msg[log_msg.find("D")+1:log_msg.find("S")]) else "REVERSE")
 
-                signals = log_msg[log_msg.find("S")+1:log_msg.find("E")];
+                signals = "{0:08b}".format(int(log_msg[log_msg.find("S")+1:log_msg.find("E")]));
                 hazard.set("ON" if int(signals[3]) else "OFF");
                 left_signal.set("ON" if int(signals[7]) else "OFF");
                 right_signal.set("ON" if int(signals[6]) else "OFF");

@@ -107,7 +107,7 @@ void logToSD() {
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
   switch (frame_id) {
-    case 5:
+    case CAN_ID_HEARTBEAT:
       msgHandleHeartbeat(frame_id, frame_data, length);
       break;
     case CAN_ID_BRAKE:

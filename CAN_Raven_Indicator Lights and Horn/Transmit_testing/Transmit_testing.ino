@@ -143,10 +143,10 @@ void loop()
           {
             Serial.println("h");
             Serial.println(" Heartbeat message from steering wheel");
-            stmp[0] = 200;
-            stmp[1] = 0;
+            stmp[0] = 255;
+            stmp[1] = 100;
             stmp[2] = 1;
-            bitSet(stmp[3], 0);
+            bitSet(stmp[3], 4);
             CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, stmp);
             for(int i = 0; i < 8; i++){
               bitClear(stmp[3], i);   
