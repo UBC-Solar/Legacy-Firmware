@@ -1,5 +1,120 @@
 #define ANSI_ESC 0x1B
 
+void printONOFF(int input, bool new_line) {
+  if (input) {
+    printHelper("ON", new_line);
+  }
+  else {
+    printHelper("OFF", new_line);
+  }
+}
+
+void printLogHeader(int log_type) {
+  myRTC.updateTime();
+  printHelper(F("["));
+  printHelper(String(myRTC.hours));
+  printHelper(F(":"));
+  printHelper(String(myRTC.minutes));
+  printHelper(F(":"));
+  printHelper(String(myRTC.seconds));
+  printHelper(F("] ["));
+  switch (log_type) {
+    case 0:
+      printHelper(F("UPDATE] "));
+      return;
+    case 1:
+      printHelper(F("WARNING] "));
+      return;
+    case 2:
+      printHelper(F("ERROR] "));
+      return;
+    case 3:
+      printHelper(F("REQUEST] "));
+      return;
+    default:
+      return;
+  }
+}
+
+void printBMSCoreStatus() {
+  switch(bms_status.status) {
+    case 0:
+      printHelper(F("IDLE"));
+      break;
+    case 1:
+      printHelper(F("PRECHARGING"));
+      break;
+    case 2:
+      printHelper(F("RUNNING"));
+      break;
+   case 3:
+      printHelper(F("CHARGING"));
+      break;
+    case 4:
+      printHelper(F("SETUP"));
+      break;
+    default:
+      break;
+  }
+}
+
+void printBMSCoreError() {
+  switch(bms_status.error) {
+  	case 0:
+  		printHelper(F("NONE"));
+  		break;
+    case 1:
+  		printHelper(F("SETTINGS CORRUPTED"));
+  		break;
+  	case 2:
+  		printHelper(F("OVERCURRENT WARNING"));
+  		break;
+  	case 3:
+  		printHelper(F("OVERCURRENT SHUTDOWN"));
+  		break;
+  	case 4:
+  		printHelper(F("LOW CELL VOLTAGE WARNING"));
+  		break;
+  	case 5:
+  		printHelper(F("LOW CELL VOLTAGE SHUTDOWN"));
+  		break;
+  	case 6:
+  		printHelper(F("HIGH CELL VOLTAGE WARNING"));
+  		break;
+  	case 7:
+  		printHelper(F("HIGH CELL VOLTAGE SHUTDOWN"));
+  		break;
+  	case 8:
+  		printHelper(F("BMS OVERTEMPERATURE"));
+  		break;
+  	case 9:
+  		printHelper(F("LOW STATE OF CHARGE WARNING"));
+  		break;
+  	case 10:
+  		printHelper(F("TEMPERATURE EXCEEDED WARNING LEVEL"));
+  		break;
+  	case 11:
+  		printHelper(F("CHASSIS LEAKAGE"));
+  		break;
+  	case 12:
+  		printHelper(F("AUX BATTERY VOLTAGE BELOW WARNING LEVEL"));
+  		break;
+  	case 13:
+  		printHelper(F("PRECHARGE FAILED"));
+  		break;
+  	case 14:
+  		printHelper(F("CONTATOR SWITCH ERROR"));
+  		break;
+  	case 15:
+  		printHelper(F("CANBUS COMMUNICATION ERROR"));
+  		break;
+    default:
+      break;
+  }
+}
+
+
+/*
 void diag_cursorPosition(int row, int col){
   Serial.write(ANSI_ESC);
   Serial.write('[');
@@ -214,4 +329,10 @@ setTime_error:
   Serial.println(F("INVALID DATE/TIME!"));
   goto setTime_exit;
 }
+*/
+
+
+
+
+
 

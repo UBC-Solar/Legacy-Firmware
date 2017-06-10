@@ -1,5 +1,4 @@
-#include <SdFat.h>
-
+/*
 // change this to match your SD shield or module;
 // Arduino Ethernet shield: pin 4
 // Adafruit SD shields and modules: pin 10
@@ -70,4 +69,4 @@ void log_can(uint32_t id, byte length, const byte *data){
 
   logfile.sync();
 }
-
+*/

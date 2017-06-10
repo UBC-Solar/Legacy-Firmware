@@ -1,5 +1,7 @@
-//ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
 
+
+//ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
+/*
 #include <mcp_can.h>
 #include <SPI.h>
 #include <avr/pgmspace.h>
@@ -58,10 +60,10 @@ DiagMode diagnosticMode = DIAG_OFF;
 DataPacket dataPacket;
 
 void setup() {  
-/* SERIAL INIT */
+/* SERIAL INIT *//*
   Serial.begin(19200);
 
-/* CAN INIT */
+/* CAN INIT *//*
   int canSSOffset = 0;
 
 CAN_INIT:
@@ -81,12 +83,12 @@ CAN_INIT:
     goto CAN_INIT;
   }
 
-/* RTC INIT */
+/* RTC INIT *//*
   // must go after CAN init, or need to call SPI.begin()
   SPI.begin();
   ds1302_init();
 
-/* SD INIT */
+/* SD INIT *//*
   // must go after RTC init
   log_init();
 
@@ -318,4 +320,4 @@ void loop() {
   }
 #endif
 }
-
+*/
