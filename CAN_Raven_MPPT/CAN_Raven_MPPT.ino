@@ -1,40 +1,47 @@
 
 
 /* Current Sensor, Relay, and Array Temperature Sensor Code
- *  UBC Solar
- *  Purpose: 1. To read the current output of the panels on the MPPT, determine whether the batteries are fully charged, and disconnect the panels from the MPPT if necessary
- *           2. Measure the temperature of each of the six arrays 
- *           3. Periodically (every second) send status message containing current levels and temperatures (201, length = 6 bytes)
- *           4. Recieves control message to connect or disconnect solar panels (200, length = 1 byte)
- *           
- *  Last Update: 06/09/2017
- *  Board: Arduino Mega 2560
- *  Analog Pins: A0 to A15
- *  Digital Pins: 
- *  
- *  Output: 1. Current+/-20mA of each of the 6 current sensors
- *          2. Status of 6 MPPT relays 
- *          3. Each temperature sensor status
- *          4. Battery charge status
- *          
- *  Input:  1. Temperature sensor voltage
- *          2. Current sensor voltage
- *          3. Driver controlled kill switch (enitrely mechanical)
- *          4.
+ * Last Update: 06/10/2017
+ * Board: Arduino Mega 2560
  * 
  * 
- * ID       SYSTEM            LENGTH (BYTE)    FORMAT
+ * ID       SYSTEM                           COMPONENT NUMBERS    LENGTH     FORMAT
+ *                                           (INCLUSIVE)          (BYTE) 
+ *                                                                      
  * 
- * 201      CURRENT SENSORS     6              frame_data[0-5] = currentOut[0-5]
- * 200      RELAY CONTROL       6              frame_data[0-5] = relay [0-5] status (0 = OFF, 1 = ON)
- * 199      TEMP SENSORS 1      5              frame_data[0-4] = tempCelsius[0-4]
- * 198      TEMP SENSORS 2      5              frame_data[0-4] = tempCelsius[5-9]
- * 197      WARNING CURRENT     1              frame_data[0] = statu(0 = OK, 1 = SHIT)
- * 196      WARNING TEMP        1              frame_data[0] = status(0 = OK, 1 = SHIT)
- * 195      RELAY STATUS        6              frame_data[0-5] = relay[0-5]
+ * 202      CURRENT SENSORS                  (0 to 3)             8          Each current value is 2 bytes in mA; This ID contains 4 values; First 2 bytes are current sensor #0
+ *                                                                         > format_data[0] = highByte(currentsensor[0]) ; format_data[1] = lowByte(currentsensor[0]) 
+ *                                                                           format_data[2] = highByte(currentsensor[1]) ; format_data[3] = lowByte(currentsensor[1])
+ *                                                                           format_data[4] = highByte(currentsensor[2]) ; format_data[5] = lowByte(currentsensor[2])
+ *                                                                           format_data[6] = highByte(currentsensor[3]) ; format_data[7] = lowByte(currentsensor[3])                                                                                      
  * 
+ * 201      CURRENT SENSORS                  (4 to 5)             4          Same as above; This ID contains 2 values; First 2 bytes are current sensor #4
  * 
- */
+ * 200      (EXTERNAL) RELAY CONTROL         (0 to 5)             6          Receiving this!; Last two bytes are extra; (0 = OPEN, 1 = CLOSED); First byte is relay #0            
+ *                                                                         > format_data[0] = relay [0] ; format_data[1] = relay [1] ; format_data[2] = relay [2] 
+ *                                                                           format_data[3] = relay [3] ; format_data[4] = relay [4] ; format_data[5] = relay [5]  
+ *        
+ * 199      TEMP. SENSORS                    (0 to 3)             8          Each temp. value is 2 bytes in milliCelsius (lol); This ID contains 4 values; First 2 bytes are temp. sensor #0 
+ *                                                                         > format_data[0] = highByte(tempsensor[0]) ; format_data[1] = lowByte(tempsensor[0])
+ *                                                                           format_data[2] = highByte(tempsensor[1]) ; format_data[3] = lowByte(tempsensor[1])
+ *                                                                           format_data[4] = highByte(tempsensor[2]) ; format_data[5] = lowByte(tempsensor[2])
+ *                                                                           format_data[6] = highByte(tempsensor[3]) ; format_data[7] = lowByte(tempsensor[3])
+ *                                                                           
+ * 198      TEMP. SENSORS                    (4 to 7)             8          Same as above; This ID contains 4 values; First 2 bytes are temp. sensor #4
+ * 
+ * 197      TEMP. SENSORS                    (8 to 9)             4          Same as above; This ID contains 2 values; First 2 bytes are temp. sensor #8
+ * 
+ * 196      EXTREME CURRENT WARNING          General              1          Using LSB  -- currently my code only sends a message when LSB is 1
+ *                                                                         > frame_data[0] = warning_current 
+ * 
+ * 195      EXTREME TEMP WARNING             General              1          Using LSB  -- currently my code only sends a message when LSB is 1
+ *                                                                         > frame_data[0] = warning_temp
+ * 
+ * 194      RELAY STATUS                     (0 to 5)             6          Sending status!; Last two bytes are extra; (0 = OPEN, 1 = CLOSED); First byte is relay #0
+ *                                                                         > format_data[0] = relay [0] ; format_data[1] = relay [1] ; format_data[2] = relay [2] 
+ *                                                                           format_data[3] = relay [3] ; format_data[4] = relay [4] ; format_data[5] = relay [5]  
+ * 
+  */
 
 #include <ubcsolar_can_ids.h>
 #include <SPI.h>
@@ -89,6 +96,7 @@ byte frame_data_current2[4] = {0};
 byte frame_data_temperature1[8] = {0};    // Will be sending in two seperate IDs because there is too much data
 byte frame_data_temperature2[8] = {0};
 byte frame_data_temperature3[4] = {0};
+
 byte warning_current = 0;                 // Overcurrent state when LSB is 1
 byte warning_temp = 0;                    // Overtemperature state when LSB is 1
 
