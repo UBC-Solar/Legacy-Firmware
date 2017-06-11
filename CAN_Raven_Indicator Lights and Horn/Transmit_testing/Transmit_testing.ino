@@ -152,5 +152,23 @@ void loop()
               bitClear(stmp[3], i);   
             }
           }
+          else if (c == 'm')
+          {
+            Serial.println("m");
+            Serial.println(" mppt message");
+            unsigned int val1 = 35.23 * 1000;
+            unsigned int val2 = 33.21 * 1000;
+            unsigned int val3 = 30.97 * 1000;
+            unsigned int val4 = 37.21 * 1000;
+            stmp[0] = highByte(val1);
+            stmp[1] = lowByte(val1);
+            stmp[2] = highByte(val2);
+            stmp[3] = lowByte(val2);
+            stmp[4] = highByte(val3);
+            stmp[5] = lowByte(val3);
+            stmp[6] = highByte(val4);
+            stmp[7] = lowByte(val4);
+            CAN.sendMsgBuf(202/*CAN_ID_CURRENT_SENSOR_1*/, 0, 8, stmp);
+          }
       }
 }

@@ -76,24 +76,21 @@ void msgHandleBms(uint32_t frame_id, byte* frame_data, byte length) {
   }
 }
 
-void msgHandleCurrentSensor(uint32_t frame_id, byte* frame_data, byte length) {
+void msgHandleMPPTData(uint32_t frame_id, byte* frame_data, byte length) {
   printLogHeader(frame_id);
   int numValues;
-  if(frame_id == CAN_ID_CURRENT_SENSOR_1) {
-    numValues = 4;
-  } else {
+  if(frame_id == 201/*CAN_ID_CURRENT_SENSOR_2*/ || frame_id == 197/*CAN_ID_TEMP_SENSOR_3*/) {
     numValues = 2;
+  } else {
+    numValues = 4;
   }
 
   for(int i = 0; i < numValues * 2; i += 2) {
-    double currentValue = word(frame_data[i], frame_data[i+1]) / 1000.0;
-    printHelper(currentValue);
+    double sensorValue = word(frame_data[i], frame_data[i+1]) / 1000.0;
+    printHelper(String(sensorValue));
     printHelper(F(" "));
   }
-}
-
-void msgHandleTempSensor(uint32_t frame_id, byte* frame_data, byte length) {
-  
+  printHelper("", 1);
 }
 
 void logToSD() {
@@ -136,20 +133,20 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
     case CAN_ID_ZEVA_BMS_CORE_STATUS:
       msgHandleCoreStatus(frame_id, frame_data, length);
       break;
-    case CAN_ID_CURRENT_SENSOR_1:
-      msgHandleCurrentSensor(frame_id, frame_data, length);
+    case 202://CAN_ID_CURRENT_SENSOR_1:
+      msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_CURRENT_SENSOR_2:
-      msgHandleCurrentSensor(frame_id, frame_data, length);
+    case 201://CAN_ID_CURRENT_SENSOR_2:
+      msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_TEMP_SENSOR_1:
-      msgHandleTempSensor(frame_id, frame_data, length);
+    case 199://CAN_ID_TEMP_SENSOR_1:
+      msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_TEMP_SENSOR_2:
-      msgHandleTempSensor(frame_id, frame_data, length);
+    case 198://CAN_ID_TEMP_SENSOR_2:
+      msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_TEMP_SENSOR_3:
-      msgHandleTempSensor(frame_id, frame_data, length);
+    case 197://CAN_ID_TEMP_SENSOR_3:
+      msgHandleMPPTData(frame_id, frame_data, length);
       break;
     default:
       if (frame_id >= CAN_ID_ZEVA_BMS_BASE && frame_id < 140) {

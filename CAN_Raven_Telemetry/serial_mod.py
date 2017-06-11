@@ -6,6 +6,11 @@ HAZARD_SIGNAL = 1;
 HEARTBEAT_SIGNAL = 6;
 DIR_SIGNAL = 9;
 BMS_CORE_STATUS = 10;
+CURRENT_SIGNAL_1 = 202;
+CURRENT_SIGNAL_2 = 201;
+TEMP_SIGNAL_1 = 199;
+TEMP_SIGNAL_2 = 198;
+TEMP_SIGNAL_3 = 197;
 
 STATES = ["IDLE", "PRECHARGING", "RUNNING", "CHARGING", "SETUP"];
 
@@ -186,11 +191,49 @@ for i in range(4):
                 pack_details[i].append((StringVar(), StringVar(),));
                 Label(pack_temp_frame, text = pack_details[i][12 + k][0], textvariable = pack_details[i][12 + k][0], font = (None, 10,), width = 20).grid(row = k + 1, column = 1);
                 Label(pack_temp_frame, text = pack_details[i][12 + k][1], textvariable = pack_details[i][12 + k][1], font = (None, 10,), width = 20).grid(row = k + 1, column = 2);
+
+mppt_frame = Frame(root, width = 20);
+mppt_frame.grid(row = 5, column = 1);
+mppt_title_frame = Frame(mppt_frame);
+
+mppt_title_frame.grid(row = 0);
+Label(mppt_title_frame, text = "MPPT info", font = (None, 10,), width = 50).grid(row = 0);
+
+mppt_current_frame = Frame(mppt_frame);
+mppt_current_frame.grid(row = 1);
+mppt_current_title_frame = Frame(mppt_current_frame, width = 20);
+mppt_current_title_frame.grid(row = 0);
+Label(mppt_current_title_frame, text = "Current (mA)", font = (None, 10,), width = 15).grid(row = 0);
+current_details = [];
+
+for i in range(6):
+        mppt_current_detail_frame = Frame(mppt_current_frame, width = 20);
+        mppt_current_detail_frame.grid(row = i+1);
+        Label(mppt_current_detail_frame, text = str(i) + ":", font = (None, 10,), width = 10).grid(row = 0, column = 0);
+        current_details.append(StringVar());
+        current_details[i].set("N/A");
+        Label(mppt_current_detail_frame, text = current_details[i], textvariable = current_details[i], font = (None, 10,), width = 10).grid(row = 0, column = 1);
+
+mppt_temp_frame = Frame(mppt_frame);
+mppt_temp_frame.grid(row = 2);
+mppt_temp_title_frame = Frame(mppt_temp_frame, width = 20);
+mppt_temp_title_frame.grid(row = 0);
+Label(mppt_temp_title_frame, text = "Temp (C)", font = (None, 10,), width = 15).grid(row = 0);
+temp_details = [];
+
+for i in range(10):
+        mppt_temp_detail_frame = Frame(mppt_temp_frame, width = 20);
+        mppt_temp_detail_frame.grid(row = i+1);
+        Label(mppt_temp_detail_frame, text = str(i) + ":", font = (None, 10,), width = 10).grid(row = 0, column = 0);
+        temp_details.append(StringVar());
+        temp_details[i].set("N/A");
+        Label(mppt_temp_detail_frame, text = temp_details[i], textvariable = temp_details[i], font = (None, 10,), width = 10).grid(row = 0, column = 1);
+
                 
 def update(log_msg):
         timestamp_end = log_msg.find("]")+1;
         data_start = log_msg.find("}")+2;
-        id = int(log_msg[log_msg.find("{")+1:log_msg.find("}")]);#are we sure this parsing will work? think it might cause problems for values between 0-9
+        id = int(log_msg[log_msg.find("{")+1:log_msg.find("}")]);
 
         if id == BRAKE_SIGNAL:
                 brake.set("ON" if int(log_msg[data_start]) else "OFF");
@@ -223,6 +266,20 @@ def update(log_msg):
                       " SoC: " + values[2] + "% Voltage: " + values[3] + "V Current: " + values[4] +\
                       "A Aux Voltage: " + str(int(values[5])/10.0) + "V Temperature: " + \
                       values[6][:len(values[6]) - 5]);
+
+        elif id == CURRENT_SIGNAL_1:
+                currents = log_msg.split();
+                print(log_msg[2:timestamp_end] + "[CURRENT1] ");
+                for i in range(4):
+                        current_details[i].set(currents[i+1]);
+                        print("Current sensor #" + str(i) + ": " + current_details[i].get() + "mA");
+
+        elif id == CURRENT_SIGNAL_2:
+                currents = log_msg.split();
+                print(log_msg[2:timestamp_end] + "[CURRENT2] ");
+                for i in range(2):
+                        current_details[i+4].set(currents[i+1]);
+                        print("Current sensor #" + str(i) + ": " + current_details[i+4].get() + "mA");
                 
         elif id >= 100 and id < 140:
                 pack_num = int(id%100/10);
