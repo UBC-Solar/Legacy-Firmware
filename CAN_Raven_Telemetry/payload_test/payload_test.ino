@@ -10,6 +10,7 @@
 // the cs pin of the version after v1.1 is default to D9
 // v0.9b and v1.0 is default D10
 const int SPI_CS_PIN = 9;
+bool manual = false;
 
 MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
 
@@ -47,12 +48,56 @@ void loop()
       if(Serial.available())
       {
           c = Serial.read();
-          Serial.println("Sending signal 1" + String(c) + "0");
-          CAN.sendMsgBuf(100 + (int(c) - 48)*10 , 0, 8, stmp);
-          Serial.println("Sending signal 1" + String(c) + "1");
-          CAN.sendMsgBuf(101 + (int(c) - 48)*10 , 0, 8, stmp);
-          
+          int pack = int(c) - 48;
+          if (pack >  3) {
+            Serial.println("\n\nRunning with manual payload:");
+            printPayload(stmp);
+            manual = true;
+            pack %= 4;
+          }
+          else {
+            Serial.println("\n\nRunning with random payloads:");
+             for (int i = 0; i < 8; i++) {
+              stmp[i] = millis()%255;
+            }
+          }
+          Serial.println("================================================");
+          Serial.println("Sending signal 10");
+          CAN.sendMsgBuf(10, 0, 8,stmp);
+          if (!manual) {
+            Serial.println("Payload:");
+            printPayload(stmp);
+          }
+          delay(1000);
 
-          
+          for (int i =0 ; i < 6 ; i++) {
+            Serial.println("================================================");
+            Serial.println("Sending signal 1" + String(pack) + String(i));
+            if (!manual) {
+             for (int i = 0; i < 8; i++) {
+              stmp[i] = millis()%255;
+              delay(10);
+               }
+              Serial.println("Payload:");
+          printPayload(stmp);
+            }
+            CAN.sendMsgBuf(100 + pack*10 , 0, 8, stmp);
+           delay(1000);
+      
       }
+      }
+      Serial.flush();
 }
+
+void printPayload(byte stmp[]) {
+  for (int i = 0; i < 8; i++) {
+     for(byte mask = 0x80; mask; mask >>= 1){
+   if(mask  & stmp[i])
+       Serial.print('1');
+   else
+       Serial.print('0');
+ }
+ Serial.println();
+}
+}
+
