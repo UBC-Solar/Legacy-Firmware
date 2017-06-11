@@ -56,9 +56,11 @@ void loop()
             pack %= 4;
           }
           else {
+            manual = false;
             Serial.println("\n\nRunning with random payloads:");
              for (int i = 0; i < 8; i++) {
               stmp[i] = millis()%255;
+              delay(10);
             }
           }
           Serial.println("================================================");
@@ -81,7 +83,7 @@ void loop()
               Serial.println("Payload:");
           printPayload(stmp);
             }
-            CAN.sendMsgBuf(100 + pack*10 , 0, 8, stmp);
+            CAN.sendMsgBuf(100 + pack*10 + i, 0, 8, stmp);
            delay(1000);
       
       }
