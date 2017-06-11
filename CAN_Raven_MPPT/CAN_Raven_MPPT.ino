@@ -277,11 +277,13 @@ for ( int x = 4, z = 0; (x < 6) && (z < 4); z+2, x++) {
   CAN.sendMsgBuf(CAN_ID_MPPT_TEMP3,0,4,frame_data_temperature3);
 
   if (bitRead(warning_current,0) == 1) {
-  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT_WARNING, 0 , 1 , warning_current); }
+    byte* warning_current_pointer = &warning_current;
+    CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT_WARNING, 0 , 1 , warning_current_pointer); 
+  }
   
   if (bitRead(warning_temp,0) == 1) {
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_WARNING, 0 , 1 , warning_temp); } 
-
+    byte* warning_temp_pointer = &warning_temp;
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_WARNING, 0 , 1 , warning_temp_pointer); } 
   
   delay(1000);
 }
