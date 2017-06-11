@@ -271,17 +271,38 @@ def update(log_msg):
 
         elif id == CURRENT_SIGNAL_1:
                 currents = log_msg.split();
-                print(log_msg[2:timestamp_end] + "[CURRENT1] ");
+                print(log_msg[2:timestamp_end] + "[MPPT CURRENT1] ");
                 for i in range(4):
                         current_details[i].set(currents[i+1]);
                         print("Current sensor #" + str(i) + ": " + current_details[i].get() + "mA");
 
         elif id == CURRENT_SIGNAL_2:
                 currents = log_msg.split();
-                print(log_msg[2:timestamp_end] + "[CURRENT2] ");
+                print(log_msg[2:timestamp_end] + "[MPPT CURRENT2] ");
                 for i in range(2):
                         current_details[i+4].set(currents[i+1]);
-                        print("Current sensor #" + str(i) + ": " + current_details[i+4].get() + "mA");
+                        print("Current sensor #" + str(i+4) + ": " + current_details[i+4].get() + "mA");
+
+        elif id == TEMP_SIGNAL_1:
+                temps = log_msg.split();
+                print(log_msg[2:timestamp_end] + "[MPPT TEMP1] ");
+                for i in range(4):
+                        temp_details[i].set(temps[i+1]);
+                        print("Temp sensor #" + str(i) + ": " + temp_details[i].get() + "C");
+
+        elif id == TEMP_SIGNAL_2:
+                temps = log_msg.split();
+                print(log_msg[2:timestamp_end] + "[MPPT TEMP2] ");
+                for i in range(4):
+                        temp_details[i+4].set(temps[i+1]);
+                        print("Temp sensor #" + str(i+4) + ": " + temp_details[i+4].get() + "C");
+
+        elif id == TEMP_SIGNAL_3:
+                temps = log_msg.split();
+                print(log_msg[2:timestamp_end] + "[MPPT TEMP3] ");
+                for i in range(2):
+                        temp_details[i+8].set(temps[i+1]);
+                        print("Temp sensor #" + str(i+8) + ": " + temp_details[i+8].get() + "C");
                 
         elif id >= 100 and id < 140:
                 pack_num = int(id%100/10);
