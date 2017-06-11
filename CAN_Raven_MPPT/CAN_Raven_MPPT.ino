@@ -42,13 +42,15 @@
 #include <mcp_can.h>
 #include <mcp_can_dfs.h>
 
-#define CAN_ID_MPPT_CURRENT 201
+#define CAN_ID_MPPT_CURRENT1 202          //0-3
+#define CAN_ID_MPPT_CURRENT2 201          //4-5
 #define CAN_ID_MPPT_CONTROL 200           // External control of relay (independent from kil switch
-#define CAN_ID_MPPT_TEMP1 199             // TSensors 0-4
-#define CAN_ID_MPPT_TEMP2 198             // TSensors 5-9 
-#define CAN_ID_MPPT_CURRENT_WARNING 197
-#define CAN_ID_MPPT_TEMP_WARNING 196     
-#define CAN_ID_MPPT_RELAY_STATUS 195  
+#define CAN_ID_MPPT_TEMP1 199             // 0-3
+#define CAN_ID_MPPT_TEMP2 198             // 4-7
+#define CAN_ID_MPPT_TEMP3 197             // 8-9 
+#define CAN_ID_MPPT_CURRENT_WARNING 196
+#define CAN_ID_MPPT_TEMP_WARNING 195     
+#define CAN_ID_MPPT_RELAY_STATUS 194  
 #define MAX_CURRENT  8000.0
 #define MAX_TEMP 80.0                     // Celsius
 #define BUS_SPEED CAN_125KBPS
@@ -63,6 +65,7 @@ const float uC_OFFSET[6] = {-2.667,-2.661,-2.619,-2.674,-2.676,-2.663};
 float currentValue[6] = {0};
 float currentVoltageOut[6] = {0};
 float currentOut[6] = {0};
+int currentCAN[6] = {0};
 
 // TEMPERATURE SENSOR CONSTANTS
 const float TEMP_BASE_VOLTAGE [10] = {603,1000,1000,1000,1000,1000,0,0,0,0};
@@ -73,6 +76,7 @@ float temp2Voltage[10] = {0};
 float tempConvert[10] =  {0};                     
 float tempCelsius[10] =  {0};    
 float tempF[10] = {0};
+int tempCAN[10] = {0};
 
 // PIN CONFIG
 const int panel[6] = {A0,A1,A2,A3,A4,A5};                                         // Analog input pin that the current sensor for the panel input of MPPT 0 is attached to
@@ -80,14 +84,13 @@ const int relay[6] = {0,1,2,3,4,5};                                             
 const int temp_sensor[10] = {A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
  
 // CAN SETUP -- figure out correct sizes
-byte frame_data_current[6] = {0};
-byte frame_data_temperature1[5] = {0};    // Will be sending in two seperate IDs because there is too much data
-byte frame_data_temperature2[5] = {0};
+byte frame_data_current1[8] = {0};
+byte frame_data_current2[4] = {0};
+byte frame_data_temperature1[8] = {0};    // Will be sending in two seperate IDs because there is too much data
+byte frame_data_temperature2[8] = {0};
+byte frame_data_temperature3[4] = {0};
 byte warning_current = 0;                 // Overcurrent state when LSB is 1
 byte warning_temp = 0;                    // Overtemperature state when LSB is 1
-
-int data_length_current = 6;              // In bytes
-int data_length_temp = 5;           
 
 const int SPI_CS_PIN = 10;
 
@@ -147,6 +150,9 @@ void loop() {
     currentValue[i] = analogRead(panel[i]);
     currentVoltageOut[i] = float((currentValue[i] / 100.0) + uC_OFFSET[i]) - ZERO_CURRENT_VOLTAGE[i];      // Convert value read in sensorValue to the voltage value output of the current sensor - 2.543
     currentOut[i] = currentVoltageOut[i] / CURRENT_CONVERSION_FACTOR[i] * 1000.0 / 2.0;                    // Convert voltage value to current value, I_p, read from the current sensor
+    
+    // for CAN
+    currentCAN[i] = int (currentOut[i] * 1000.0);
    
     Serial.print("MPPT");
     Serial.print(i);
@@ -187,7 +193,10 @@ void loop() {
     tempConvert[j] = (temp2Voltage[j]/0.01) - 273.15;                        // Converting voltage reading into temperature   
     tempCelsius[j] = baseCelsius[j] + (baseCelsius[j] - tempConvert[j]);     // Adding difference -- since voltage decreases as temperature increases
     tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird american units
- 
+   
+   // for CAN
+    tempCAN[j] = int (tempCelsius[j]*1000.0);
+
     Serial.print("LM335Z");
     Serial.print(j);
     Serial.print(": Analog Voltage (mV):");
@@ -216,27 +225,63 @@ void loop() {
     }
   }
 
-// handling data to be sent through CAN bus shield
+// Sending data through CAN bus shield  -- Each value is 2 bytes and so multiple IDs are being used to send all the data
+// 6 Current Values
+// 10 Temperature Values
 
-  // assigning frame data array with measured values
-  for (int z = 0; z < 5; z++) {
-    frame_data_temperature1[z] = tempCelsius[z];      //0-4
-    frame_data_temperature2[z+5] = tempCelsius[z+5];  //5-9
-    }
-     
-  for (int c = 0; c < 6; c++) {
-    frame_data_current[c] = currentOut[c];  
+for ( int x = 0, z = 0; (x < 4) && (z < 8); z+2, x++) {
+    frame_data_temperature1[z] = highByte(tempCAN[x]); 
+    frame_data_temperature1[z+1] = lowByte(tempCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_temperature1[z]);
+    Serial.print("\n");
+  }
+
+for ( int x = 4, z = 0; (x < 8) && (z < 8); z+2, x++) {
+    frame_data_temperature2[z] = highByte(tempCAN[x]); 
+    frame_data_temperature2[z+1] = lowByte(tempCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_temperature2[z]);
+    Serial.print("\n");
+  }
+
+for ( int x = 8, z = 0; (x < 10) && (z < 4); z+2, x++) {
+    frame_data_temperature3[z] = highByte(tempCAN[x]); 
+    frame_data_temperature3[z+1] = lowByte(tempCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_temperature3[z]);
+    Serial.print("\n");
+  }
+
+for ( int x = 0, z = 0; (x < 4) && (z < 8); z+2, x++) {
+    frame_data_current1[z] = highByte(currentCAN[x]); 
+    frame_data_current1[z+1] = lowByte(currentCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_current1[z]);
+    Serial.print("\n");
+  }
+
+
+for ( int x = 4, z = 0; (x < 6) && (z < 4); z+2, x++) {
+    frame_data_current2[z] = highByte(currentCAN[x]); 
+    frame_data_current2[z+1] = lowByte(currentCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_current2[z]);
+    Serial.print("\n");
   }
   
-  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT, 0, data_length_current, frame_data_current);  
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP1, 0, data_length_temp, frame_data_temperature1);
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP2, 0, data_length_temp, frame_data_temperature2);
+  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT1,0,8,frame_data_current1); 
+  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT2,0,4,frame_data_current2); 
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP1,0,8,frame_data_temperature1);
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP2,0,8,frame_data_temperature2);
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP3,0,4,frame_data_temperature3);
 
   if (bitRead(warning_current,0) == 1) {
   CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT_WARNING, 0 , 1 , warning_current); }
   
   if (bitRead(warning_temp,0) == 1) {
   CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_WARNING, 0 , 1 , warning_temp); } 
+
   
   delay(1000);
 }
