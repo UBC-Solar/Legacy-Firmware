@@ -189,6 +189,8 @@ for i in range(4):
         for k in range(2):
                 Label(pack_temp_frame, text = "Temperature " + str(k) + ": ", font = (None, 10,), width = 10).grid(row = k + 1);
                 pack_details[i].append((StringVar(), StringVar(),));
+                pack_details[i][k + 12][0].set("N/A");
+                pack_details[i][k + 12][1].set("OK");
                 Label(pack_temp_frame, text = pack_details[i][12 + k][0], textvariable = pack_details[i][12 + k][0], font = (None, 10,), width = 20).grid(row = k + 1, column = 1);
                 Label(pack_temp_frame, text = pack_details[i][12 + k][1], textvariable = pack_details[i][12 + k][1], font = (None, 10,), width = 20).grid(row = k + 1, column = 2);
 
@@ -240,11 +242,11 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[UPDATE] Brake: " + brake.get());
 
         elif id == HEARTBEAT_SIGNAL:
-                acceleration.set((float(log_msg[log_msg.find("A")+1:log_msg.find("R")]) / 255.0 * 100.0));
-                regen.set((float(log_msg[log_msg.find("R")+1:log_msg.find("D")]) / 255.0 * 100.0));
+                acceleration.set(str(double(log_msg[log_msg.find("A")+1:log_msg("R")]) / 255.0 * 100.0));
+                regen.set(str(double(log_msg[log_msg.find("R")+1:log_msg("D")]) / 255.0 * 100.0));
                 direction.set("FORWARD" if int(log_msg[log_msg.find("D")+1:log_msg.find("S")]) else "REVERSE")
 
-                signals = "{0:08b}".format(int(log_msg[log_msg.find("S")+1:log_msg.find("E")]));
+                signals = log_msg[log_msg.find("S")+1:log_msg.find("E")];
                 hazard.set("ON" if int(signals[3]) else "OFF");
                 left_signal.set("ON" if int(signals[7]) else "OFF");
                 right_signal.set("ON" if int(signals[6]) else "OFF");
@@ -253,8 +255,8 @@ def update(log_msg):
                 print("Left signal: " + left_signal.get() + "\tRight signal: " + right_signal.get() + "\tHazard: " + hazard.get());
 
         elif id == BMS_CORE_STATUS:
-                values = log_msg.split("] ")[1].split(" ");
-                status.set(STATES[int(values[0])]);
+                values = log_msg.split("} ")[1].split(" ");
+                status.set(STATES[int(values[0])%4]); #mod 4 is there just for testing. remove after
                 error.set(ERRORS[int(values[1])]);
                 state_of_charge.set(int(values[2]));
                 voltage.set(int(values[3]));
@@ -262,10 +264,10 @@ def update(log_msg):
                 aux_voltage.set(int(values[5])/10.0);
                 temperature.set(int(values[6][:len(values[6]) - 5]));
                 print(log_msg[2:timestamp_end] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]") +\
-                      " Status: " + STATES[int(values[0])] + " Error: " + ERRORS[int(values[1])] + \
+                      " Status: " + status.get() + " Error: " + ERRORS[int(values[1])] + \
                       " SoC: " + values[2] + "% Voltage: " + values[3] + "V Current: " + values[4] +\
-                      "A Aux Voltage: " + str(int(values[5])/10.0) + "V Temperature: " + \
-                      values[6][:len(values[6]) - 5]);
+                        "A Aux Voltage: " + aux_voltage.get() + "V Temperature: " + \
+                        temperature.get());
 
         elif id == CURRENT_SIGNAL_1:
                 currents = log_msg.split();
@@ -283,10 +285,25 @@ def update(log_msg):
                 
         elif id >= 100 and id < 140:
                 pack_num = int(id%100/10);
-                print(int(id%10%2));
+                print(int(id%10));
                 if id%10%2 is 0:
-                        print(log_msg[2:timestamp_end] + "[REQUEST] " + "Pack " + str(pack_num) + (" Status" if id%10 == 0 else(" Voltages of cells 0-5" if id%10 == 3 else "Voltages of cells of 6-11")) + " Requested");
+                        print(log_msg[2:timestamp_end] + "[REQUEST] " + "Pack " + str(pack_num) + (" Status" if id%10 == 0 else(" Voltages of cells 0-5" if id%10 == 2 else " Voltages of cells of 6-11")) + " Requested");
 
+                elif id%10 is 1:
+                        values = log_msg.split(" ");
+
+                        for i in range(12):
+                                pack_details[pack_num][i][1].set("OK" if int(values[i + 1]) == 0 else ("LOW" if int(int(values[i + 1])/100) == 1 else "HIGH"));
+                                pack_details[pack_num][i][2].set("OK" if int(values[i + 1])%10 == 0 else "SHUN");
+                        pack_details[pack_num][12][1].set("OK" if int(values[13]) == 0 else "LOW" if int(values[13]) == 1 else "HIGH");
+                        pack_details[pack_num][13][1].set("OK" if int(values[14][0]) == 0 else "LOW" if int(values[14][0]) == 2 else "HIGH");
+
+                elif id%10 in [3,5]:
+                        half = 0 if id%10 == 3 else 1;
+                        values = log_msg.split(" ");
+                        for i in range(6):
+                                pack_details[pack_num][i + half*6][0].set(values[i + 1]);
+                        pack_details[pack_num][12 + half][0].set(values[7][:len(values[7]) - 5]);
 
 def wait():
         log_msg = str(ser.readline());
