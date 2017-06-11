@@ -1,19 +1,79 @@
 //ZEVA PROTOCOL AT http://zeva.com.au/Products/datasheets/BMS12_CAN_Protocol.pdf
-#include "CAN_Raven_Motor.h"
+
+#include <mcp_can.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <ubcsolar_can_ids.h>
 
-void setup() {
+#define CAN_SS 9
+#define RHEO_THROTTLE_SS 8
+#define RHEO_REGEN_SS 7
+
+/* relays, from top to bottom */
+#define RELAY1PIN 4
+#define RELAY2PIN 5
+#define RELAY3PIN 6
+#define RELAY4PIN 3
+
+#define FORWARD_SWITCH RELAY1PIN
+#define REVERSE_SWITCH RELAY2PIN
+#define SEAT_SWITCH RELAY3PIN
+#define FS1_SWITCH RELAY4PIN
+
+#define DIR_SWITCH_RAMP_STEP_TIME_MS 10
+
+#define BUS_SPEED CAN_125KBPS
+
+MCP_CAN CAN(CAN_SS);
+
+byte target_throttle = 0;
+byte target_regen = 0;
+byte target_dir = 0;
+byte current_throttle = 0;
+byte current_regen = 0;
+byte current_dir = 0;
+byte in_dir_switch = 0;
+byte dir_switch_last_ramp_time = 0;
+byte brake_on = 0;
+unsigned long int lastMotorCtrlRxTime = 0;
+
+union floatbytes {
+  byte b[4];
+  float f;
+} speedHz;
+
+
+void setup() {  
+/* SERIAL INIT */
   Serial.begin(115200);
-  lastHeartbeatMillis = millis();
-  canDriver.begin(); // also inits SPI, we believe
+
+/* CAN INIT */
+  int canSSOffset = 0;
+
+CAN_INIT:
+
+  if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate = 125k
+  {
+    Serial.println("CAN BUS Shield init ok!");
+  }
+  else
+  {
+    Serial.println("CAN BUS Shield init fail");
+    Serial.print("Init CAN BUS Shield again with SS pin ");
+    Serial.println(CAN_SS + canSSOffset);
+    delay(100);
+    canSSOffset ^= 1;
+    CAN = MCP_CAN(CAN_SS + canSSOffset);
+    goto CAN_INIT;
+  }
 
 /* RHEO INIT */
   pinMode(RHEO_THROTTLE_SS,OUTPUT);
   pinMode(RHEO_REGEN_SS,OUTPUT);
   digitalWrite(RHEO_THROTTLE_SS, HIGH);
   digitalWrite(RHEO_REGEN_SS, HIGH);
+  //SPI init already done in CAN INIT
+
   setRheo(RHEO_THROTTLE_SS, 0);
   setRheo(RHEO_REGEN_SS, 0); // this code will be replaced with power on default setting in rheo EEPROM.
 
@@ -42,37 +102,63 @@ void setup() {
   Serial.println("fs1 on");
   digitalWrite(FS1_SWITCH, HIGH);
   delay(1000);
+  
 }
 
-// Does the rheo actually require us to use the 2-byte spi transfers?
-void setRheo(uint8_t controlPin, uint8_t value) {
-  digitalWrite(controlPin, LOW);
+void msgHandleMotorCtrl(uint32_t frame_id, byte *frame_data, byte length){
+  target_throttle = frame_data[0];
+  target_regen = frame_data[1];
+  target_dir = frame_data[2];
+  lastMotorCtrlRxTime = millis();
+  Serial.print("target throttle: ");
+  Serial.print(frame_data[0]);
+  Serial.print(" target regen: ");
+  Serial.print(frame_data[1]);
+  Serial.print(" target direction: ");
+  Serial.println(frame_data[2]);
+}
+
+void msgHandleBrake(uint32_t frame_id, byte *frame_data, byte length){
+  brake_on = frame_data[0];
+}
+
+void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
+   if(frame_id == CAN_ID_HEARTBEAT){
+     msgHandleMotorCtrl(frame_id, frame_data, length);
+   }else if(frame_id == CAN_ID_BRAKE){
+     msgHandleBrake(frame_id, frame_data, length);
+   }else{
+     Serial.print("unknown msg ");
+   }
+}
+
+void setRheo(int ss, byte r){
+  digitalWrite(ss,LOW);
   SPI.transfer(0x00);
-  SPI.transfer(value & 0xFF);
-  digitalWrite(controlPin, HIGH);
+  SPI.transfer(r&0xff);
+  digitalWrite(ss,HIGH);
   delayMicroseconds(1);
 }
 
-void motorSwitchDir(uint8_t dir) {
+void motorSwitchDir(int dir){
   // this function should only be called when the direction changes
+  // 0=FWD, 1=REV
   digitalWrite(FORWARD_SWITCH, LOW);
   digitalWrite(REVERSE_SWITCH, LOW);
   delay(100);
-  if (dir == DIRECTION_FORWARD) {
+  if(dir == 0)
     digitalWrite(FORWARD_SWITCH, HIGH);
-  } else if (dir == DIRECTION_REVERSE) {
+  else if(dir == 1)
     digitalWrite(REVERSE_SWITCH, HIGH);
-  }
 }
 
-void motorCtrlRun() {
-
-  if (current_dir != target_dir) {
-    transitioning_direction = true;
-    dir_switch_counter = millis();
+void motorCtrlRun(){
+  if(current_dir != target_dir){
+    in_dir_switch = 1;
+    dir_switch_last_ramp_time = millis();
   }
-  if (transitioning_direction) {
-    if (millis() - dir_switch_counter > DIR_SWITCH_MS){
+  if(in_dir_switch){ // in direction transition
+    if(millis() - dir_switch_last_ramp_time > DIR_SWITCH_RAMP_STEP_TIME_MS){
       if(current_dir != target_dir){ // ramp down
         current_throttle--;
         setRheo(RHEO_THROTTLE_SS, current_throttle);
@@ -84,15 +170,15 @@ void motorCtrlRun() {
         current_throttle++;
         setRheo(RHEO_THROTTLE_SS, current_throttle);
         if(current_throttle >= target_throttle){
-          transitioning_direction = 0;
+          in_dir_switch = 0;
         }
       }
-      dir_switch_counter += DIR_SWITCH_MS;
+      dir_switch_last_ramp_time += DIR_SWITCH_RAMP_STEP_TIME_MS;
     }
   }else{
     current_throttle = target_throttle;
     if(brake_on)
-      current_throttle = 0;
+      current_throttle = 0; 
     current_regen = target_regen;
     setRheo(RHEO_THROTTLE_SS, current_throttle);
     setRheo(RHEO_REGEN_SS, current_regen);
@@ -100,41 +186,23 @@ void motorCtrlRun() {
 }
 
 void loop() {
-  Message message;
-  HeartbeatMessage* heartbeat;
-  static uint32_t millisSinceHeartbeat;
-  static const uint32_t cutoffPeriod = 2*HeartbeatMessage::HEARTBEAT_PERIOD;
-  millisSinceHeartbeat += millis() - lastHeartbeatMillis;
-  lastHeartbeatMillis = millis();
+  
+  byte length;
+  uint32_t frame_id;
+  byte frame_data[8];
 
-  if (canDriver.checkMessage(message)) {
-    switch (message._frameId) {
-      case CAN_ID_HANDBRAKE:
-        // turn off the motor
-        target_throttle = 0;
-        break;
-      case CAN_ID_HEARTBEAT:
-        // reset timer
-        millisSinceHeartbeat = 0;
-        heartbeat = static_cast<HeartbeatMessage*>(&message);
-        // set target values according to message contents
-        target_throttle = heartbeat->getForwardThrottle();
-        target_regen = heartbeat->getRegen();
-        target_dir = heartbeat->getThrottleDirection();
-        break;
-      default:
-        // ignore it, we don't care about other messages
-        break;
-    }
+  if(CAN_MSGAVAIL == CAN.checkReceive()){
+    CAN.readMsgBuf(&length, frame_data);
+    frame_id = CAN.getCanId();
+
+    msgHandler(frame_id, frame_data, length);
   }
 
-  if (millisSinceHeartbeat > cutoffPeriod) {
-    // panic, send error message, we've missed at least one heartbeat
-    CommErrorMessage msg(CommErrorMessage::SYSTEM_MOTOR_CONTROL, millisSinceHeartbeat);
-    canDriver.send(msg);
-    // also turn off the motor
+  // stop motor if the commander is lost
+  if(millis() - lastMotorCtrlRxTime > 500){
     target_throttle = 0;
   }
-
+  
   motorCtrlRun();
 }
+

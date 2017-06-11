@@ -113,7 +113,7 @@ START_INIT:
 
 }
 
-void msgHandler(unsigned char frame_id,unsigned char* frame_data, unsigned char frame_length)
+void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
 {
     // ******************* Printing the recieved CAN msg *********************
     Serial.println("------------------------------------------");
@@ -122,52 +122,57 @@ void msgHandler(unsigned char frame_id,unsigned char* frame_data, unsigned char 
     Serial.print("Frame Data:  ");
         for(int i = 0; i<frame_length; i++)    // print the data
         {
-            Serial.print(frame_data[i]);
+            Serial.print(buf[i]);
             Serial.print("\t");
         }
     // ******************* setting flags based on CAN msg *********************   
-    if (frame_id == CAN_ID_HAZARD)  //Emergency Hazard message
+    if (frame_id == CAN_ID_HEARTBEAT)   // Turning Indicator message
     {
-        if (frame_data[0] == 1)  //Emergency Hazard ON
+        byte signalStatus = buf[3];
+        int leftSignalStatus = bitRead(signalStatus, 0);
+        int rightSignalStatus = bitRead(signalStatus, 1);
+        int hazardSignalStatus = bitRead(signalStatus, 4);
+
+        if (hazardSignalStatus == 1)  //Emergency Hazard ON
         {
             Hazard_flg = TRUE;
             Serial.println("leds should start blinking. Emergency Hazard!!!!" );
             blink_Interval = HAZARD_INTERVAL;   // to make the light blink faster
         }     
-        else if (frame_data[0] == 0)  //Emergency Hazard OF
+        else  //Emergency Hazard OFF
         {
             Hazard_flg = FALSE;
             Serial.println("leds should stop blinking. Emergency Hazard is over!!" );
             blink_Interval = NORMAL_INTERVAL;   // to make the light blink with normal intervals
         }
-    }
-    else if (frame_id == CAN_ID_SIGNAL_CTRL)   // Turning Indicator message
-    {
-        if (frame_data[0] == 1)  //Turning left side Indicators ON
+                
+        if (leftSignalStatus)  //Turning left side Indicators ON
         {
             Left_Sig_flg = TRUE;
             Serial.println("LEFT side lights should start blinking. Turning Indicator ON" );
+        } else {
+            Left_Sig_flg = FALSE;
         }
-        else if (frame_data[0] == 2) //Turning right side Indicators ON
+        
+        if (rightSignalStatus) //Turning right side Indicators ON
         {
             Right_Sig_flg = TRUE;
             Serial.println("RIGHT side lights should start blinking. Turning Indicator ON" );
         }                    
-        else if (frame_data[0] == 0) //Turning Indicators OFF
+        else //Turning Indicators OFF
         {
             Right_Sig_flg = FALSE;
-            Left_Sig_flg = FALSE;
             Serial.println("led should stop blinking. Turning Indicator OFF" );
         }
     }
     else if (frame_id == CAN_ID_BRAKE)  // Brake message
     {
-        if (frame_data[0] == 1)  // Brake ON
+        if (buf[0] == 1)  // Brake ON
         {
             Brake_flg = TRUE;
             Serial.println("led should turn on. Brakes ON" );
         }
-        else if (frame_data[0] == 0) // Brake OFF
+        else if (buf[0] == 0) // Brake OFF
         {
             Brake_flg = FALSE;
             Serial.println("led should turn off. Brakes OFF" );
@@ -175,7 +180,7 @@ void msgHandler(unsigned char frame_id,unsigned char* frame_data, unsigned char 
     }
     else if (frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS)  //BPS Trip Message  TODO for msg ID
     {
-        unsigned char error = frame_data[0] & 15; //error is the bits 3-0 of frame_data[0]
+        unsigned char error = buf[0] & 15; //error is the bits 3-0 of frame_data[0]
         if (error == 3 || error == 5 || error == 8) // BPS Trip Indicator ON      TODO for message data
         {
             BPS_Trip_flg = TRUE;
@@ -196,8 +201,10 @@ void msgHandler(unsigned char frame_id,unsigned char* frame_data, unsigned char 
 }
 
 void loop() {
-  
-    unsigned char len=0, buf[8], canID;
+
+    uint32_t canID;
+    byte *buf; 
+    byte len;
     
     if(CAN_MSGAVAIL == CAN.checkReceive())            // check if data is coming
     {
