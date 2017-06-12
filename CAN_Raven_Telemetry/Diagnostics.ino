@@ -51,7 +51,7 @@ void printHelper(String message, boolean newLine){
       serialFile.println(message);
       serialFile.close();
     } else {
-      //Serial.println(F("unable to open serial file"));
+    //  Serial.println(F("unable to open serial file"));
     }
     Serial.println(message);
   } else {
@@ -61,7 +61,7 @@ void printHelper(String message, boolean newLine){
       serialFile.print(message);
       serialFile.close();
     } else {
-    //  Serial.println(F("unable to open serial file"));
+     // Serial.println(F("unable to open serial file"));
     }
     Serial.print(message);
   }

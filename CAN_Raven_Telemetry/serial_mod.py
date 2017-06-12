@@ -126,49 +126,57 @@ error_label_caption.grid(row = 0, column = 2);
 error_label = Label(status_frame1, text = error, textvariable = error, font = (None, 10,), width = 35);
 error_label.grid(row = 0, column = 3);
 
-status_frame2 = Frame(root);
-status_frame2.grid(row = 4, column = 0);
+car_details_frame = Frame(root);
+car_details_frame.grid(row = 4);
+#car_info_frame = Frame(details_frame);
+#car_info_frame.grid(column = 0);
+
+status_frame2 = Frame(car_details_frame);
+status_frame2.grid(row = 0, column = 0);
 soc_label_caption = Label(status_frame2, text = "State of Charge: (%) ", font = (None, 10,), width = 20);
-soc_label_caption.grid(row = 1, column = 0);
-soc_label = Label(status_frame2, text = state_of_charge, textvariable = state_of_charge, font = (None, 10,), width = 20);
-soc_label.grid(row = 2, column = 0);
+soc_label_caption.grid(row = 0, column = 0);
+soc_label = Label(status_frame2, text = state_of_charge, textvariable = state_of_charge, font = (None, 15,), width = 20, height = 3);
+soc_label.grid(row = 1, column = 0);
 
 voltage_label_caption = Label(status_frame2, text = "Voltage: (V)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 1, column = 1);
-voltage_label = Label(status_frame2, text = voltage, textvariable = voltage, font = (None, 10,), width = 20);
-voltage_label.grid(row = 2, column = 1);
+voltage_label_caption.grid(row = 0, column = 1);
+voltage_label = Label(status_frame2, text = voltage, textvariable = voltage, font = (None, 15,), width = 20, height = 3);
+voltage_label.grid(row = 1, column = 1);
 
 voltage_label_caption = Label(status_frame2, text = "Current: (A)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 1, column = 2);
-voltage_label = Label(status_frame2, text = current, textvariable = current, font = (None, 10,), width = 20);
-voltage_label.grid(row = 2, column = 2);
+voltage_label_caption.grid(row = 2, column = 0);
+voltage_label = Label(status_frame2, text = current, textvariable = current, font = (None, 15,), width = 20, height = 3);
+voltage_label.grid(row = 3, column = 0);
 
 voltage_label_caption = Label(status_frame2, text = "Aux Voltage: (V)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 1, column = 3);
-voltage_label = Label(status_frame2, text = aux_voltage, textvariable = aux_voltage, font = (None, 10,), width = 20);
-voltage_label.grid(row = 2, column = 3);
+voltage_label_caption.grid(row = 2, column = 1);
+voltage_label = Label(status_frame2, text = aux_voltage, textvariable = aux_voltage, font = (None, 15,), width = 20, height = 3);
+voltage_label.grid(row = 3, column = 1);
 
 voltage_label_caption = Label(status_frame2, text = "Temperature: (Cel.)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 1, column = 4);
-voltage_label = Label(status_frame2, text = temperature, textvariable = temperature, font = (None, 10,), width = 20);
-voltage_label.grid(row = 2, column = 4);
+voltage_label_caption.grid(row = 4, column = 0);
+voltage_label = Label(status_frame2, text = temperature, textvariable = temperature, font = (None, 15,), width = 20, height = 3);
+voltage_label.grid(row = 5, column = 0);
 
-battery_frame = Frame(root);
-battery_frame.grid(row = 5, column = 0);
+
+
+
+#battery_frame = Frame(details_frame);
+#battery_frame.grid(row = 0, column = 1);
 pack_details = [];
 
 for i in range(4):
-        pack_frame = Frame(battery_frame, width = 50);
-        pack_frame.grid(row = int(i/2), column = i%2);
+        pack_frame = Frame(car_details_frame, width = 50);
+        pack_frame.grid(row = int(i/2), column = i%2 + 1);
         title_frame = Frame(pack_frame);
         title_frame.grid(row = 0);
         detail_frame = Frame(pack_frame);
         detail_frame.grid(row = 1);
         Label(title_frame, text = "Pack " + str(i + 1) + ":", font = (None, 10,), width = 50).grid(row = 0);
         Label(detail_frame, text = "Cell: " , font = (None, 10,), width = 5).grid(row = 0, column = 0);
-        Label(detail_frame, text = "Voltage: (V)" , font = (None, 10,), width = 15).grid(row = 0, column = 1);
-        Label(detail_frame, text = "Volt warning: " , font = (None, 10,), width = 15).grid(row = 0, column = 2);
-        Label(detail_frame, text = "Shun warning: " , font = (None, 10,), width = 15).grid(row = 0, column = 3);
+        Label(detail_frame, text = "Voltage: (V)" , font = (None, 10,), width = 10).grid(row = 0, column = 1);
+        Label(detail_frame, text = "Volt warning: " , font = (None, 10,), width = 10).grid(row = 0, column = 2);
+        Label(detail_frame, text = "Shun warning: " , font = (None, 10,), width = 10).grid(row = 0, column = 3);
         pack_details.append([]);
 
         for j in range(12):
@@ -187,22 +195,25 @@ for i in range(4):
         Label(pack_temp_frame, text = "Warning :", font = (None, 10,), width = 20).grid(row = 0, column = 2);
 
         for k in range(2):
-                Label(pack_temp_frame, text = "Temperature " + str(k) + ": ", font = (None, 10,), width = 10).grid(row = k + 1);
+                Label(pack_temp_frame, text = "Temperature " + str(k) + ": ", font = (None, 10,), width = 12).grid(row = k + 1);
                 pack_details[i].append((StringVar(), StringVar(),));
                 pack_details[i][k + 12][0].set("N/A");
                 pack_details[i][k + 12][1].set("OK");
-                Label(pack_temp_frame, text = pack_details[i][12 + k][0], textvariable = pack_details[i][12 + k][0], font = (None, 10,), width = 20).grid(row = k + 1, column = 1);
-                Label(pack_temp_frame, text = pack_details[i][12 + k][1], textvariable = pack_details[i][12 + k][1], font = (None, 10,), width = 20).grid(row = k + 1, column = 2);
+                Label(pack_temp_frame, text = pack_details[i][12 + k][0], textvariable = pack_details[i][12 + k][0], font = (None, 10,), width = 14).grid(row = k + 1, column = 1);
+                Label(pack_temp_frame, text = pack_details[i][12 + k][1], textvariable = pack_details[i][12 + k][1], font = (None, 10,), width = 14).grid(row = k + 1, column = 2);
 
-mppt_frame = Frame(root, width = 20);
-mppt_frame.grid(row = 5, column = 1);
+mppt_frame = Frame(car_details_frame, width = 50);
+mppt_frame.grid(row= 1, column = 0, sticky = N);
 mppt_title_frame = Frame(mppt_frame);
+
+mppt_details_frame = Frame(mppt_frame);
+mppt_details_frame.grid(row = 1);
 
 mppt_title_frame.grid(row = 0);
 Label(mppt_title_frame, text = "MPPT info", font = (None, 10,), width = 50).grid(row = 0);
 
-mppt_current_frame = Frame(mppt_frame);
-mppt_current_frame.grid(row = 1);
+mppt_current_frame = Frame(mppt_details_frame);
+mppt_current_frame.grid(row = 1, column = 0, sticky = N);
 mppt_current_title_frame = Frame(mppt_current_frame, width = 20);
 mppt_current_title_frame.grid(row = 0);
 Label(mppt_current_title_frame, text = "Current (mA)", font = (None, 10,), width = 15).grid(row = 0);
@@ -216,8 +227,8 @@ for i in range(6):
         current_details[i].set("N/A");
         Label(mppt_current_detail_frame, text = current_details[i], textvariable = current_details[i], font = (None, 10,), width = 10).grid(row = 0, column = 1);
 
-mppt_temp_frame = Frame(mppt_frame);
-mppt_temp_frame.grid(row = 2);
+mppt_temp_frame = Frame(mppt_details_frame);
+mppt_temp_frame.grid(row = 1, column = 1);
 mppt_temp_title_frame = Frame(mppt_temp_frame, width = 20);
 mppt_temp_title_frame.grid(row = 0);
 Label(mppt_temp_title_frame, text = "Temp (C)", font = (None, 10,), width = 15).grid(row = 0);

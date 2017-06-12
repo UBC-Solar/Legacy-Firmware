@@ -29,7 +29,7 @@ void msgHandleCoreStatus(uint32_t frame_id, byte* frame_data, byte length) {
   printHelper(String(packet.soc) + " ");
   printHelper(String(packet.voltage) + " ");
   printHelper(String(current) + " ");
-  printHelper(String(frame_data[5]) + " ");
+  printHelper(String(frame_data[5]/10.0) + " ");
   printHelper(String(packet.temperature), NEW_LINE);
 }
 
@@ -54,7 +54,7 @@ void msgHandleBmsStatus(uint32_t frame_id, byte* frame_data, byte length) {
 void msgHandleBmsReply(uint32_t frame_id, byte* frame_data, byte length) {
   for (int i = 0 ; i < 6 ; i++) {
     unsigned int cell_volt = ((unsigned int) frame_data[i]) | (frame_data[6] & ((unsigned int) 1 << i)) << (8 - i);
-    printHelper(String(cell_volt));
+    printHelper(String(cell_volt/100.0));
     printHelper(F(" "));
   }
   byte temp = frame_data[7] - 128;
@@ -124,7 +124,7 @@ void logToSD() {
 
 void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
   switch (frame_id) {
-    case /*CAN_ID_HEARTBEAT*/ 6:
+    case CAN_ID_HEARTBEAT:
       msgHandleHeartbeat(frame_id, frame_data, length);
       break;
     case CAN_ID_BRAKE:
@@ -133,19 +133,19 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
     case CAN_ID_ZEVA_BMS_CORE_STATUS:
       msgHandleCoreStatus(frame_id, frame_data, length);
       break;
-    case 202://CAN_ID_CURRENT_SENSOR_1:
+    case CAN_ID_CURRENT_SENSOR_1:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case 201://CAN_ID_CURRENT_SENSOR_2:
+    case CAN_ID_CURRENT_SENSOR_2:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case 199://CAN_ID_TEMP_SENSOR_1:
+    case CAN_ID_TEMP_SENSOR_1:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case 198://CAN_ID_TEMP_SENSOR_2:
+    case CAN_ID_TEMP_SENSOR_2:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case 197://CAN_ID_TEMP_SENSOR_3:
+    case CAN_ID_TEMP_SENSOR_3:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
     default:
