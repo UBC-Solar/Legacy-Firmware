@@ -160,7 +160,7 @@ void loop() {
     currentOut[i] = currentVoltageOut[i] / CURRENT_CONVERSION_FACTOR[i] * 1000.0 / 2.0;                    // Convert voltage value to current value, I_p, read from the current sensor
     
     // for CAN
-    currentCAN[i] = int (currentOut[i] * 1000.0);
+    currentCAN[i] = int (currentOut[i] * 100.0);
    
     Serial.print("MPPT");
     Serial.print(i);
@@ -203,7 +203,7 @@ void loop() {
     tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird american units
    
    // for CAN
-    tempCAN[j] = int (tempCelsius[j]*1000.0);
+    tempCAN[j] = int (tempCelsius[j]*100.0);
 
     Serial.print("LM335Z");
     Serial.print(j);
