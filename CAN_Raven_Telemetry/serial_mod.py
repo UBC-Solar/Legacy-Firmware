@@ -272,7 +272,7 @@ def update(log_msg):
                 state_of_charge.set(int(values[2]));
                 voltage.set(int(values[3]));
                 current.set(int(values[4]));
-                aux_voltage.set(int(values[5])/10.0);
+                aux_voltage.set(float(values[5]));
                 temperature.set(int(values[6][:len(values[6]) - 5]));
                 print(log_msg[2:timestamp_end] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]") +\
                       " Status: " + status.get() + " Error: " + ERRORS[int(values[1])] + \
@@ -323,19 +323,25 @@ def update(log_msg):
 
                 elif id%10 is 1:
                         values = log_msg.split(" ");
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num), end = "  "); 
 
                         for i in range(12):
-                                pack_details[pack_num][i][1].set("OK" if int(values[i + 1]) == 0 else ("LOW" if int(int(values[i + 1])/100) == 1 else "HIGH"));
+                                pack_details[pack_num][i][1].set("OK" if int(values[i + 1]/10) == 0 else ("LOW" if int(int(values[i + 1])/100) == 1 else "HIGH"));
                                 pack_details[pack_num][i][2].set("OK" if int(values[i + 1])%10 == 0 else "SHUN");
+                                print("Cell " + str(i) + ": Voltage: " + pack_details[pack_num][i][1].get() + " Shun? " + pack_details[pack_num][i][2].get(), end = " ");
                         pack_details[pack_num][12][1].set("OK" if int(values[13]) == 0 else "LOW" if int(values[13]) == 1 else "HIGH");
                         pack_details[pack_num][13][1].set("OK" if int(values[14][0]) == 0 else "LOW" if int(values[14][0]) == 2 else "HIGH");
+                        print("Temperature 1: " + pack_details[pack_num][12][1].get() + "\tTemperature 2: " + pack_details[pack_num][13][1].get());
 
                 elif id%10 in [3,5]:
                         half = 0 if id%10 == 3 else 1;
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "  Voltages for cells " + ("6 - 11: " if half else "0 - 5: "), end = ""); 
                         values = log_msg.split(" ");
                         for i in range(6):
                                 pack_details[pack_num][i + half*6][0].set(values[i + 1]);
+                                print(pack_details[pack_num][i + half*6][0].get() + "V ", end = "");
                         pack_details[pack_num][12 + half][0].set(values[7][:len(values[7]) - 5]);
+                        print("Temperature " + str(half) + ": " + pack_details[pack_num][12 + half][0].get());
 
 def wait():
         log_msg = str(ser.readline());

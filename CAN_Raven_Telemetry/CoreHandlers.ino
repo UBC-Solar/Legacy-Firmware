@@ -42,7 +42,7 @@ void msgHandleBmsStatus(uint32_t frame_id, byte* frame_data, byte length) {
 
   for (int i = 0; i < 12; i++) {
     printHelper(String((volt_warn >> i) & 0x1));
-    printHelper(String((volt_warn >> i + 12) & 0x1));
+    printHelper(String((volt_warn >> (i + 12)) & 0x1));
     printHelper(String((volt_shun_warn >> i) & 0x1));
     printHelper(F(" "));
   }
