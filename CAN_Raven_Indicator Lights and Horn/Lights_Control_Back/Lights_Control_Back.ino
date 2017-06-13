@@ -52,11 +52,11 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define NORMAL_INTERVAL 300
 
 // 5 flages for each message
-boolean Brake_flg    =0;
-boolean Hazard_flg   =0;
-boolean Left_Sig_flg =0;
-boolean Right_Sig_flg=0;
-boolean BPS_Trip_flg =0;
+boolean brakeFlag    =0;
+boolean hazardFlag   =0;
+boolean leftSignalFlag =0;
+boolean rightSignalFlag=0;
+boolean bpsTripFlag =0;
 
 /*used to determine if the LED should blink or not. (value determined according to the 4 flags)
  *ledBLINK = 0 => NOT BLINK  ledBLINK = 1 => BLINK
@@ -77,12 +77,14 @@ boolean ledState_BC =LOW;
 boolean ledState_BPS=LOW;
 
 unsigned long previousMillis =0;
-long blink_Interval = NORMAL_INTERVAL;       
+long blinkInterval = NORMAL_INTERVAL;       
+
+boolean displayNext = true;
 
 void setup() {
   
 // SERIAL INIT 
-    Serial.begin(115200);
+    Serial.begin(9600);
 
 // CAN INIT 
     int canSSOffset = 0;
@@ -115,67 +117,77 @@ START_INIT:
 
 void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
 {
-    // ******************* Printing the recieved CAN msg *********************
-    Serial.println("------------------------------------------");
-    Serial.print("data received from ID: ");
+    Serial.print("frame_id: ");
     Serial.println(frame_id);
-    Serial.print("Frame Data:  ");
-        for(int i = 0; i<frame_length; i++)    // print the data
-        {
-            Serial.print(buf[i]);
-            Serial.print("\t");
-        }
-    // ******************* setting flags based on CAN msg *********************   
+            Serial.print("buf: ");
+        Serial.println(buf[0], BIN);
     if (frame_id == CAN_ID_HEARTBEAT)   // Turning Indicator message
     {
         byte signalStatus = buf[3];
         int leftSignalStatus = bitRead(signalStatus, 0);
         int rightSignalStatus = bitRead(signalStatus, 1);
+        int brakeSignalStatus = bitRead(signalStatus, 2);
         int hazardSignalStatus = bitRead(signalStatus, 4);
+
+        
 
         if (hazardSignalStatus == 1)  //Emergency Hazard ON
         {
-            Hazard_flg = TRUE;
-            Serial.println("leds should start blinking. Emergency Hazard!!!!" );
-            blink_Interval = HAZARD_INTERVAL;   // to make the light blink faster
+            hazardFlag = TRUE;
+            Serial.println(F("Hazard true") );
+            ledState_BL = HIGH;
+            ledState_BR = HIGH;
+            ledState_BC = HIGH;
+            blinkInterval = HAZARD_INTERVAL;   // to make the light blink faster
         }     
         else  //Emergency Hazard OFF
         {
-            Hazard_flg = FALSE;
-            Serial.println("leds should stop blinking. Emergency Hazard is over!!" );
-            blink_Interval = NORMAL_INTERVAL;   // to make the light blink with normal intervals
+            hazardFlag = FALSE;
+            Serial.println(F("Hazard false"));
+            blinkInterval = NORMAL_INTERVAL;   // to make the light blink with normal intervals
         }
                 
         if (leftSignalStatus)  //Turning left side Indicators ON
         {
-            Left_Sig_flg = TRUE;
-            Serial.println("LEFT side lights should start blinking. Turning Indicator ON" );
+            leftSignalFlag = TRUE;
+            Serial.println(F("left signal true"));
         } else {
-            Left_Sig_flg = FALSE;
+            Serial.println(F("left signal false"));
+            leftSignalFlag = FALSE;
         }
         
         if (rightSignalStatus) //Turning right side Indicators ON
         {
-            Right_Sig_flg = TRUE;
-            Serial.println("RIGHT side lights should start blinking. Turning Indicator ON" );
+            rightSignalFlag = TRUE;
+            Serial.println(F("Right signal true"));
         }                    
         else //Turning Indicators OFF
         {
-            Right_Sig_flg = FALSE;
-            Serial.println("led should stop blinking. Turning Indicator OFF" );
+            rightSignalFlag = FALSE;
+            Serial.println(F("Right signal false"));
+        }
+        if (brakeSignalStatus)
+        {
+            brakeFlag = TRUE;
+            Serial.println(F("Brake signal true"));
+        }
+        else {
+            brakeFlag = FALSE;
+            Serial.println(F("Brake signal false"));
         }
     }
     else if (frame_id == CAN_ID_BRAKE)  // Brake message
     {
-        if (buf[0] == 1)  // Brake ON
+
+        if (buf[0])  // Brake ON
         {
-            Brake_flg = TRUE;
-            Serial.println("led should turn on. Brakes ON" );
+            brakeFlag = TRUE;
+            Serial.println(F("led should turn on. Brakes ON"));
         }
-        else if (buf[0] == 0) // Brake OFF
+        else if (!buf[0]) // Brake OFF
         {
-            Brake_flg = FALSE;
-            Serial.println("led should turn off. Brakes OFF" );
+            brakeFlag = FALSE;
+            Serial.println(F("led should turn off. Brakes OFF"));
         }
     }
     else if (frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS)  //BPS Trip Message  TODO for msg ID
@@ -183,19 +195,19 @@ void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
         unsigned char error = buf[0] & 15; //error is the bits 3-0 of frame_data[0]
         if (error == 3 || error == 5 || error == 8) // BPS Trip Indicator ON      TODO for message data
         {
-            BPS_Trip_flg = TRUE;
-            Serial.print("White Strobe Light Should turn on. BPS TRIP happened,  ERROR : " );
+            bpsTripFlag = TRUE;
+            Serial.print(F("White Strobe Light Should turn on. BPS TRIP happened,  ERROR : "));
             if (error == 3)
-                Serial.println(" ---- OverCurrent " );
+                Serial.println(F(" ---- OverCurrent "));
             else if (error == 5)
-                Serial.println(" ---- UnderVoltage for +10s " );
+                Serial.println(F(" ---- UnderVoltage for +10s "));
             else if (error == 8)
-                Serial.println(" ---- OverTemperature " );               
+                Serial.println(F(" ---- OverTemperature "));               
         }
         else if(error == 0) //  No BMS ERROR. BPS Trip Indicator OFF
         {
-            BPS_Trip_flg = FALSE;
-            Serial.println("White Strobe Light Should turn off. No BMS Error" );
+            bpsTripFlag = FALSE;
+            Serial.println(F("White Strobe Light Should turn off. No BMS Error"));
         }
     }
 }
@@ -208,99 +220,63 @@ void loop() {
     
     if(CAN_MSGAVAIL == CAN.checkReceive())            // check if data is coming
     {
+        Serial.println("received CAN message");
+        displayNext = true;
         CAN.readMsgBuf(&len, buf);    // read data,  len: data length, buf: data buf
         canID = CAN.getCanId(); 
 
         msgHandler (canID, buf, len);
     }
 
-    // ******************* setting controller flags *********************
-    ledBLINK_ALL = Hazard_flg;
-    ledBLINK_R = Hazard_flg || Right_Sig_flg;               
-    ledBLINK_L = Hazard_flg || Left_Sig_flg;
-
-    Brake_R= !ledBLINK_R  && Brake_flg;    // since blinking is in priority, Brake_x value is determined if the light is not to be blinked
-    Brake_L= !ledBLINK_L  && Brake_flg;      
-    Brake_C= !ledBLINK_ALL  && Brake_flg ;
-
-    // ******************* Output 0ing if necessary *********************
-    // to turn off all the lights which should NOT BLINK or be ON
-    if ( !Brake_R && !ledBLINK_R) //right light
-        ledState_BR=LOW;
-
-    if ( !Brake_L && !ledBLINK_L) //left light
-        ledState_BL=LOW;
-    
-    if ( !Brake_C && !ledBLINK_ALL)//center light
-        ledState_BC=LOW;
-
-    // ******************* Blinking Control *********************
     unsigned long currentMillis = millis();
-
-    if (ledBLINK_R || ledBLINK_L || ledBLINK_ALL)
-    {           
-        if ( currentMillis - previousMillis >= blink_Interval)    // to blink the amber light. instead of using delay();
-        {
-            previousMillis = currentMillis;
-
-            ledState_BC = (ledBLINK_ALL ? !ledState_BC : ledState_BC);
-            ledState_BR = (ledBLINK_ALL ?  ledState_BC : (ledBLINK_R ? !ledState_BR : ledState_BR));
-            ledState_BL = (ledBLINK_ALL ?  ledState_BC : (ledBLINK_L ? !ledState_BL : ledState_BL));
-            /*(ledBLINK_ALL || ledBLINK_R)?.... is not used because it can't guarantee synced blink for all lights
-                example:
-                  1. hazard On.
-                  2. right turn on.
-                  3. hazard off.
-                  4. hazard on when the right light is on.
-                  5. center and left light blink and turn on, while right light blinks and turn off (out of phase)
-            */
-            /*
-            if (ledBLINK_ALL) //hazard    //******** this method , lights are synced ******* too long
-            {
-                ledState_BR =!ledState_BR;
-                Serial.print("--Back Right---" );
-                Serial.print(ledState_BR);
-                   
-                ledState_BL =ledState_BR;
-                Serial.print("--Back left---" );
-                Serial.print(ledState_BL);
-                   
-                ledState_BC =ledState_BR;
-                Serial.print("--Back Center---" );
-                Serial.println(ledState_BC);            
-            }
-            else if(ledBLINK_R)
-            {
-                ledState_BR =!ledState_BR;
-                Serial.print("--Back Right----" );
-                Serial.println(ledState_BR);       
-            }
-            else if(ledBLINK_L)
-            {                                 
-                ledState_BL =!ledState_BL;
-                Serial.print("--Back Left----" );
-                Serial.println(ledState_BL);         
-            }*/
-        }
-    }
-
-    // ******************* Constant ON/OFF Control *********************
-    // turning on the lights if they should be on ( braking and not blinking)
-    if ( Brake_R )
+    if(brakeFlag) {
         ledState_BR = HIGH;
-    
-    if ( Brake_L )
         ledState_BL = HIGH;
-
-    if ( Brake_C )
         ledState_BC = HIGH;
+    } else if (hazardFlag) {
+      if(currentMillis - previousMillis >= blinkInterval){
+        previousMillis = currentMillis;
 
-    if ( BPS_Trip_flg )
+        ledState_BR = !ledState_BR;
+        ledState_BL = !ledState_BL;
+        ledState_BC = !ledState_BC;
+      }
+    } else if (rightSignalFlag || leftSignalFlag) {
+      if(currentMillis - previousMillis >= blinkInterval){
+        previousMillis = currentMillis;
+
+        if(rightSignalFlag) {
+          ledState_BR = !ledState_BR;
+          ledState_BL = LOW;
+          ledState_BC = LOW;
+        } else {
+          ledState_BR = LOW;
+          ledState_BL = !ledState_BL;
+          ledState_BC = LOW;
+        }
+      }
+    } else {
+      ledState_BR = LOW;
+      ledState_BL = LOW;
+      ledState_BC = LOW;
+    }
+    
+    if ( bpsTripFlag )
         ledState_BPS = HIGH;
     else
         ledState_BPS = LOW;
     
     // ******************* Driving the outputs *********************
+//
+//      Serial.print("led brake R: ");
+//      Serial.println(ledState_BR);
+//      Serial.print("led brake L: ");
+//      Serial.println(ledState_BL);
+//      Serial.print("led brake C: ");
+//      Serial.println(ledState_BC);
+//      Serial.print("led brake W: ");
+//      Serial.println(ledState_BPS);
+
     digitalWrite(BACK_R_PIN, ledState_BR);
     digitalWrite(BACK_L_PIN, ledState_BL);
     digitalWrite(BACK_C_PIN, ledState_BC);
