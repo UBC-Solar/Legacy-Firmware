@@ -79,14 +79,14 @@ void msgHandleBms(uint32_t frame_id, byte* frame_data, byte length) {
 void msgHandleMPPTData(uint32_t frame_id, byte* frame_data, byte length) {
   printLogHeader(frame_id);
   int numValues;
-  if(frame_id == 201/*CAN_ID_CURRENT_SENSOR_2*/ || frame_id == 197/*CAN_ID_TEMP_SENSOR_3*/) {
+  if(frame_id == CAN_ID_CURRENT_SENSOR_2 || frame_id == CAN_ID_TEMP_SENSOR_3) {
     numValues = 2;
   } else {
     numValues = 4;
   }
 
   for(int i = 0; i < numValues * 2; i += 2) {
-    double sensorValue = word(frame_data[i], frame_data[i+1]) / 1000.0;
+    double sensorValue = word(frame_data[i], frame_data[i+1]) / 100.0;
     printHelper(String(sensorValue));
     printHelper(F(" "));
   }
