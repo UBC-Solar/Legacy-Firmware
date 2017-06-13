@@ -71,7 +71,7 @@ long interval = NORMAL_INTERVAL;
 void setup() {
   
 // SERIAL INIT 
-    Serial.begin(115200);
+    Serial.begin(9600);
 
 // CAN INIT 
     int canSSOffset = 0;
@@ -105,7 +105,7 @@ START_INIT:
 void loop() {
 
     uint32_t canID;
-    byte *buf;
+    byte buf[8];
     byte len;
     
     if(CAN_MSGAVAIL == CAN.checkReceive())            // check if data is coming
@@ -124,6 +124,7 @@ void loop() {
             Serial.print(buf[i]);
             Serial.print("\t");
         }
+    
         
         if (canID == CAN_ID_HEARTBEAT){   // Turning Indicator message
           byte signalStatus = buf[3];
