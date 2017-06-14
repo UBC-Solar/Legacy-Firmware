@@ -79,8 +79,6 @@ boolean ledState_BPS=LOW;
 unsigned long previousMillis =0;
 long blinkInterval = NORMAL_INTERVAL;       
 
-boolean displayNext = true;
-
 void setup() {
   
 // SERIAL INIT 
@@ -227,7 +225,6 @@ void loop() {
     
     if(CAN_MSGAVAIL == CAN.checkReceive())            // check if data is coming
     {
-        displayNext = true;
         CAN.readMsgBuf(&len, buf);    // read data,  len: data length, buf: data buf
         canID = CAN.getCanId(); 
 
