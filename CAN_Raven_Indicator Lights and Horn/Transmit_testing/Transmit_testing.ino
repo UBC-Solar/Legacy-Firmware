@@ -40,6 +40,7 @@ START_INIT:
 }
 
 unsigned char stmp[1] = {0};
+unsigned char bigStmp[8];
 void loop()
 {
       char c;
@@ -143,11 +144,15 @@ void loop()
           {
             Serial.println("h");
             Serial.println(" Heartbeat message from steering wheel");
-            stmp[0] = 255;
-            stmp[1] = 100;
-            stmp[2] = 1;
-            bitSet(stmp[3], 4);
-            CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, stmp);
+            bigStmp[0] = 255;
+            bigStmp[1] = 100;
+            bigStmp[2] = 1;
+            //bitSet(bigStmp[3], 0);
+            //bitSet(bigStmp[3], 1);
+            //bitSet(bigStmp[3], 2);
+            //bitSet(bigStmp[3], 3);
+            bitSet(bigStmp[3], 4);
+            CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, bigStmp);
             for(int i = 0; i < 8; i++){
               bitClear(stmp[3], i);   
             }
@@ -160,15 +165,15 @@ void loop()
             unsigned int val2 = 33.21 * 1000;
             unsigned int val3 = 30.97 * 1000;
             unsigned int val4 = 37.21 * 1000;
-            stmp[0] = highByte(val1);
-            stmp[1] = lowByte(val1);
-            stmp[2] = highByte(val2);
-            stmp[3] = lowByte(val2);
-            stmp[4] = highByte(val3);
-            stmp[5] = lowByte(val3);
-            stmp[6] = highByte(val4);
-            stmp[7] = lowByte(val4);
-            CAN.sendMsgBuf(202/*CAN_ID_CURRENT_SENSOR_1*/, 0, 8, stmp);
+            bigStmp[0] = highByte(val1);
+            bigStmp[1] = lowByte(val1);
+            bigStmp[2] = highByte(val2);
+            bigStmp[3] = lowByte(val2);
+            bigStmp[4] = highByte(val3);
+            bigStmp[5] = lowByte(val3);
+            bigStmp[6] = highByte(val4);
+            bigStmp[7] = lowByte(val4);
+            CAN.sendMsgBuf(202/*CAN_ID_CURRENT_SENSOR_1*/, 0, 8, bigStmp);
           }
       }
 }

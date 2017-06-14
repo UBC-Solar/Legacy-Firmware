@@ -48,8 +48,8 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define FALSE 0
 
 // time intervals used for blinking
-#define HAZARD_INTERVAL 125
-#define NORMAL_INTERVAL 300
+#define HAZARD_INTERVAL 250
+#define NORMAL_INTERVAL 500
 
 // 5 flages for each message
 boolean brakeFlag    =0;
@@ -116,11 +116,18 @@ START_INIT:
 }
 
 void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
-{
-    Serial.print("frame_id: ");
-    Serial.println(frame_id);
-            Serial.print("buf: ");
-        Serial.println(buf[0], BIN);
+{      
+//    Serial.print("frame_id: ");
+//    Serial.println(frame_id);
+//    Serial.print("buf[0]: ");
+//    Serial.println(buf[0]);
+//    Serial.print("buf[1]: ");
+//    Serial.println(buf[1]);
+//    Serial.print("buf[2]: ");
+//    Serial.println(buf[2]);
+//    Serial.print("buf[3]: ");
+//    Serial.println(buf[3], BIN);
+  
     if (frame_id == CAN_ID_HEARTBEAT)   // Turning Indicator message
     {
         byte signalStatus = buf[3];
@@ -215,12 +222,11 @@ void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
 void loop() {
 
     uint32_t canID;
-    byte *buf; 
+    byte buf[8]; 
     byte len;
     
     if(CAN_MSGAVAIL == CAN.checkReceive())            // check if data is coming
     {
-        Serial.println("received CAN message");
         displayNext = true;
         CAN.readMsgBuf(&len, buf);    // read data,  len: data length, buf: data buf
         canID = CAN.getCanId(); 
@@ -229,11 +235,21 @@ void loop() {
     }
 
     unsigned long currentMillis = millis();
-    if(brakeFlag) {
-        ledState_BR = HIGH;
-        ledState_BL = HIGH;
+    if(brakeFlag && !hazardFlag) {
         ledState_BC = HIGH;
-    } else if (hazardFlag) {
+        if(!leftSignalFlag){
+          ledState_BL = HIGH;
+        }
+        if(!rightSignalFlag){
+          ledState_BR = HIGH;
+        }
+    }
+
+    if(!brakeFlag && !hazardFlag) {
+      ledState_BC = LOW;
+    }
+    
+    if (hazardFlag) {
       if(currentMillis - previousMillis >= blinkInterval){
         previousMillis = currentMillis;
 
@@ -247,15 +263,13 @@ void loop() {
 
         if(rightSignalFlag) {
           ledState_BR = !ledState_BR;
-          ledState_BL = LOW;
-          ledState_BC = LOW;
+          ledState_BL = brakeFlag;
         } else {
-          ledState_BR = LOW;
+          ledState_BR = brakeFlag;
           ledState_BL = !ledState_BL;
-          ledState_BC = LOW;
         }
       }
-    } else {
+    } else if (!brakeFlag){
       ledState_BR = LOW;
       ledState_BL = LOW;
       ledState_BC = LOW;
