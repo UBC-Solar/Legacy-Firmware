@@ -1,4 +1,5 @@
 import serial
+import time
 from tkinter import *
 
 BRAKE_SIGNAL = 0;
@@ -40,19 +41,31 @@ brake = StringVar();
 brake.set("OFF");
 hazard = StringVar();
 hazard.set("OFF");
+time_str = StringVar();
+time_str.set("N/A");
+timer_str = StringVar();
+timer_str.set("N/A");
+last_msg = time.time();
 
 brake_frame = Frame(root);
 brake_frame.grid(row = 0);
 
+time_label_caption = Label(brake_frame, text = "Last CAN message: ", font = (None, 10,), width = 25);
+time_label_caption.grid(row = 0, column = 0);
+time_label = Label(brake_frame, text = time_str, textvariable = time_str, font = (None, 10,), width = 10);
+time_label.grid(row = 0, column = 1);
+timer_label = Label(brake_frame, text = timer_str, textvariable = timer_str, font = (None, 10,), width = 25);
+timer_label.grid(row = 0, column = 2);
+
 brake_label_caption =  Label(brake_frame, text = "Brake: " , font = (None, 10,), width = 25);
-brake_label_caption.grid(row = 0, column = 0);
+brake_label_caption.grid(row = 0, column = 3);
 brake_label = Label(brake_frame, text = brake, textvariable = brake, font = (None, 10,), width = 25);
-brake_label.grid(row = 0, column = 1);
+brake_label.grid(row = 0, column = 4);
 
 hazard_label_caption =  Label(brake_frame, text = "Hazard: " , font = (None, 10,), width = 25);
-hazard_label_caption.grid(row = 0, column = 2);
+hazard_label_caption.grid(row = 0, column = 5);
 hazard_label = Label(brake_frame, text = hazard, textvariable = hazard, font = (None, 10,),  width = 25);
-hazard_label.grid(row = 0, column = 3);
+hazard_label.grid(row = 0, column = 6);
 
 dir_frame = Frame(root);
 dir_frame.grid(row = 1, column = 0);
@@ -123,7 +136,7 @@ status_label.grid(row = 0, column = 1);
 
 error_label_caption = Label(status_frame1, text = "Error: ", font = (None, 10,), width = 15);
 error_label_caption.grid(row = 0, column = 2);
-error_label = Label(status_frame1, text = error, textvariable = error, font = (None, 10,), width = 35);
+error_label = Label(status_frame1, text = error, textvariable = error, font = (None, 10,), width = 55);
 error_label.grid(row = 0, column = 3);
 
 car_details_frame = Frame(root);
@@ -164,6 +177,8 @@ voltage_label.grid(row = 5, column = 0);
 #battery_frame = Frame(details_frame);
 #battery_frame.grid(row = 0, column = 1);
 pack_details = [];
+battery_warning_labels = [];
+temp_warning_labels = [];
 
 for i in range(4):
         pack_frame = Frame(car_details_frame, width = 50);
@@ -178,6 +193,8 @@ for i in range(4):
         Label(detail_frame, text = "Volt warning: " , font = (None, 10,), width = 10).grid(row = 0, column = 2);
         Label(detail_frame, text = "Shun warning: " , font = (None, 10,), width = 10).grid(row = 0, column = 3);
         pack_details.append([]);
+        battery_warning_labels.append([]);
+        temp_warning_labels.append([]);
 
         for j in range(12):
                 Label(detail_frame, text = str(j) + ":", font = (None, 10,), width = 12).grid(row = j + 1, column = 0);
@@ -186,8 +203,10 @@ for i in range(4):
                 pack_details[i][j][1].set("OK");
                 pack_details[i][j][2].set("OK");
                 Label(detail_frame, text = pack_details[i][j][0], textvariable = pack_details[i][j][0], font = (None, 10,), width = 14).grid(row = j + 1, column = 1);
-                Label(detail_frame, text = pack_details[i][j][1], textvariable = pack_details[i][j][1] , font = (None, 10,), width = 12).grid(row = j + 1, column = 2);
-                Label(detail_frame, text = pack_details[i][j][2], textvariable = pack_details[i][j][2] , font = (None, 10,), width = 12).grid(row = j + 1, column = 3);
+                battery_warning_labels[i].append((Label(detail_frame, text = pack_details[i][j][1], textvariable = pack_details[i][j][1] , font = (None, 10,), width = 12), \
+                                    Label(detail_frame, text = pack_details[i][j][2], textvariable = pack_details[i][j][2] , font = (None, 10,), width = 12),));
+                battery_warning_labels[i][j][0].grid(row = j + 1, column = 2);
+                battery_warning_labels[i][j][1].grid(row = j + 1, column = 3);
 
         pack_temp_frame = Frame(pack_frame);
         pack_temp_frame.grid(row = 2);
@@ -200,7 +219,8 @@ for i in range(4):
                 pack_details[i][k + 12][0].set("N/A");
                 pack_details[i][k + 12][1].set("OK");
                 Label(pack_temp_frame, text = pack_details[i][12 + k][0], textvariable = pack_details[i][12 + k][0], font = (None, 10,), width = 14).grid(row = k + 1, column = 1);
-                Label(pack_temp_frame, text = pack_details[i][12 + k][1], textvariable = pack_details[i][12 + k][1], font = (None, 10,), width = 14).grid(row = k + 1, column = 2);
+                temp_warning_labels[i].append(Label(pack_temp_frame, text = pack_details[i][12 + k][1], textvariable = pack_details[i][12 + k][1], font = (None, 10,), width = 14));
+                temp_warning_labels[i][k].grid(row = k + 1, column = 2);
 
 mppt_frame = Frame(car_details_frame, width = 50);
 mppt_frame.grid(row= 1, column = 0, sticky = N);
@@ -244,10 +264,12 @@ for i in range(10):
 
                 
 def update(log_msg):
+        global last_msg;
         timestamp_end = log_msg.find("]")+1;
         data_start = log_msg.find("}")+2;
         id = int(log_msg[log_msg.find("{")+1:log_msg.find("}")]);
-
+        time_str.set(log_msg[2:timestamp_end]);
+        
         if id == BRAKE_SIGNAL:
                 brake.set("ON" if int(log_msg[data_start]) else "OFF");
                 print(log_msg[2:timestamp_end] + "[UPDATE] Brake: " + brake.get());
@@ -274,6 +296,8 @@ def update(log_msg):
                 current.set(int(values[4]));
                 aux_voltage.set(float(values[5]));
                 temperature.set(int(values[6][:len(values[6]) - 5]));
+                error_label.config(fg = ("GREEN" if error.get() == "NONE" else "red"));
+                
                 print(log_msg[2:timestamp_end] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]") +\
                       " Status: " + status.get() + " Error: " + ERRORS[int(values[1])] + \
                       " SoC: " + values[2] + "% Voltage: " + values[3] + "V Current: " + values[4] +\
@@ -326,11 +350,15 @@ def update(log_msg):
                         print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num), end = "  "); 
 
                         for i in range(12):
-                                pack_details[pack_num][i][1].set("OK" if int(values[i + 1]/10) == 0 else ("LOW" if int(int(values[i + 1])/100) == 1 else "HIGH"));
+                                pack_details[pack_num][i][1].set("OK" if int(int(values[i + 1])/10) == 0 else ("LOW" if int(int(values[i + 1])/100) == 1 else "HIGH"));
+                                battery_warning_labels[pack_num][i][0].config(fg = ("Green" if pack_details[pack_num][i][1].get() == "OK" else "Red"));
                                 pack_details[pack_num][i][2].set("OK" if int(values[i + 1])%10 == 0 else "SHUN");
+                                battery_warning_labels[pack_num][i][1].config(fg = ("Green" if pack_details[pack_num][i][2].get() == "OK" else "Red"));
                                 print("Cell " + str(i) + ": Voltage: " + pack_details[pack_num][i][1].get() + " Shun? " + pack_details[pack_num][i][2].get(), end = " ");
                         pack_details[pack_num][12][1].set("OK" if int(values[13]) == 0 else "LOW" if int(values[13]) == 1 else "HIGH");
+                        temp_warning_labels[pack_num][0].config(fg = ("Green" if pack_details[pack_num][12][1].get() == "OK" else "Red"));
                         pack_details[pack_num][13][1].set("OK" if int(values[14][0]) == 0 else "LOW" if int(values[14][0]) == 2 else "HIGH");
+                        temp_warning_labels[pack_num][1].config(fg = ("Green" if pack_details[pack_num][13][1].get() == "OK" else "Red"));
                         print("Temperature 1: " + pack_details[pack_num][12][1].get() + "\tTemperature 2: " + pack_details[pack_num][13][1].get());
 
                 elif id%10 in [3,5]:
@@ -342,14 +370,18 @@ def update(log_msg):
                                 print(pack_details[pack_num][i + half*6][0].get() + "V ", end = "");
                         pack_details[pack_num][12 + half][0].set(values[7][:len(values[7]) - 5]);
                         print("Temperature " + str(half) + ": " + pack_details[pack_num][12 + half][0].get());
+        last_msg = time.time();
 
 def wait():
-        log_msg = str(ser.readline());
-        print(log_msg);
-
-        if log_msg.find("]{") > -1:
-                update(log_msg);
-   
+        global last_msg;
+        if ser.inWaiting():
+                log_msg = str(ser.readline());
+                print(log_msg);
+                if log_msg.find("]{") > -1:
+                        update(log_msg);
+                
+        timer_str.set(str(int(time.time() - last_msg)) + " secs since last msg");
+        timer_label.config(fg = "black" if (time.time() - last_msg) < 5 else "red");
         root.after(100, wait);
 
 root.after(10, wait);
