@@ -17,7 +17,7 @@
  * 
  * 201      CURRENT SENSORS                  (4 to 5)             4          Same as above; This ID contains 2 values; First 2 bytes are current sensor #4
  * 
- * 200      (EXTERNAL) RELAY CONTROL         (0 to 5)             6          Receiving this!; Last two bytes are extra; (0 = OPEN, 1 = CLOSED); First byte is relay #0            
+ * 200      (EXTERNAL) RELAY CONTROL         (0 to 5)             6          Receiving this!; (0 = OPEN, 1 = CLOSED); First byte is relay #0            
  *                                                                         > format_data[0] = relay [0] ; format_data[1] = relay [1] ; format_data[2] = relay [2] 
  *                                                                           format_data[3] = relay [3] ; format_data[4] = relay [4] ; format_data[5] = relay [5]  
  *        
@@ -31,13 +31,13 @@
  * 
  * 197      TEMP. SENSORS                    (8 to 9)             4          Same as above; This ID contains 2 values; First 2 bytes are temp. sensor #8
  * 
- * 196      EXTREME CURRENT WARNING          General              1          Using LSB  -- currently my code only sends a message when LSB is 1
+ * 196      EXTREME CURRENT WARNING          General              1          Using LSB  -- currently sends a message only when LSB is 1 
  *                                                                         > frame_data[0] = warning_current 
  * 
- * 195      EXTREME TEMP WARNING             General              1          Using LSB  -- currently my code only sends a message when LSB is 1
+ * 195      EXTREME TEMP WARNING             General              1          Using LSB  -- currently sends a message only when LSB is 1 
  *                                                                         > frame_data[0] = warning_temp
  * 
- * 194      RELAY STATUS                     (0 to 5)             6          Sending status!; Last two bytes are extra; (0 = OPEN, 1 = CLOSED); First byte is relay #0
+ * 194      RELAY STATUS                     (0 to 5)             6          Sending status!; (0 = OPEN, 1 = CLOSED); First byte is relay #0
  *                                                                         > format_data[0] = relay [0] ; format_data[1] = relay [1] ; format_data[2] = relay [2] 
  *                                                                           format_data[3] = relay [3] ; format_data[4] = relay [4] ; format_data[5] = relay [5]  
  * 
@@ -90,12 +90,13 @@ const int panel[6] = {A0,A1,A2,A3,A4,A5};                                       
 const int relay[6] = {0,1,2,3,4,5};                                               // Digital output pins corresponding to their respective power relays
 const int temp_sensor[10] = {A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
  
-// CAN SETUP -- figure out correct sizes
+// CAN SETUP 
 byte frame_data_current1[8] = {0};
 byte frame_data_current2[4] = {0};
 byte frame_data_temperature1[8] = {0};    // Will be sending in two seperate IDs because there is too much data
 byte frame_data_temperature2[8] = {0};
 byte frame_data_temperature3[4] = {0};
+byte frame_data_relay_status[6] = {0};
 
 byte warning_current = 0;                 // Overcurrent state when LSB is 1
 byte warning_temp = 0;                    // Overtemperature state when LSB is 1
@@ -145,13 +146,20 @@ void loop() {
   byte length;
   uint32_t frame_id;
   byte frame_data[8];   // Max length
-  
+
+
+  // checking for relay control message 
   if(CAN_MSGAVAIL == CAN.checkReceive()) {
     CAN.readMsgBuf(&length, frame_data);
     frame_id = CAN.getCanId();   
-    msgHandler(frame_id, frame_data, length);
-    
+    msgHandler(frame_id, frame_data, length);   
   }
+
+  // sending relay status 
+  for (int i = 0; i < 5; i++) {
+    frame_data_relay_status[i] = relay[i];
+  }
+  CAN.sendMsgBuf(CAN_ID_MPPT_RELAY_STATUS,0,6,frame_data_relay_status);
   
   // reading and displaying current levels, as well as relay logic
   for (int i = 0; i < 6; i++) {
@@ -160,7 +168,7 @@ void loop() {
     currentOut[i] = currentVoltageOut[i] / CURRENT_CONVERSION_FACTOR[i] * 1000.0 / 2.0;                    // Convert voltage value to current value, I_p, read from the current sensor
     
     // for CAN
-    currentCAN[i] = int (currentOut[i] * 1000.0);
+    currentCAN[i] = int (currentOut[i] * 100.0);
    
     Serial.print("MPPT");
     Serial.print(i);
@@ -203,7 +211,7 @@ void loop() {
     tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird american units
    
    // for CAN
-    tempCAN[j] = int (tempCelsius[j]*1000.0);
+    tempCAN[j] = int (tempCelsius[j]*100.0);
 
     Serial.print("LM335Z");
     Serial.print(j);
@@ -292,7 +300,9 @@ for ( int x = 4, z = 0; (x < 6) && (z < 4); z+2, x++) {
   if (bitRead(warning_temp,0) == 1) {
     byte* warning_temp_pointer = &warning_temp;
   CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_WARNING, 0 , 1 , warning_temp_pointer); } 
-  
+
+ 
+
   delay(1000);
 }
 
