@@ -65,7 +65,7 @@ float currentVoltageOut[6] = {0};
 float currentOut[6] = {0};
 
 // TEMPERATURE SENSOR CONSTANTS
-const float TEMP_BASE_VOLTAGE [10] = {603,1000,1000,1000,1000,1000,0,0,0,0};
+const float TEMP_BASE_VOLTAGE [10] = {608,617,613,607,610,610,0,0,0,0};
 float baseVoltage[10] = {0}; 
 float baseCelsius[10] = {0};
 float tempVoltage[10] = {0};
@@ -184,8 +184,9 @@ void loop() {
     baseCelsius[j] = (baseVoltage[j]/0.01) - 273.15;                         // At room temperature: Convert to celsius -- around 27
     tempVoltage[j] = analogRead(temp_sensor[j]);                             // Real-time (mV)   
     temp2Voltage[j] = (tempVoltage[j]*VCC)/1024;                             // Real-time (V)
-    tempConvert[j] = (temp2Voltage[j]/0.01) - 273.15;                        // Converting voltage reading into temperature   
-    tempCelsius[j] = baseCelsius[j] + (baseCelsius[j] - tempConvert[j]);     // Adding difference -- since voltage decreases as temperature increases
+//  tempConvert[j] = (temp2Voltage[j]/0.01) - 273.15;                        // Converting voltage reading into temperature   
+//  tempCelsius[j] = baseCelsius[j] + (baseCelsius[j] - tempConvert[j]);     // Adding difference -- since voltage decreases as temperature increases
+    tempCelsius[j] = (temp2Voltage[j] / baseVoltage) * baseCelsius;
     tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird american units
  
     Serial.print("LM335Z");
