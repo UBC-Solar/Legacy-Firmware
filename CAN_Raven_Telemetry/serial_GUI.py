@@ -50,21 +50,21 @@ last_msg = time.time();
 brake_frame = Frame(root);
 brake_frame.grid(row = 0);
 
-time_label_caption = Label(brake_frame, text = "Last CAN message: ", font = (None, 10,), width = 25);
-time_label_caption.grid(row = 0, column = 0);
-time_label = Label(brake_frame, text = time_str, textvariable = time_str, font = (None, 10,), width = 10);
+time_label_caption = Label(brake_frame, text = "Last CAN message: ", font = (None, 10,), width = 25, anchor = E);
+time_label_caption.grid(row = 0, column = 0, sticky = E);
+time_label = Label(brake_frame, text = time_str, textvariable = time_str, font = (None, 10,), width = 10, anchor = W);
 time_label.grid(row = 0, column = 1);
-timer_label = Label(brake_frame, text = timer_str, textvariable = timer_str, font = (None, 10,), width = 25);
+timer_label = Label(brake_frame, text = timer_str, textvariable = timer_str, font = (None, 10,), width = 25, anchor = W);
 timer_label.grid(row = 0, column = 2);
 
-brake_label_caption =  Label(brake_frame, text = "Brake: " , font = (None, 10,), width = 25);
-brake_label_caption.grid(row = 0, column = 3);
-brake_label = Label(brake_frame, text = brake, textvariable = brake, font = (None, 10,), width = 25);
-brake_label.grid(row = 0, column = 4);
+brake_label_caption =  Label(brake_frame, text = "Brake: " , font = (None, 10,), width = 25, anchor = E);
+brake_label_caption.grid(row = 0, column = 3, sticky = E);
+brake_label = Label(brake_frame, text = brake, textvariable = brake, font = (None, 10,), width = 25, anchor = W);
+brake_label.grid(row = 0, column = 4, sticky = W);
 
-hazard_label_caption =  Label(brake_frame, text = "Hazard: " , font = (None, 10,), width = 25);
+hazard_label_caption =  Label(brake_frame, text = "Hazard: " , font = (None, 10,), width = 25, anchor = E);
 hazard_label_caption.grid(row = 0, column = 5);
-hazard_label = Label(brake_frame, text = hazard, textvariable = hazard, font = (None, 10,),  width = 25);
+hazard_label = Label(brake_frame, text = hazard, textvariable = hazard, font = (None, 10,),  width = 25, anchor = W);
 hazard_label.grid(row = 0, column = 6);
 
 dir_frame = Frame(root);
@@ -75,14 +75,14 @@ left_signal.set("OFF");
 right_signal = StringVar();
 right_signal.set("OFF");
 
-left_label_caption = Label(dir_frame, text = "Left Signal: " , font = (None, 10,), width = 25);
+left_label_caption = Label(dir_frame, text = "Left Signal: " , font = (None, 10,), width = 50, anchor = E, bg = "gray85");
 left_label_caption.grid(row = 0, column = 0);
-left_label = Label(dir_frame, text = left_signal, textvariable = left_signal, font = (None, 10,), width = 25);
+left_label = Label(dir_frame, text = left_signal, textvariable = left_signal, font = (None, 10,), width = 25, anchor = W, bg = "gray85");
 left_label.grid(row = 0, column = 1);
 
-right_label_caption = Label(dir_frame, text = "Right Signal: ", font = (None, 10,), width = 25);
+right_label_caption = Label(dir_frame, text = "Right Signal: ", font = (None, 10,), width = 25, anchor = E, bg = "gray85");
 right_label_caption.grid(row = 0, column = 2);
-right_label = Label(dir_frame, text = right_signal, textvariable = right_signal, font = (None, 10,) , width = 25);
+right_label = Label(dir_frame, text = right_signal, textvariable = right_signal, font = (None, 10,) , width = 50, anchor = W, bg = "gray85");
 right_label.grid(row = 0, column = 3);
 
 acceleration = StringVar();
@@ -97,19 +97,19 @@ direction.set("FORWARD");
 motor_frame = Frame(root);
 motor_frame.grid(row = 2, column = 0);
 
-acceleration_label_caption = Label(motor_frame, text = "Acceleration: ", font = (None, 10,), width = 25);
+acceleration_label_caption = Label(motor_frame, text = "Acceleration: ", font = (None, 10,), width = 25, anchor = E);
 acceleration_label_caption.grid(row = 0, column = 0);
-acceleration_label = Label(motor_frame, text = acceleration, textvariable = acceleration, font = (None, 10,), width = 25);
+acceleration_label = Label(motor_frame, text = acceleration, textvariable = acceleration, font = (None, 10,), width = 25, anchor = W);
 acceleration_label.grid(row = 0, column = 1);
 
-regen_label_caption = Label(motor_frame, text = "Regen: ", font = (None, 10,), width = 25);
+regen_label_caption = Label(motor_frame, text = "Regen: ", font = (None, 10,), width = 25, anchor = E);
 regen_label_caption.grid(row = 0, column = 2);
-regen_label = Label(motor_frame, text = regen, textvariable = regen, font = (None, 10,), width = 25);
+regen_label = Label(motor_frame, text = regen, textvariable = regen, font = (None, 10,), width = 25, anchor = W);
 regen_label.grid(row = 0, column = 3);
 
-direction_label_caption = Label(motor_frame, text = "Direction: ", font = (None, 10,), width = 25);
+direction_label_caption = Label(motor_frame, text = "Direction: ", font = (None, 10,), width = 25, anchor = E);
 direction_label_caption.grid(row = 0, column = 4);
-direction_label = Label(motor_frame, text = direction, textvariable = direction, font = (None, 10,), width = 25);
+direction_label = Label(motor_frame, text = direction, textvariable = direction, font = (None, 10,), width = 25, anchor = W);
 direction_label.grid(row = 0, column = 5);
 
 status = StringVar();
@@ -129,14 +129,14 @@ temperature.set("N/A");
 
 status_frame1 = Frame(root);
 status_frame1.grid(row = 3, column = 0);
-status_label_caption = Label(status_frame1, text = "Status: ",font = (None, 10,), width = 15);
+status_label_caption = Label(status_frame1, text = "Status: ",font = (None, 10,), width = 50, anchor = E, bg = "gray85");
 status_label_caption.grid(row = 0, column = 0);
-status_label = Label(status_frame1, text = status, textvariable = status, font = (None, 10,), width = 35);
+status_label = Label(status_frame1, text = status, textvariable = status, font = (None, 10,), width = 25, anchor = W, bg = "gray85");
 status_label.grid(row = 0, column = 1);
 
-error_label_caption = Label(status_frame1, text = "Error: ", font = (None, 10,), width = 15);
+error_label_caption = Label(status_frame1, text = "Error: ", font = (None, 10,), width = 25, anchor = E, bg = "gray85");
 error_label_caption.grid(row = 0, column = 2);
-error_label = Label(status_frame1, text = error, textvariable = error, font = (None, 10,), width = 55);
+error_label = Label(status_frame1, text = error, textvariable = error, font = (None, 10,), width = 50, anchor = W, bg = "gray85");
 error_label.grid(row = 0, column = 3);
 
 car_details_frame = Frame(root);
@@ -187,7 +187,7 @@ for i in range(4):
         title_frame.grid(row = 0);
         detail_frame = Frame(pack_frame);
         detail_frame.grid(row = 1);
-        Label(title_frame, text = "Pack " + str(i + 1) + ":", font = (None, 10,), width = 50).grid(row = 0);
+        Label(title_frame, text = "Pack " + str(i + 1) + ":", font = (None, 10,), width = 50, anchor = W).grid(row = 0);
         Label(detail_frame, text = "Cell: " , font = (None, 10,), width = 5).grid(row = 0, column = 0);
         Label(detail_frame, text = "Voltage: (V)" , font = (None, 10,), width = 10).grid(row = 0, column = 1);
         Label(detail_frame, text = "Volt warning: " , font = (None, 10,), width = 10).grid(row = 0, column = 2);
@@ -275,8 +275,8 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[UPDATE] Brake: " + brake.get());
 
         elif id == HEARTBEAT_SIGNAL:
-                acceleration.set(str(double(log_msg[log_msg.find("A")+1:log_msg("R")]) / 255.0 * 100.0));
-                regen.set(str(double(log_msg[log_msg.find("R")+1:log_msg("D")]) / 255.0 * 100.0));
+                acceleration.set(str(float(log_msg[log_msg.find("A")+1:log_msg.find("R")]) / 255.0 * 100.0));
+                regen.set(str(float(log_msg[log_msg.find("R")+1:log_msg.find("D")]) / 255.0 * 100.0));
                 direction.set("FORWARD" if int(log_msg[log_msg.find("D")+1:log_msg.find("S")]) else "REVERSE")
 
                 signals = log_msg[log_msg.find("S")+1:log_msg.find("E")];
