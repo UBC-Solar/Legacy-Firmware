@@ -279,7 +279,7 @@ def update(log_msg):
                 regen.set(str(float(log_msg[log_msg.find("R")+1:log_msg.find("D")]) / 255.0 * 100.0));
                 direction.set("FORWARD" if int(log_msg[log_msg.find("D")+1:log_msg.find("S")]) else "REVERSE")
 
-                signals = log_msg[log_msg.find("S")+1:log_msg.find("E")];
+                signals = "{0:08b}".format(int(log_msg[log_msg.find("S")+1:log_msg.find("E")]));
                 hazard.set("ON" if int(signals[3]) else "OFF");
                 left_signal.set("ON" if int(signals[7]) else "OFF");
                 right_signal.set("ON" if int(signals[6]) else "OFF");
