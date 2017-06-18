@@ -186,8 +186,8 @@ void loop() {
     temp2Voltage[j] = (tempVoltage[j]*VCC)/1024;                             // Real-time (V)
 //  tempConvert[j] = (temp2Voltage[j]/0.01) - 273.15;                        // Converting voltage reading into temperature   
 //  tempCelsius[j] = baseCelsius[j] + (baseCelsius[j] - tempConvert[j]);     // Adding difference -- since voltage decreases as temperature increases
-    tempCelsius[j] = (temp2Voltage[j] / baseVoltage[j]) * baseCelsius[j];
-    tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird american units
+    tempCelsius[j] = ((14*((temp2Voltage[j] / baseVoltage[j]) - 1))+1) * baseCelsius[j] - 10;
+    tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird American units
  
     Serial.print("LM335Z");
     Serial.print(j);
