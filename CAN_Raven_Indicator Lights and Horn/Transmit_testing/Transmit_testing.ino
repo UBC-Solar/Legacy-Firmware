@@ -142,9 +142,9 @@ void loop()
           }
           else if (c== 'u'){
             Serial.println("u");
-            Serial.println("sending current from BMS");
+            Serial.println("sending current and temperature from BMS");
             unsigned int current = 1001 + 2048;//needs offset of 2048 (bc it's unsigned); subtract 2048 on other end to get real value
-
+            unsigned int temperature = 37 + 128;//maybe needs offset of 128? to allow negative temperatures 
             for(int i = 0; i < 4; i++){
               if(bitRead(current,i)){
                 bitSet(bigStmp[3], i);   
@@ -159,6 +159,7 @@ void loop()
                 bitClear(bigStmp[4], i);
               }
             }
+            bigStmp[7] = temperature;
             CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, bigStmp);
             
           }
