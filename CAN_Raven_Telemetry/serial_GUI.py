@@ -185,7 +185,6 @@ def reset_bms_temp(pack_num, temp):
         row_num = 2 if pack_num is 3 else 3;
         var["pack"][pack_num][row_num + temp][2].set("N/A");
         var["pack"][pack_num][row_num + temp][3].set("N/A");
-        
 
 for i in range(4):
         subsubframe = Frame(subframe, width = 50);
@@ -235,6 +234,7 @@ for i in range(4):
                 labels["temp"][i][k][0].grid(row = k + 1, column = 2);
                 labels["temp"][i][k][1].grid(row = k + 1, column = 3);
                 Button(subsubframe, text = "RESET", width = 10, command = lambda x = i, y = k:reset_bms_temp(x, y)).grid(row = k + 1, column = 5);
+
                 
 subframe = Frame(frame, width = 45);
 subframe.grid(row= 1, column = 1, sticky = N);
@@ -247,11 +247,17 @@ Label(subsubframe, text = "Peak", font = (None, 10, "bold",), width = 10).grid(r
 Label(subsubframe, text = "Peak Time", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 3);
 Label(subsubframe, text = "Reset", font = (None, 10, "bold",), width = 5).grid(row = 0, column = 4);
 
+mppt_peak_currs = {0,0,0,0,0,0};
+mppt_peak_temps = {0,0,0,0,0,0,0,0,0,0};
 def reset_mppt_peak(key, index):
         print(key);
         print(index);
         var[key][index][2].set("N/A");
         var[key][index][1].set("N/A");
+        if key == "mppt curr":
+                mppt_peak_currs[index] = 0;
+        if key == "mppt temp":
+                mppt_peak_temps[index] = 0;
 
 for i in range(6):
         Label(subsubframe, text = str(i) + ":", font = (None, 10,), width = 5).grid(row = i + 1, column = 0);
@@ -334,10 +340,12 @@ def update(log_msg):
                 currents = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT CURRENT1] ");
                 for i in range(4):
-                        var["mppt curr"][i][0].set(currents[i+1]);
-                        if var["mppt curr"][i][1].get() is "N/A" or float(var["mppt curr"][i][0].get()) > float(var["mppt curr"][i][1].get()):
-                                var["mppt curr"][i][1].set(var["mppt curr"][i][0].get());
-                                var["mppt curr"][i][2].set(log_msg[2:timestamp_end]);
+                        thisCurrent = currents[i+1];
+                        var["mppt curr"][i][0].set(thisCurrent);
+                        if thisCurrent > mppt_peak_currs[i]:
+                                var["mppt curr"][i][1].set(thisCurrent);
+                                var["mppt curr"][i][2].set(timestamp);
+                                mppt_peak_currs[i] = thisCurrent;
                         
                         print("Current sensor #" + str(i) + ": " + var["mppt curr"][i][0].get() + "mA");
 
@@ -345,40 +353,48 @@ def update(log_msg):
                 currents = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT CURRENT2] ");
                 for i in range(2):
-                        var["mppt curr"][i+4][0].set(currents[i+1]);
-                        if var["mppt curr"][i + 4][1].get() is "N/A" or float(var["mppt curr"][i + 4][0].get()) > float(var["mppt curr"][i + 4][1].get()):
-                                var["mppt curr"][i + 4][1].set(var["mppt curr"][i + 4][0].get());
-                                var["mppt curr"][i + 4][2].set(log_msg[2:timestamp_end]);
+                        thisCurrent = currents[i+1];
+                        var["mppt curr"][i+4][0].set(thisCurrent);
+                        if thisCurrent > mppt_peak_currs[i+4]:
+                                var["mppt curr"][i + 4][1].set(thisCurrent);
+                                var["mppt curr"][i + 4][2].set(timestamp);
+                                mppt_peak_currs[i+4] = thisCurrent;
                         print("Current sensor #" + str(i+4) + ": " + var["mppt curr"][i+4][0].get() + "mA");
 
         elif id == TEMP_SIGNAL_1:
                 temps = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP1] ");
                 for i in range(4):
-                        var["mppt temp"][i][0].set(temps[i+1]);
-                        if var["mppt temp"][i][1].get() is "N/A" or float(var["mppt temp"][i][0].get()) > float(var["mppt temp"][i][1].get()):
-                                var["mppt temp"][i][1].set(var["mppt temp"][i][0].get());
-                                var["mppt temp"][i][2].set(log_msg[2:timestamp_end]);
+                        thisTemp = temps[i+1];
+                        var["mppt temp"][i][0].set(thisTemp);
+                        if thisTemp > mppt_peak_temps[i]:
+                                var["mppt temp"][i][1].set(thisTemp);
+                                var["mppt temp"][i][2].set(timestamp);
+                                mppt_peak_temps[i] = thisTemp;
                         print("Temp sensor #" + str(i) + ": " + var["mppt temp"][i][0].get() + "C");
 
         elif id == TEMP_SIGNAL_2:
                 temps = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP2] ");
                 for i in range(4):
-                        var["mppt temp"][i+4][0].set(temps[i+1]);
-                        if var["mppt temp"][i + 4][1].get() is "N/A" or float(var["mppt temp"][i + 4][0].get()) > float(var["mppt temp"][i + 4][1].get()):
-                                var["mppt temp"][i + 4][1].set(var["mppt temp"][i + 4][0].get());
-                                var["mppt temp"][i + 4][2].set(log_msg[2:timestamp_end]);
+                        thisTemp = temps[i+1];
+                        var["mppt temp"][i+4][0].set(thisTemp);
+                        if thisTemp > mppt_peak_temps[i+4]:
+                                var["mppt temp"][i+4][1].set(thisTemp);
+                                var["mppt temp"][i+4][2].set(timestamp);
+                                mppt_peak_temps[i+4] = thisTemp;
                         print("Temp sensor #" + str(i+4) + ": " + var["mppt temp"][i+4][0].get() + "C");
 
         elif id == TEMP_SIGNAL_3:
                 temps = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP3] ");
                 for i in range(2):
-                        var["mppt temp"][i+8][0].set(temps[i+1]);
-                        if var["mppt temp"][i + 8][1].get() is "N/A" or float(var["mppt temp"][i + 8][0].get()) > float(var["mppt temp"][i + 8][1].get()):
-                                var["mppt temp"][i + 8][1].set(var["mppt temp"][i + 8][0].get());
-                                var["mppt temp"][i + 8][2].set(log_msg[2:timestamp_end]);
+                        thisTemp = temps[i+1];
+                        var["mppt temp"][i+8][0].set(thisTemp);
+                        if thisTemp > mppt_peak_temps[i+8]:
+                                var["mppt temp"][i+8][1].set(thisTemp);
+                                var["mppt temp"][i+8][2].set(timestamp);
+                                mppt_peak_temps[i+8] = thisTemp;
                         print("Temp sensor #" + str(i+8) + ": " + var["mppt temp"][i+8][0].get() + "C");
                 
         elif id >= 100 and id < 140:
