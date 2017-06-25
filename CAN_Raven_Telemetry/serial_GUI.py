@@ -22,7 +22,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
 
 connected = False;
 print((5 >> 1));
-'''
+
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -34,7 +34,7 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-'''
+
 root = Tk();
 
 var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
@@ -242,13 +242,13 @@ Label(subframe, text = "MPPT info", font = (None, 15,"bold",)).grid(row = 0);
 
 subsubframe = Frame(subframe , width = 45);
 subsubframe.grid(row = 1, column = 0, sticky = N);
-Label(subsubframe, text = "Current (mA)", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 1);
+Label(subsubframe, text = "Current (A)", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 1);
 Label(subsubframe, text = "Peak", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 2);
 Label(subsubframe, text = "Peak Time", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 3);
 Label(subsubframe, text = "Reset", font = (None, 10, "bold",), width = 5).grid(row = 0, column = 4);
 
-mppt_peak_currs = {0,0,0,0,0,0};
-mppt_peak_temps = {0,0,0,0,0,0,0,0,0,0};
+mppt_peak_currs = [0,0,0,0,0,0];
+mppt_peak_temps = [0,0,0,0,0,0,0,0,0,0];
 def reset_mppt_peak(key, index):
         print(key);
         print(index);
@@ -306,8 +306,8 @@ def update(log_msg):
                 var["left"].set("ON" if int(signals[7]) else "OFF");
                 var["right"].set("ON" if int(signals[6]) else "OFF");
                 print(log_msg[2:timestamp_end] + "[HEARTBEAT] ");
-                print("Acceleration%: " + var["accel"].get() + "\tRegen%: " + var["regen"].get() + "\tDirection: " + direction.get());
-                print("Left signal: " + var["left"].get() + "\tRight signal: " + var["right"].get() + "\tHazard: " + hazard.get());
+                print("Acceleration%: " + var["accel"].get() + "\tRegen%: " + var["regen"].get() + "\tDirection: " + var["dir"].get());
+                print("Left signal: " + var["left"].get() + "\tRight signal: " + var["right"].get() + "\tHazard: " + var["hazard"].get());
 
         elif id == BMS_CORE_STATUS:
                 values = log_msg.split("} ")[1].split(" ");
@@ -342,12 +342,12 @@ def update(log_msg):
                 for i in range(4):
                         thisCurrent = currents[i+1];
                         var["mppt curr"][i][0].set(thisCurrent);
-                        if thisCurrent > mppt_peak_currs[i]:
+                        if float(thisCurrent) > mppt_peak_currs[i]:
                                 var["mppt curr"][i][1].set(thisCurrent);
                                 var["mppt curr"][i][2].set(timestamp);
-                                mppt_peak_currs[i] = thisCurrent;
+                                mppt_peak_currs[i] = float(thisCurrent);
                         
-                        print("Current sensor #" + str(i) + ": " + var["mppt curr"][i][0].get() + "mA");
+                        print("Current sensor #" + str(i) + ": " + var["mppt curr"][i][0].get() + "A");
 
         elif id == CURRENT_SIGNAL_2:
                 currents = log_msg.split();
@@ -355,11 +355,11 @@ def update(log_msg):
                 for i in range(2):
                         thisCurrent = currents[i+1];
                         var["mppt curr"][i+4][0].set(thisCurrent);
-                        if thisCurrent > mppt_peak_currs[i+4]:
+                        if float(thisCurrent) > mppt_peak_currs[i+4]:
                                 var["mppt curr"][i + 4][1].set(thisCurrent);
                                 var["mppt curr"][i + 4][2].set(timestamp);
-                                mppt_peak_currs[i+4] = thisCurrent;
-                        print("Current sensor #" + str(i+4) + ": " + var["mppt curr"][i+4][0].get() + "mA");
+                                mppt_peak_currs[i+4] = float(thisCurrent);
+                        print("Current sensor #" + str(i+4) + ": " + var["mppt curr"][i+4][0].get() + "A");
 
         elif id == TEMP_SIGNAL_1:
                 temps = log_msg.split();
@@ -367,10 +367,10 @@ def update(log_msg):
                 for i in range(4):
                         thisTemp = temps[i+1];
                         var["mppt temp"][i][0].set(thisTemp);
-                        if thisTemp > mppt_peak_temps[i]:
+                        if float(thisTemp) > mppt_peak_temps[i]:
                                 var["mppt temp"][i][1].set(thisTemp);
                                 var["mppt temp"][i][2].set(timestamp);
-                                mppt_peak_temps[i] = thisTemp;
+                                mppt_peak_temps[i] = float(thisTemp);
                         print("Temp sensor #" + str(i) + ": " + var["mppt temp"][i][0].get() + "C");
 
         elif id == TEMP_SIGNAL_2:
@@ -379,10 +379,10 @@ def update(log_msg):
                 for i in range(4):
                         thisTemp = temps[i+1];
                         var["mppt temp"][i+4][0].set(thisTemp);
-                        if thisTemp > mppt_peak_temps[i+4]:
+                        if float(thisTemp) > mppt_peak_temps[i+4]:
                                 var["mppt temp"][i+4][1].set(thisTemp);
                                 var["mppt temp"][i+4][2].set(timestamp);
-                                mppt_peak_temps[i+4] = thisTemp;
+                                mppt_peak_temps[i+4] = float(thisTemp);
                         print("Temp sensor #" + str(i+4) + ": " + var["mppt temp"][i+4][0].get() + "C");
 
         elif id == TEMP_SIGNAL_3:
@@ -391,10 +391,10 @@ def update(log_msg):
                 for i in range(2):
                         thisTemp = temps[i+1];
                         var["mppt temp"][i+8][0].set(thisTemp);
-                        if thisTemp > mppt_peak_temps[i+8]:
+                        if float(thisTemp) > mppt_peak_temps[i+8]:
                                 var["mppt temp"][i+8][1].set(thisTemp);
                                 var["mppt temp"][i+8][2].set(timestamp);
-                                mppt_peak_temps[i+8] = thisTemp;
+                                mppt_peak_temps[i+8] = float(thisTemp);
                         print("Temp sensor #" + str(i+8) + ": " + var["mppt temp"][i+8][0].get() + "C");
                 
         elif id >= 100 and id < 140:
@@ -473,5 +473,5 @@ def wait():
         labels["timer"].config(fg = "black" if (time.time() - last_msg) < 5 else "red");
         root.after(100, wait);
 
-#root.after(10, wait);
+root.after(10, wait);
 root.mainloop();
