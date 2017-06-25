@@ -122,6 +122,13 @@ def bmsMainCurrentReset():
 var["temp"][0].set("N/A");
 var["temp"][1].set("N/A");
 var["temp"][2].set("N/A");
+bmsMainTempPeak = 0;
+
+def bmsMainTempReset():
+        global bmsMainTempPeak;
+        bmsMainTempPeak = 0;
+        var["temp"][1].set("N/A");
+        var["temp"][2].set("N/A");
 
 frame = Frame(root);
 frame.grid(row = 4);
@@ -169,7 +176,7 @@ Label(subsubframe, textvariable = var["temp"][1], font = (None, 10,), width = 10
 
 Label(subsubframe, text = "Peak Time:", font = (None, 10,"bold",), width = 10).grid(row = 2, column = 1);
 Label(subsubframe, textvariable = var["temp"][2], font = (None, 10,), width = 10).grid(row = 3, column = 1);
-Button(subsubframe, text = "RESET").grid(row = 4, column = 1);
+Button(subsubframe, text = "RESET", command = bmsMainTempReset).grid(row = 4, column = 1);
 
 subframe = Frame(frame);
 subframe.grid(column = 2, rowspan = 4, row = 0);
@@ -260,6 +267,7 @@ for i in range(10):
 def update(log_msg):
         global last_msg;
         global bmsMainCurrentPeak;
+        global bmsMainTempPeak;
         timestamp_end = log_msg.find("]")+1;
         data_start = log_msg.find("}")+2;
         id = int(log_msg[log_msg.find("{")+1:log_msg.find("}")]);
@@ -296,7 +304,12 @@ def update(log_msg):
                         bmsMainCurrentPeak = currentValue;
                         var["current"][2].set(timestamp);
                 var["aux volt"].set(float(values[5]));
-                var["temp"][0].set(int(values[6][:len(values[6]) - 5]));
+                tempValue = int(values[6][:len(values[6]) - 5])
+                var["temp"][0].set(tempValue);
+                if(tempValue > bmsMainTempPeak):
+                        var["temp"][1].set(tempValue);
+                        bmsMainTempPeak = tempValue;
+                        var["temp"][2].set(timestamp);
                 labels["err"].config(fg = ("GREEN" if var["err"].get() == "NONE" else "red"));
                 
                 print(log_msg[2:timestamp_end] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]" if int(values[1]) is 15 else "[UPDATE]") +\
