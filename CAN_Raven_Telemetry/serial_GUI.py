@@ -110,6 +110,8 @@ var["hazard"].set("OFF");
 var["current"][0].set("N/A");
 var["current"][1].set("N/A");
 var["current"][2].set("N/A");
+bmsMainCurrentPeak = 0.0;
+
 
 var["temp"][0].set("N/A");
 var["temp"][1].set("N/A");
@@ -251,10 +253,12 @@ for i in range(10):
                 
 def update(log_msg):
         global last_msg;
+        global bmsMainCurrentPeak;
         timestamp_end = log_msg.find("]")+1;
         data_start = log_msg.find("}")+2;
         id = int(log_msg[log_msg.find("{")+1:log_msg.find("}")]);
-        var["time"].set(log_msg[2:timestamp_end]);
+        timestamp = log_msg[2:timestamp_end];
+        var["time"].set(timestamp);
         
         if id == BRAKE_SIGNAL:
                 var["brake"].set("ON" if int(log_msg[data_start]) else "OFF");
@@ -279,7 +283,12 @@ def update(log_msg):
                 var["err"].set(ERRORS[int(values[1])]);
                 var["soc"].set(int(values[2]));
                 var["volt"].set(int(values[3]));
-                var["current"][0].set(int(values[4]));
+                currentValue = int(values[4]);
+                var["current"][0].set(currentValue);
+                if(currentValue > bmsMainCurrentPeak):
+                        var["current"][1].set(currentValue);
+                        bmsMainCurrentPeak = currentValue;
+                        var["current"][2].set(timestamp);
                 var["aux volt"].set(float(values[5]));
                 var["temp"][0].set(int(values[6][:len(values[6]) - 5]));
                 labels["err"].config(fg = ("GREEN" if var["err"].get() == "NONE" else "red"));
@@ -290,7 +299,7 @@ def update(log_msg):
                         "A Aux Voltage: " + var["aux volt"].get() + "V Temperature: " + \
                         var["temp"][0].get());
 
-        elif id == CURRENT_SIGNAL_1:
+        elif id == CURRENT_SIGNAL_1: #CURRENT_SIGNAL_X and TEMP_SIGNAL_X refer to MPPT
                 currents = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT CURRENT1] ");
                 for i in range(4):
