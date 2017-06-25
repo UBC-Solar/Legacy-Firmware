@@ -187,7 +187,7 @@ void zevaCoreSetCellNum(void) {
   // format is 16 4-bit values
   // ie. 0x0B means module ID 0 has 11 cells
   //     0xBB means module IDs 0 and 1 have 11 cells each
-  frame_data[0] = 0x0B;
+  frame_data[0] = 0x03;
   frame_data[1] = 0;
   frame_data[2] = 0;
   frame_data[3] = 0;

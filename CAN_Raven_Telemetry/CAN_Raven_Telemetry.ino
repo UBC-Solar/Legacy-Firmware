@@ -71,7 +71,13 @@ void loop() {
   if(CAN_MSGAVAIL == CAN.checkReceive()){
     CAN.readMsgBuf(&length, frame_data);
     frame_id = CAN.getCanId();
-    
+    /*Serial.print(frame_id);
+    Serial.print("\t");
+    for (int i = 0; i < 8; i++) {
+      Serial.print(frame_data[i], HEX);
+      Serial.print("\t");
+    }
+    Serial.println();*/
     msgHandler(frame_id, frame_data, length);
   }
 }

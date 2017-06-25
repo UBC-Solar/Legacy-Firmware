@@ -34,8 +34,21 @@ void msgHandleCoreStatus(uint32_t frame_id, byte* frame_data, byte length) {
 }
 
 void msgHandleBmsStatus(uint32_t frame_id, byte* frame_data, byte length) {
-  int pack_num = (frame_id % 100) / 10;
-
+   byte temp_warn = frame_data[4] >> 4;
+   
+  printHelper(String(frame_data[0]&0x7));
+  printHelper(F(" "));
+  printHelper(String((frame_data[1] >> 4)&0x7));
+  printHelper(F(" "));
+  printHelper(String(frame_data[4]&0x7));
+  printHelper(F(" "));
+  printHelper(String(temp_warn & 0x3));
+  printHelper(" ");
+  printHelper(String(temp_warn & 0xC), 1);
+  
+  
+  
+/*
   uint32_t volt_warn = ((unsigned long) frame_data[2]) << 16 | ((unsigned long) frame_data[1]) << 8 | ((unsigned long) frame_data[0]);
   uint16_t volt_shun_warn = (frame_data[4] & 0x0F) << 8 | (unsigned char) frame_data[3];
   byte temp_warn = frame_data[4] >> 4;
@@ -48,16 +61,18 @@ void msgHandleBmsStatus(uint32_t frame_id, byte* frame_data, byte length) {
   }
   printHelper(String(temp_warn & 0x3));
   printHelper(" ");
-  printHelper(String(temp_warn & 0xC), 1);
+  printHelper(String(temp_warn & 0xC), 1);*/
 }
 
 void msgHandleBmsReply(uint32_t frame_id, byte* frame_data, byte length) {
-  for (int i = 0 ; i < 6 ; i++) {
-    unsigned int cell_volt = ((unsigned int) frame_data[i]) | (frame_data[6] & ((unsigned int) 1 << i)) << (8 - i);
-    printHelper(String(cell_volt/100.0));
-    printHelper(F(" "));
+  if (frame_id % 10 == 3) {
+   for (int i = 0 ; i < 3 ; i++) {
+      unsigned int cell_volt = ((unsigned int) frame_data[i]) | (frame_data[6] & ((unsigned int) 1 << i)) << (8 - i);
+      printHelper(String(cell_volt/100.0));
+      printHelper(F(" "));
+    }
   }
-  byte temp = frame_data[7] - 128;
+  int temp = frame_data[7] - 128;
   printHelper(String(temp), NEW_LINE);
 }
 

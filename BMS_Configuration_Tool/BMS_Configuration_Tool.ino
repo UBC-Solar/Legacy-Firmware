@@ -11,7 +11,7 @@
 bool shouldPrintBMS12Messages = true;
 bool shouldPrintCoreStatusMessages = true;
 bool shouldPrintCoreConfigMessages = true;
-bool shouldSendCoreConfigMessages = false;
+bool shouldSendCoreConfigMessages = true;
 
 MCP_CAN CAN(CAN_SS);
 
