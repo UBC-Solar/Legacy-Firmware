@@ -181,6 +181,12 @@ Button(subsubframe, text = "RESET", command = bmsMainTempReset).grid(row = 4, co
 subframe = Frame(frame);
 subframe.grid(column = 2, rowspan = 4, row = 0);
 
+def reset_bms_temp(pack_num, temp):
+        row_num = 2 if pack_num is 3 else 3;
+        var["pack"][pack_num][row_count + temp][2].set("N/A");
+        var["pack"][pack_num][row_count + temp][3].set("N/A");
+        
+
 for i in range(4):
         subsubframe = Frame(subframe, width = 50);
         subsubframe.grid(row = i*2, pady = 10);
@@ -228,7 +234,7 @@ for i in range(4):
                 Label(subsubframe, textvariable = var["pack"][i][row_count + k][3], font = (None, 10,), width = 10).grid(row = k + 1, column = 4);
                 labels["temp"][i][k][0].grid(row = k + 1, column = 2);
                 labels["temp"][i][k][1].grid(row = k + 1, column = 3);
-                Button(subsubframe, text = "RESET", width = 10).grid(row = k + 1, column = 5);
+                Button(subsubframe, text = "RESET", width = 10, command = lambda:reset_bms_temp(pack_num, k)).grid(row = k + 1, column = 5);
                 
 subframe = Frame(frame, width = 45);
 subframe.grid(row= 1, column = 1, sticky = N);
@@ -241,10 +247,14 @@ Label(subsubframe, text = "Peak", font = (None, 10, "bold",), width = 10).grid(r
 Label(subsubframe, text = "Peak Time", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 3);
 Label(subsubframe, text = "Reset", font = (None, 10, "bold",), width = 5).grid(row = 0, column = 4);
 
+def reset_mppt_peak(key, index):
+        var[key][index][2].set("N/A");
+        var[key][index][1].set("N/A");
+
 for i in range(6):
         Label(subsubframe, text = str(i) + ":", font = (None, 10,), width = 5).grid(row = i + 1, column = 0);
         var["mppt curr"].append((StringVar(), StringVar(), StringVar(),));
-        Button(subsubframe, text = "RESET").grid(row = i + 1, column = 4);
+        Button(subsubframe, text = "RESET", command = lambda:reset_mppt_peak("mppt curr" , i).grid(row = i + 1, column = 4);
 
         for j in range(3):
                 var["mppt curr"][i][j].set("N/A");
@@ -257,7 +267,7 @@ Label(subsubframe, text = "Temp (C)", font = (None, 10, "bold",), width = 10).gr
 for i in range(10):
         Label(subsubframe, text = str(i) + ":", font = (None, 10,), width = 5).grid(row = i + 1, column = 0);
         var["mppt temp"].append((StringVar(), StringVar(), StringVar(),));
-        Button(subsubframe, text = "RESET").grid(row = i + 1, column = 4);
+        Button(subsubframe, text = "RESET", command = lambda: reset_mppt_peak("mppt temp", i)).grid(row = i + 1, column = 4);
 
         for j in range(3):
                 var["mppt temp"][i][j].set("N/A");
@@ -323,6 +333,10 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[MPPT CURRENT1] ");
                 for i in range(4):
                         var["mppt curr"][i][0].set(currents[i+1]);
+                        if var["mppt curr"][i][1].get() is "N/A" or float(var["mppt curr"][i][0].get()) > float(var["mppt curr"][i][1].get()):
+                                var["mppt curr"][i][1].set(var["mppt curr"][i][0].get());
+                                var["mppt curr"][i][2].set(log_msg[2:timestamp_end]);
+                        
                         print("Current sensor #" + str(i) + ": " + var["mppt curr"][i][0].get() + "mA");
 
         elif id == CURRENT_SIGNAL_2:
@@ -330,6 +344,9 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[MPPT CURRENT2] ");
                 for i in range(2):
                         var["mppt curr"][i+4][0].set(currents[i+1]);
+                        if var["mppt curr"][i + 4][1].get() is "N/A" or float(var["mppt curr"][i + 4][0].get()) > float(var["mppt curr"][i + 4][1].get()):
+                                var["mppt curr"][i + 4][1].set(var["mppt curr"][i + 4][0].get());
+                                var["mppt curr"][i + 4][2].set(log_msg[2:timestamp_end]);
                         print("Current sensor #" + str(i+4) + ": " + var["mppt curr"][i+4][0].get() + "mA");
 
         elif id == TEMP_SIGNAL_1:
@@ -337,6 +354,9 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP1] ");
                 for i in range(4):
                         var["mppt temp"][i][0].set(temps[i+1]);
+                        if var["mppt temp"][i][1].get() is "N/A" or float(var["mppt temp"][i][0].get()) > float(var["mppt temp"][i][1].get()):
+                                var["mppt temp"][i][1].set(var["mppt temp"][i][0].get());
+                                var["mppt temp"][i][2].set(log_msg[2:timestamp_end]);
                         print("Temp sensor #" + str(i) + ": " + var["mppt temp"][i][0].get() + "C");
 
         elif id == TEMP_SIGNAL_2:
@@ -344,6 +364,9 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP2] ");
                 for i in range(4):
                         var["mppt temp"][i+4][0].set(temps[i+1]);
+                        if var["mppt temp"][i + 4][1].get() is "N/A" or float(var["mppt temp"][i + 4][0].get()) > float(var["mppt temp"][i + 4][1].get()):
+                                var["mppt temp"][i + 4][1].set(var["mppt temp"][i + 4][0].get());
+                                var["mppt temp"][i + 4][2].set(log_msg[2:timestamp_end]);
                         print("Temp sensor #" + str(i+4) + ": " + var["mppt temp"][i+4][0].get() + "C");
 
         elif id == TEMP_SIGNAL_3:
@@ -351,6 +374,9 @@ def update(log_msg):
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP3] ");
                 for i in range(2):
                         var["mppt temp"][i+8][0].set(temps[i+1]);
+                        if var["mppt temp"][i + 8][1].get() is "N/A" or float(var["mppt temp"][i + 8][0].get()) > float(var["mppt temp"][i + 8][1].get()):
+                                var["mppt temp"][i + 8][1].set(var["mppt temp"][i + 8][0].get());
+                                var["mppt temp"][i + 8][2].set(log_msg[2:timestamp_end]);
                         print("Temp sensor #" + str(i+8) + ": " + var["mppt temp"][i+8][0].get() + "C");
                 
         elif id >= 100 and id < 140:
@@ -383,11 +409,18 @@ def update(log_msg):
                                 var["pack"][pack_num][i][0].set(values[i + 1]);
                                 print(values[i + 1] + "V ", end = "");
                         var["pack"][pack_num][row_count][0].set(values[4][:len(values[4]) - 5]);
+                        if var["pack"][pack_num][row_count][2].get() is "N/A" or int(var["pack"][pack_num][row_count][0].get()) > int(var["pack"][pack_num][row_count][2].get()):
+                              var["pack"][pack_num][row_count][2].set(var["pack"][pack_num][row_count][0].get());
+                              var["pack"][pack_num][row_count][3].set(log_msg[2:timestamp_end]);
                         print("Temperature 0:" + var["pack"][pack_num][row_count][0].get());
                         
                 elif id%10 is 5:
                         value = log_msg.split(" ")[1];
                         var["pack"][pack_num][row_count + 1][0].set(value[:len(value) - 5]);
+                        if var["pack"][pack_num][row_count + 1][2].get() is "N/A" or int(var["pack"][pack_num][row_count + 1][0].get()) > int(var["pack"][pack_num][row_count + 1][2].get()):
+                              var["pack"][pack_num][row_count + 1][2].set(var["pack"][pack_num][row_count + 1][0].get());
+                              var["pack"][pack_num][row_count + 1][3].set(log_msg[2:timestamp_end]);
+                        
                         print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "Temperature 1:" + var["pack"][pack_num][row_count + 1][0].get());
                         
         last_msg = time.time();
