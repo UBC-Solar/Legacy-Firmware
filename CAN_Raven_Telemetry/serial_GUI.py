@@ -110,7 +110,13 @@ var["hazard"].set("OFF");
 var["current"][0].set("N/A");
 var["current"][1].set("N/A");
 var["current"][2].set("N/A");
-bmsMainCurrentPeak = 0.0;
+bmsMainCurrentPeak = 0;
+
+def bmsMainCurrentReset():
+        global bmsMainCurrentPeak;
+        bmsMainCurrentPeak = 0;
+        var["current"][1].set("N/A");
+        var["current"][2].set("N/A");
 
 
 var["temp"][0].set("N/A");
@@ -150,7 +156,7 @@ Label(subsubframe, textvariable = var["current"][1], font = (None, 10,), width =
 
 Label(subsubframe, text = "Peak Time:", font = (None, 10,"bold",), width = 10).grid(row = 2, column = 1);
 Label(subsubframe, textvariable = var["current"][2], font = (None, 10,), width = 10).grid(row = 3, column = 1);
-Button(subsubframe, text = "RESET").grid(row = 4, column = 1);
+Button(subsubframe, text = "RESET", command = bmsMainCurrentReset).grid(row = 4, column = 1);
 
 subsubframe = Frame(subframe);
 subsubframe.grid(row = 1, pady = 20);
