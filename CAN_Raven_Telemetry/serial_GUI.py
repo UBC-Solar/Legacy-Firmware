@@ -22,7 +22,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
 
 connected = False;
 print((5 >> 1));
-
+'''
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -34,7 +34,7 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-
+'''
 root = Tk();
 
 var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
@@ -183,8 +183,8 @@ subframe.grid(column = 2, rowspan = 4, row = 0);
 
 def reset_bms_temp(pack_num, temp):
         row_num = 2 if pack_num is 3 else 3;
-        var["pack"][pack_num][row_count + temp][2].set("N/A");
-        var["pack"][pack_num][row_count + temp][3].set("N/A");
+        var["pack"][pack_num][row_num + temp][2].set("N/A");
+        var["pack"][pack_num][row_num + temp][3].set("N/A");
         
 
 for i in range(4):
@@ -234,7 +234,7 @@ for i in range(4):
                 Label(subsubframe, textvariable = var["pack"][i][row_count + k][3], font = (None, 10,), width = 10).grid(row = k + 1, column = 4);
                 labels["temp"][i][k][0].grid(row = k + 1, column = 2);
                 labels["temp"][i][k][1].grid(row = k + 1, column = 3);
-                Button(subsubframe, text = "RESET", width = 10, command = lambda:reset_bms_temp(pack_num, k)).grid(row = k + 1, column = 5);
+                Button(subsubframe, text = "RESET", width = 10, command = lambda x = i, y = k:reset_bms_temp(x, y)).grid(row = k + 1, column = 5);
                 
 subframe = Frame(frame, width = 45);
 subframe.grid(row= 1, column = 1, sticky = N);
@@ -248,13 +248,15 @@ Label(subsubframe, text = "Peak Time", font = (None, 10, "bold",), width = 10).g
 Label(subsubframe, text = "Reset", font = (None, 10, "bold",), width = 5).grid(row = 0, column = 4);
 
 def reset_mppt_peak(key, index):
+        print(key);
+        print(index);
         var[key][index][2].set("N/A");
         var[key][index][1].set("N/A");
 
 for i in range(6):
         Label(subsubframe, text = str(i) + ":", font = (None, 10,), width = 5).grid(row = i + 1, column = 0);
         var["mppt curr"].append((StringVar(), StringVar(), StringVar(),));
-        Button(subsubframe, text = "RESET", command = lambda:reset_mppt_peak("mppt curr" , i).grid(row = i + 1, column = 4);
+        Button(subsubframe, text = "RESET", command = lambda x = i:reset_mppt_peak("mppt curr" , x)).grid(row = i + 1, column = 4);
 
         for j in range(3):
                 var["mppt curr"][i][j].set("N/A");
@@ -267,7 +269,7 @@ Label(subsubframe, text = "Temp (C)", font = (None, 10, "bold",), width = 10).gr
 for i in range(10):
         Label(subsubframe, text = str(i) + ":", font = (None, 10,), width = 5).grid(row = i + 1, column = 0);
         var["mppt temp"].append((StringVar(), StringVar(), StringVar(),));
-        Button(subsubframe, text = "RESET", command = lambda: reset_mppt_peak("mppt temp", i)).grid(row = i + 1, column = 4);
+        Button(subsubframe, text = "RESET", command = lambda x = i: reset_mppt_peak("mppt temp", x)).grid(row = i + 1, column = 4);
 
         for j in range(3):
                 var["mppt temp"][i][j].set("N/A");
@@ -455,5 +457,5 @@ def wait():
         labels["timer"].config(fg = "black" if (time.time() - last_msg) < 5 else "red");
         root.after(100, wait);
 
-root.after(10, wait);
+#root.after(10, wait);
 root.mainloop();
