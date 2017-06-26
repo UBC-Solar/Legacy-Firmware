@@ -1,15 +1,24 @@
 #include <FlexCAN.h>
 #include <kinetis_flexcan.h>
-
 #include <ubcsolar_can_ids.h>
 
-//TODO: figure out what pins we're using
-#define HORN_PIN 0
-#define LEFT_SIGNAL_PIN 1
-#define RIGHT_SIGNAL_PIN 2
-#define REGEN_PIN 15
-#define THROTTLE_PIN 14
+#define HORN_PIN 14
+#define LEFT_SIGNAL_PIN 13
+#define RIGHT_SIGNAL_PIN 15
+#define REGEN_PIN 20
+#define THROTTLE_PIN 23
 #define DIRECTION_PIN 7
+
+#define BMS_LAMP_RED_PIN 8
+#define BMS_LAMP_GREEN_PIN 11
+#define MOTOR_LAMP_RED_PIN 9
+#define MOTOR_LAMP_GREEN_PIN 19
+#define MPPT_LAMP_RED_PIN 2
+#define MPPT_LAMP_GREEN_PIN 7
+#define LOW_12V_LAMP_RED_PIN 6
+#define LOW_12V_LAMP_GREEN_PIN 5
+#define LEFT_TURN_LAMP_PIN 10
+#define RIGHT_TURN_LAMP_PIN 12
 
 #define BYTE_THROTTLE_ACCEL 0
 #define BYTE_THROTTLE_REGEN 1
@@ -35,7 +44,7 @@ bool leftSignalOn = false;
 bool rightSignalOn = false;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   CANbus.begin();
   txmsg.id = CAN_ID_HEARTBEAT;
@@ -46,8 +55,44 @@ void setup() {
   pinMode(THROTTLE_PIN, INPUT);
   pinMode(REGEN_PIN, INPUT);
   
-  Serial.println(F("System initialized"));
+  pinMode(BMS_LAMP_RED_PIN, OUTPUT);
+  pinMode(BMS_LAMP_GREEN_PIN, OUTPUT);
+  pinMode(MOTOR_LAMP_RED_PIN, OUTPUT);
+  pinMode(MOTOR_LAMP_GREEN_PIN, OUTPUT);
+  pinMode(MPPT_LAMP_RED_PIN, OUTPUT);
+  pinMode(MPPT_LAMP_GREEN_PIN, OUTPUT);
+  pinMode(LOW_12V_LAMP_RED_PIN, OUTPUT);
+  pinMode(LOW_12V_LAMP_GREEN_PIN, OUTPUT);
+  pinMode(LEFT_TURN_LAMP_PIN, OUTPUT);
+  pinMode(RIGHT_TURN_LAMP_PIN, OUTPUT);
 
+  // flash the lamps so we can tell they're working
+  for(int i=0; i<4; i++) {
+    digitalWrite(BMS_LAMP_RED_PIN, HIGH);
+    digitalWrite(MOTOR_LAMP_RED_PIN, HIGH);
+    digitalWrite(MPPT_LAMP_RED_PIN, HIGH);
+    digitalWrite(LOW_12V_LAMP_RED_PIN, HIGH);
+    digitalWrite(LEFT_TURN_LAMP_PIN, HIGH);
+    digitalWrite(RIGHT_TURN_LAMP_PIN, HIGH);
+    delay(500);
+    digitalWrite(BMS_LAMP_RED_PIN, LOW);
+    digitalWrite(MOTOR_LAMP_RED_PIN, LOW);
+    digitalWrite(MPPT_LAMP_RED_PIN, LOW);
+    digitalWrite(LOW_12V_LAMP_RED_PIN, LOW);
+    digitalWrite(LEFT_TURN_LAMP_PIN, LOW);
+    digitalWrite(RIGHT_TURN_LAMP_PIN, LOW);
+    digitalWrite(BMS_LAMP_GREEN_PIN, HIGH);
+    digitalWrite(MOTOR_LAMP_GREEN_PIN, HIGH);
+    digitalWrite(MPPT_LAMP_GREEN_PIN, HIGH);
+    digitalWrite(LOW_12V_LAMP_GREEN_PIN, HIGH);
+    delay(500);
+    digitalWrite(BMS_LAMP_GREEN_PIN, LOW);
+    digitalWrite(MOTOR_LAMP_GREEN_PIN, LOW);
+    digitalWrite(MPPT_LAMP_GREEN_PIN, LOW);
+    digitalWrite(LOW_12V_LAMP_GREEN_PIN, LOW);
+  }
+  
+  Serial.println(F("System initialized"));
 }
 
 void msgHandler() {
