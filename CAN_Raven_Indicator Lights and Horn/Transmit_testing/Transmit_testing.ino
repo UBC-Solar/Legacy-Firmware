@@ -40,7 +40,7 @@ START_INIT:
 }
 
 unsigned char stmp[1] = {0};
-unsigned char bigStmp[8];
+unsigned char bigStmp[8] = {0,0,0,0,0,0,0,0};
 void loop()
 {
       char c;
@@ -139,7 +139,30 @@ void loop()
               Serial.println(" NO ERROR Error from BMS");
               stmp[0]=0+ 2*16;//5th bit is for status = running
               CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, stmp);              
-          }     
+          }
+          else if (c== 'u'){
+            Serial.println("u");
+            Serial.println("sending current and temperature from BMS");
+            unsigned int current = 1001 + 2048;//needs offset of 2048 (bc it's unsigned); subtract 2048 on other end to get real value
+            unsigned int temperature = 20 + 128;//maybe needs offset of 128? to allow negative temperatures 
+            for(int i = 0; i < 4; i++){
+              if(bitRead(current,i)){
+                bitSet(bigStmp[3], i);   
+              } else {
+                bitClear(bigStmp[3], i);
+              }
+            }
+            for(int i = 0; i < 8; i++){
+              if(bitRead(current,i+4)){
+                bitSet(bigStmp[4], i);   
+              }else {
+                bitClear(bigStmp[4], i);
+              }
+            }
+            bigStmp[7] = temperature;
+            CAN.sendMsgBuf(CAN_ID_ZEVA_BMS_CORE_STATUS, 0, 8, bigStmp);
+            
+          }
           else if (c== 'h')
           {
             Serial.println("h");
@@ -161,10 +184,10 @@ void loop()
           {
             Serial.println("m");
             Serial.println(" mppt message");
-            unsigned int val1 = 35.23 * 1000;
-            unsigned int val2 = 33.21 * 1000;
-            unsigned int val3 = 30.97 * 1000;
-            unsigned int val4 = 37.21 * 1000;
+            unsigned int val1 = 35.23 * 100;
+            unsigned int val2 = 33.21 * 100;
+            unsigned int val3 = 30.97 * 100;
+            unsigned int val4 = 37.21 * 100;
             bigStmp[0] = highByte(val1);
             bigStmp[1] = lowByte(val1);
             bigStmp[2] = highByte(val2);

@@ -21,6 +21,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
 connected = False;
+print((5 >> 1));
 
 while not connected:
         print("Enter COM port: ");
@@ -33,344 +34,432 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
+
 root = Tk();
 
+var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
+             "left" : StringVar(), "right" : StringVar(),\
+             "accel" : StringVar(), "regen" : StringVar(), "dir" : StringVar(),\
+             "status": StringVar(), "err" : StringVar(),\
+             "soc" : StringVar(), "volt" : StringVar(), "aux volt" : StringVar(),\
+             "current" : (StringVar(), StringVar(), StringVar(),), "temp" : (StringVar(), StringVar(), StringVar(),),\
+      "pack" : [], "mppt curr" : [], "mppt temp" : []};
 
+labels = {"battery" : [], "temp" : []};
 
-brake = StringVar();
-brake.set("OFF");
-hazard = StringVar();
-hazard.set("OFF");
-time_str = StringVar();
-time_str.set("N/A");
-timer_str = StringVar();
-timer_str.set("N/A");
 last_msg = time.time();
 
-brake_frame = Frame(root);
-brake_frame.grid(row = 0);
+frame = Frame(root);
+frame.grid(row = 0);
 
-time_label_caption = Label(brake_frame, text = "Last CAN message: ", font = (None, 10,), width = 25, anchor = E);
-time_label_caption.grid(row = 0, column = 0, sticky = E);
-time_label = Label(brake_frame, text = time_str, textvariable = time_str, font = (None, 10,), width = 10, anchor = W);
-time_label.grid(row = 0, column = 1);
-timer_label = Label(brake_frame, text = timer_str, textvariable = timer_str, font = (None, 10,), width = 25, anchor = W);
-timer_label.grid(row = 0, column = 2);
+var["time"].set("N/A");
+var["timer"].set("N/A");
 
-brake_label_caption =  Label(brake_frame, text = "Brake: " , font = (None, 10,), width = 25, anchor = E);
-brake_label_caption.grid(row = 0, column = 3, sticky = E);
-brake_label = Label(brake_frame, text = brake, textvariable = brake, font = (None, 10,), width = 25, anchor = W);
-brake_label.grid(row = 0, column = 4, sticky = W);
+Label(frame, text = "Last CAN message: ", font = (None, 10, "bold",), width = 25, anchor = E).grid(row = 0, column = 0, sticky = E);
+Label(frame, textvariable = var["time"], font = (None, 10,), width = 10, anchor = W).grid(row = 0, column = 1);
+labels["timer"] = Label(frame, textvariable = var["timer"], font = (None, 10,), width = 25, anchor = W);
+labels["timer"].grid(row = 0, column = 2);
 
-hazard_label_caption =  Label(brake_frame, text = "Hazard: " , font = (None, 10,), width = 25, anchor = E);
-hazard_label_caption.grid(row = 0, column = 5);
-hazard_label = Label(brake_frame, text = hazard, textvariable = hazard, font = (None, 10,),  width = 25, anchor = W);
-hazard_label.grid(row = 0, column = 6);
+frame = Frame(root);
+frame.grid(row = 1, column = 0);
 
-dir_frame = Frame(root);
-dir_frame.grid(row = 1, column = 0);
+var["left"].set("OFF");
+var["right"].set("OFF");
 
-left_signal = StringVar();
-left_signal.set("OFF");
-right_signal = StringVar();
-right_signal.set("OFF");
+Label(frame, text = "Left Signal: " , font = (None, 10, "bold",), width = 50, anchor = E, bg = "gray85").grid(row = 0, column = 0);
+Label(frame, textvariable = var["left"], font = (None, 10,), width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 1);
 
-left_label_caption = Label(dir_frame, text = "Left Signal: " , font = (None, 10,), width = 50, anchor = E, bg = "gray85");
-left_label_caption.grid(row = 0, column = 0);
-left_label = Label(dir_frame, text = left_signal, textvariable = left_signal, font = (None, 10,), width = 25, anchor = W, bg = "gray85");
-left_label.grid(row = 0, column = 1);
+Label(frame, text = "Right Signal: ", font = (None, 10, "bold",), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 2);
+Label(frame, textvariable = var["right"], font = (None, 10,) , width = 50, anchor = W, bg = "gray85").grid(row = 0, column = 3);
 
-right_label_caption = Label(dir_frame, text = "Right Signal: ", font = (None, 10,), width = 25, anchor = E, bg = "gray85");
-right_label_caption.grid(row = 0, column = 2);
-right_label = Label(dir_frame, text = right_signal, textvariable = right_signal, font = (None, 10,) , width = 50, anchor = W, bg = "gray85");
-right_label.grid(row = 0, column = 3);
+var["accel"].set("N/A");
+var["regen"].set("N/A");
+var["dir"].set("FORWARD");
 
-acceleration = StringVar();
-acceleration.set("N/A");
+frame = Frame(root);
+frame.grid(row = 2, column = 0);
 
-regen = StringVar();
-regen.set("N/A");
+Label(frame, text = "Acceleration: ", font = (None, 10, "bold",), width = 25, anchor = E).grid(row = 0, column = 0);
+Label(frame, textvariable = var["accel"], font = (None, 10, ), width = 25, anchor = W).grid(row = 0, column = 1);
 
-direction = StringVar();
-direction.set("FORWARD");
+Label(frame, text = "Regen: ", font = (None, 10, "bold",), width = 25, anchor = E).grid(row = 0, column = 2);
+Label(frame, textvariable = var["regen"], font = (None, 10,), width = 25, anchor = W).grid(row = 0, column = 3);
 
-motor_frame = Frame(root);
-motor_frame.grid(row = 2, column = 0);
+Label(frame, text = "Direction: ", font = (None, 10, "bold",), width = 25, anchor = E).grid(row = 0, column = 4);
+Label(frame, textvariable = var["dir"], font = (None, 10,), width = 25, anchor = W).grid(row = 0, column = 5);
 
-acceleration_label_caption = Label(motor_frame, text = "Acceleration: ", font = (None, 10,), width = 25, anchor = E);
-acceleration_label_caption.grid(row = 0, column = 0);
-acceleration_label = Label(motor_frame, text = acceleration, textvariable = acceleration, font = (None, 10,), width = 25, anchor = W);
-acceleration_label.grid(row = 0, column = 1);
+var["status"].set("N/A");
+var["err"].set(ERRORS[0]);
 
-regen_label_caption = Label(motor_frame, text = "Regen: ", font = (None, 10,), width = 25, anchor = E);
-regen_label_caption.grid(row = 0, column = 2);
-regen_label = Label(motor_frame, text = regen, textvariable = regen, font = (None, 10,), width = 25, anchor = W);
-regen_label.grid(row = 0, column = 3);
+frame = Frame(root);
+frame.grid(row = 3, column = 0);
+Label(frame, text = "Status: ",font = (None, 10, "bold",), width = 50, anchor = E, bg = "gray85").grid(row = 0, column = 0);
+Label(frame, textvariable = var["status"], font = (None, 10,), width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 1);
 
-direction_label_caption = Label(motor_frame, text = "Direction: ", font = (None, 10,), width = 25, anchor = E);
-direction_label_caption.grid(row = 0, column = 4);
-direction_label = Label(motor_frame, text = direction, textvariable = direction, font = (None, 10,), width = 25, anchor = W);
-direction_label.grid(row = 0, column = 5);
+Label(frame, text = "Error: ", font = (None, 10, "bold"), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 2);
+labels["err"] = Label(frame, textvariable =var["err"], font = (None, 10,), width = 50, anchor = W, bg = "gray85");
+labels["err"].grid(row = 0, column = 3);
 
-status = StringVar();
-status.set("N/A");
-error = StringVar();
-error.set(ERRORS[0]);
-state_of_charge = StringVar();
-state_of_charge.set("N/A");
-voltage = StringVar();
-voltage.set("N/A");
-current = StringVar();
-current.set("N/A");
-aux_voltage = StringVar();
-aux_voltage.set("N/A");
-temperature = StringVar();
-temperature.set("N/A");
+var["soc"].set("N/A");
+var["volt"].set("N/A");
+var["aux volt"].set("N/A");
 
-status_frame1 = Frame(root);
-status_frame1.grid(row = 3, column = 0);
-status_label_caption = Label(status_frame1, text = "Status: ",font = (None, 10,), width = 50, anchor = E, bg = "gray85");
-status_label_caption.grid(row = 0, column = 0);
-status_label = Label(status_frame1, text = status, textvariable = status, font = (None, 10,), width = 25, anchor = W, bg = "gray85");
-status_label.grid(row = 0, column = 1);
+var["brake"].set("OFF");
+var["hazard"].set("OFF");
 
-error_label_caption = Label(status_frame1, text = "Error: ", font = (None, 10,), width = 25, anchor = E, bg = "gray85");
-error_label_caption.grid(row = 0, column = 2);
-error_label = Label(status_frame1, text = error, textvariable = error, font = (None, 10,), width = 50, anchor = W, bg = "gray85");
-error_label.grid(row = 0, column = 3);
+var["current"][0].set("N/A");
+var["current"][1].set("N/A");
+var["current"][2].set("N/A");
+bmsMainCurrentPeak = 0;
 
-car_details_frame = Frame(root);
-car_details_frame.grid(row = 4);
-#car_info_frame = Frame(details_frame);
-#car_info_frame.grid(column = 0);
-
-status_frame2 = Frame(car_details_frame);
-status_frame2.grid(row = 0, column = 0);
-soc_label_caption = Label(status_frame2, text = "State of Charge: (%) ", font = (None, 10,), width = 20);
-soc_label_caption.grid(row = 0, column = 0);
-soc_label = Label(status_frame2, text = state_of_charge, textvariable = state_of_charge, font = (None, 15,), width = 20, height = 3);
-soc_label.grid(row = 1, column = 0);
-
-voltage_label_caption = Label(status_frame2, text = "Voltage: (V)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 0, column = 1);
-voltage_label = Label(status_frame2, text = voltage, textvariable = voltage, font = (None, 15,), width = 20, height = 3);
-voltage_label.grid(row = 1, column = 1);
-
-voltage_label_caption = Label(status_frame2, text = "Current: (A)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 2, column = 0);
-voltage_label = Label(status_frame2, text = current, textvariable = current, font = (None, 15,), width = 20, height = 3);
-voltage_label.grid(row = 3, column = 0);
-
-voltage_label_caption = Label(status_frame2, text = "Aux Voltage: (V)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 2, column = 1);
-voltage_label = Label(status_frame2, text = aux_voltage, textvariable = aux_voltage, font = (None, 15,), width = 20, height = 3);
-voltage_label.grid(row = 3, column = 1);
-
-voltage_label_caption = Label(status_frame2, text = "Temperature: (Cel.)", font = (None, 10,), width = 20);
-voltage_label_caption.grid(row = 4, column = 0);
-voltage_label = Label(status_frame2, text = temperature, textvariable = temperature, font = (None, 15,), width = 20, height = 3);
-voltage_label.grid(row = 5, column = 0);
+def bmsMainCurrentReset():
+        global bmsMainCurrentPeak;
+        bmsMainCurrentPeak = 0;
+        var["current"][1].set("N/A");
+        var["current"][2].set("N/A");
 
 
+var["temp"][0].set("N/A");
+var["temp"][1].set("N/A");
+var["temp"][2].set("N/A");
+bmsMainTempPeak = 0;
 
+def bmsMainTempReset():
+        global bmsMainTempPeak;
+        bmsMainTempPeak = 0;
+        var["temp"][1].set("N/A");
+        var["temp"][2].set("N/A");
 
-#battery_frame = Frame(details_frame);
-#battery_frame.grid(row = 0, column = 1);
-pack_details = [];
-battery_warning_labels = [];
-temp_warning_labels = [];
+frame = Frame(root);
+frame.grid(row = 4);
+
+subframe = Frame(frame);
+subframe.grid(row = 0, column = 0, columnspan = 2);
+Label(subframe, text = "State of Charge: (%) ", font = (None, 10, "bold",), width = 20).grid(row = 0, column = 0);
+Label(subframe, textvariable = var["soc"], font = (None, 15,), width = 20, height = 3).grid(row = 1, column = 0);
+
+Label(subframe, text = "Voltage: (V)", font = (None, 10, "bold",), width = 20).grid(row = 0, column = 1);
+Label(subframe, textvariable = var["volt"], font = (None, 15,), width = 20, height = 3).grid(row = 1, column = 1);
+
+Label(subframe, text = "Aux Voltage: (V)", font = (None, 10, "bold",), width = 20).grid(row = 0, column = 2);
+Label(subframe, textvariable = var["aux volt"], font = (None, 15,), width = 20, height = 3).grid(row = 1, column = 2);
+
+Label(subframe, text = "Brake: " , font = (None, 10, "bold",), width = 20).grid(row = 2, column = 0);
+Label(subframe, textvariable = var["brake"], font = (None, 15,), width = 10, height = 3).grid(row = 3, column = 0);
+
+Label(subframe, text = "Hazard: " , font = (None, 10, "bold",), width = 25).grid(row = 2, column = 1);
+Label(subframe, textvariable = var["hazard"], font = (None, 15,),  width = 25, height = 3).grid(row = 3, column = 1);
+
+subframe = Frame(frame);
+subframe.grid(row = 1, column = 0, sticky = N);
+subsubframe = Frame(subframe);
+subsubframe.grid(row = 0, pady = 60);
+
+Label(subsubframe, text = "Current: (A)", font = (None, 10,"bold",), width = 10).grid(row = 0, column = 0);
+Label(subsubframe, textvariable = var["current"][0], font = (None, 15,), width = 10, height = 3).grid(row = 1, column = 0, rowspan = 4);
+
+Label(subsubframe, text = "Peak:", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 1);
+Label(subsubframe, textvariable = var["current"][1], font = (None, 10,), width = 10).grid(row = 1, column = 1);
+
+Label(subsubframe, text = "Peak Time:", font = (None, 10,"bold",), width = 10).grid(row = 2, column = 1);
+Label(subsubframe, textvariable = var["current"][2], font = (None, 10,), width = 10).grid(row = 3, column = 1);
+Button(subsubframe, text = "RESET", command = bmsMainCurrentReset).grid(row = 4, column = 1);
+
+subsubframe = Frame(subframe);
+subsubframe.grid(row = 1, pady = 20);
+
+Label(subsubframe, text = "Temp: (Cel.)", font = (None, 10, "bold"), width = 10).grid(row = 0, column = 0);
+Label(subsubframe, textvariable = var["temp"][0], font = (None, 15,), width = 10, height = 3).grid(row = 1, column = 0, rowspan = 4);
+
+Label(subsubframe, text = "Peak:", font = (None, 10,"bold",), width = 10).grid(row = 0, column = 1);
+Label(subsubframe, textvariable = var["temp"][1], font = (None, 10,), width = 10).grid(row = 1, column = 1);
+
+Label(subsubframe, text = "Peak Time:", font = (None, 10,"bold",), width = 10).grid(row = 2, column = 1);
+Label(subsubframe, textvariable = var["temp"][2], font = (None, 10,), width = 10).grid(row = 3, column = 1);
+Button(subsubframe, text = "RESET", command = bmsMainTempReset).grid(row = 4, column = 1);
+
+subframe = Frame(frame);
+subframe.grid(column = 2, rowspan = 4, row = 0);
+
+def reset_bms_temp(pack_num, temp):
+        row_num = 2 if pack_num is 3 else 3;
+        var["pack"][pack_num][row_num + temp][2].set("N/A");
+        var["pack"][pack_num][row_num + temp][3].set("N/A");
 
 for i in range(4):
-        pack_frame = Frame(car_details_frame, width = 50);
-        pack_frame.grid(row = int(i/2), column = i%2 + 1);
-        title_frame = Frame(pack_frame);
-        title_frame.grid(row = 0);
-        detail_frame = Frame(pack_frame);
-        detail_frame.grid(row = 1);
-        Label(title_frame, text = "Pack " + str(i + 1) + ":", font = (None, 10,), width = 50, anchor = W).grid(row = 0);
-        Label(detail_frame, text = "Cell: " , font = (None, 10,), width = 5).grid(row = 0, column = 0);
-        Label(detail_frame, text = "Voltage: (V)" , font = (None, 10,), width = 10).grid(row = 0, column = 1);
-        Label(detail_frame, text = "Volt warning: " , font = (None, 10,), width = 10).grid(row = 0, column = 2);
-        Label(detail_frame, text = "Shun warning: " , font = (None, 10,), width = 10).grid(row = 0, column = 3);
-        pack_details.append([]);
-        battery_warning_labels.append([]);
-        temp_warning_labels.append([]);
+        subsubframe = Frame(subframe, width = 50);
+        subsubframe.grid(row = i*2, pady = 10);
+        
+        Label(subsubframe, text = "Pack " + str(i + 1) + ":", font = (None, 12, "bold"), width = 50, anchor = W).grid(row = 0, columnspan = 4);
+        Label(subsubframe, text = "Cell: " , font = (None, 10, "bold",), width = 5).grid(row = 1, column = 0);
+        Label(subsubframe, text = "Voltage: (V)" , font = (None, 10, "bold",), width = 10).grid(row = 1, column = 1);
+        Label(subsubframe, text = "Volt warning: " , font = (None, 10, "bold",), width = 10).grid(row = 1, column = 2);
+        Label(subsubframe, text = "Shun warning: " , font = (None, 10, "bold",), width = 12).grid(row = 1, column = 3);
+        var["pack"].append([]);
+        labels["battery"].append([]);
+        labels["temp"].append([]);
+        row_count = 2 if i is 3 else 3;
 
-        for j in range(12):
-                Label(detail_frame, text = str(j) + ":", font = (None, 10,), width = 12).grid(row = j + 1, column = 0);
-                pack_details[i].append((StringVar(), StringVar(), StringVar(),));
-                pack_details[i][j][0].set("N/A");
-                pack_details[i][j][1].set("OK");
-                pack_details[i][j][2].set("OK");
-                Label(detail_frame, text = pack_details[i][j][0], textvariable = pack_details[i][j][0], font = (None, 10,), width = 14).grid(row = j + 1, column = 1);
-                battery_warning_labels[i].append((Label(detail_frame, text = pack_details[i][j][1], textvariable = pack_details[i][j][1] , font = (None, 10,), width = 12), \
-                                    Label(detail_frame, text = pack_details[i][j][2], textvariable = pack_details[i][j][2] , font = (None, 10,), width = 12),));
-                battery_warning_labels[i][j][0].grid(row = j + 1, column = 2);
-                battery_warning_labels[i][j][1].grid(row = j + 1, column = 3);
+        for j in range(row_count):
+                Label(subsubframe, text = str(j) + ":", font = (None, 10, "bold",), width = 12).grid(row = j + 2, column = 0);
+                var["pack"][i].append((StringVar(), StringVar(), StringVar(),));
+                var["pack"][i][j][0].set("N/A");
+                var["pack"][i][j][1].set("OK");
+                var["pack"][i][j][2].set("OK");
+                Label(subsubframe, textvariable = var["pack"][i][j][0], font = (None, 10,), width = 14).grid(row = j + 2, column = 1);
+                labels["battery"][i].append((Label(subsubframe, textvariable = var["pack"][i][j][1] , font = (None, 10,), width = 12), \
+                                    Label(subsubframe,textvariable = var["pack"][i][j][2] , font = (None, 10,), width = 12),));
+                labels["battery"][i][j][0].grid(row = j + 2, column = 2);
+                labels["battery"][i][j][1].grid(row = j + 2, column = 3);
 
-        pack_temp_frame = Frame(pack_frame);
-        pack_temp_frame.grid(row = 2);
-        Label(pack_temp_frame, text = "Temperature:  ", font = (None, 10,), width = 20).grid(row = 0, column = 1);
-        Label(pack_temp_frame, text = "Warning :", font = (None, 10,), width = 20).grid(row = 0, column = 2);
+        subsubframe = Frame(subframe);
+        subsubframe.grid(row = i*2 + 1, pady = 10);
+        Label(subsubframe, text = "Temperature:  ", font = (None, 10, "bold",), width = 11).grid(row = 0, column = 1);
+        Label(subsubframe, text = "Warning :", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 2);
+        Label(subsubframe, text = "Peak :", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 3);
+        Label(subsubframe, text = "Time of Peak :", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 4);
+        Label(subsubframe, text = "Reset Peak:", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 5);
 
         for k in range(2):
-                Label(pack_temp_frame, text = "Temperature " + str(k) + ": ", font = (None, 10,), width = 12).grid(row = k + 1);
-                pack_details[i].append((StringVar(), StringVar(),));
-                pack_details[i][k + 12][0].set("N/A");
-                pack_details[i][k + 12][1].set("OK");
-                Label(pack_temp_frame, text = pack_details[i][12 + k][0], textvariable = pack_details[i][12 + k][0], font = (None, 10,), width = 14).grid(row = k + 1, column = 1);
-                temp_warning_labels[i].append(Label(pack_temp_frame, text = pack_details[i][12 + k][1], textvariable = pack_details[i][12 + k][1], font = (None, 10,), width = 14));
-                temp_warning_labels[i][k].grid(row = k + 1, column = 2);
+                Label(subsubframe, text = "Temperature " + str(k) + ": ", font = (None, 10, "bold",), width = 12).grid(row = k + 1);
+                var["pack"][i].append((StringVar(), StringVar(), StringVar(), StringVar()));
+                var["pack"][i][k + row_count][0].set("N/A");
+                var["pack"][i][k + row_count][1].set("OK");
+                var["pack"][i][k + row_count][2].set("N/A");
+                var["pack"][i][k + row_count][3].set("N/A");
+                Label(subsubframe, textvariable = var["pack"][i][row_count + k][0], font = (None, 10,), width = 10).grid(row = k + 1, column = 1);
+                labels["temp"][i].append((Label(subsubframe, textvariable = var["pack"][i][row_count + k][1], font = (None, 10,), width = 10), \
+                                       Label(subsubframe, textvariable = var["pack"][i][row_count + k][2], font = (None, 10,), width = 10),));
+                Label(subsubframe, textvariable = var["pack"][i][row_count + k][3], font = (None, 10,), width = 10).grid(row = k + 1, column = 4);
+                labels["temp"][i][k][0].grid(row = k + 1, column = 2);
+                labels["temp"][i][k][1].grid(row = k + 1, column = 3);
+                Button(subsubframe, text = "RESET", width = 10, command = lambda x = i, y = k:reset_bms_temp(x, y)).grid(row = k + 1, column = 5);
 
-mppt_frame = Frame(car_details_frame, width = 50);
-mppt_frame.grid(row= 1, column = 0, sticky = N);
-mppt_title_frame = Frame(mppt_frame);
+                
+subframe = Frame(frame, width = 45);
+subframe.grid(row= 1, column = 1, sticky = N);
+Label(subframe, text = "MPPT info", font = (None, 15,"bold",)).grid(row = 0);
 
-mppt_details_frame = Frame(mppt_frame);
-mppt_details_frame.grid(row = 1);
+subsubframe = Frame(subframe , width = 45);
+subsubframe.grid(row = 1, column = 0, sticky = N);
+Label(subsubframe, text = "Current (A)", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 1);
+Label(subsubframe, text = "Peak", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 2);
+Label(subsubframe, text = "Peak Time", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 3);
+Label(subsubframe, text = "Reset", font = (None, 10, "bold",), width = 5).grid(row = 0, column = 4);
 
-mppt_title_frame.grid(row = 0);
-Label(mppt_title_frame, text = "MPPT info", font = (None, 10,), width = 50).grid(row = 0);
-
-mppt_current_frame = Frame(mppt_details_frame);
-mppt_current_frame.grid(row = 1, column = 0, sticky = N);
-mppt_current_title_frame = Frame(mppt_current_frame, width = 20);
-mppt_current_title_frame.grid(row = 0);
-Label(mppt_current_title_frame, text = "Current (mA)", font = (None, 10,), width = 15).grid(row = 0);
-current_details = [];
+mppt_peak_currs = [0,0,0,0,0,0];
+mppt_peak_temps = [0,0,0,0,0,0,0,0,0,0];
+def reset_mppt_peak(key, index):
+        print(key);
+        print(index);
+        var[key][index][2].set("N/A");
+        var[key][index][1].set("N/A");
+        if key == "mppt curr":
+                mppt_peak_currs[index] = 0;
+        if key == "mppt temp":
+                mppt_peak_temps[index] = 0;
 
 for i in range(6):
-        mppt_current_detail_frame = Frame(mppt_current_frame, width = 20);
-        mppt_current_detail_frame.grid(row = i+1);
-        Label(mppt_current_detail_frame, text = str(i) + ":", font = (None, 10,), width = 10).grid(row = 0, column = 0);
-        current_details.append(StringVar());
-        current_details[i].set("N/A");
-        Label(mppt_current_detail_frame, text = current_details[i], textvariable = current_details[i], font = (None, 10,), width = 10).grid(row = 0, column = 1);
+        Label(subsubframe, text = str(i) + ":", font = (None, 10,), width = 5).grid(row = i + 1, column = 0);
+        var["mppt curr"].append((StringVar(), StringVar(), StringVar(),));
+        Button(subsubframe, text = "RESET", command = lambda x = i:reset_mppt_peak("mppt curr" , x)).grid(row = i + 1, column = 4);
 
-mppt_temp_frame = Frame(mppt_details_frame);
-mppt_temp_frame.grid(row = 1, column = 1);
-mppt_temp_title_frame = Frame(mppt_temp_frame, width = 20);
-mppt_temp_title_frame.grid(row = 0);
-Label(mppt_temp_title_frame, text = "Temp (C)", font = (None, 10,), width = 15).grid(row = 0);
-temp_details = [];
+        for j in range(3):
+                var["mppt curr"][i][j].set("N/A");
+                Label(subsubframe, textvariable = var["mppt curr"][i][j], font = (None, 10,), width = 10).grid(row = i + 1, column = j + 1);
 
+subsubframe = Frame(subframe, width = 45);
+subsubframe.grid(row = 2, column = 0, pady = 20);
+
+Label(subsubframe, text = "Temp (C)", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 1);
 for i in range(10):
-        mppt_temp_detail_frame = Frame(mppt_temp_frame, width = 20);
-        mppt_temp_detail_frame.grid(row = i+1);
-        Label(mppt_temp_detail_frame, text = str(i) + ":", font = (None, 10,), width = 10).grid(row = 0, column = 0);
-        temp_details.append(StringVar());
-        temp_details[i].set("N/A");
-        Label(mppt_temp_detail_frame, text = temp_details[i], textvariable = temp_details[i], font = (None, 10,), width = 10).grid(row = 0, column = 1);
+        Label(subsubframe, text = str(i) + ":", font = (None, 10,), width = 5).grid(row = i + 1, column = 0);
+        var["mppt temp"].append((StringVar(), StringVar(), StringVar(),));
+        Button(subsubframe, text = "RESET", command = lambda x = i: reset_mppt_peak("mppt temp", x)).grid(row = i + 1, column = 4);
+
+        for j in range(3):
+                var["mppt temp"][i][j].set("N/A");
+                Label(subsubframe, textvariable = var["mppt temp"][i][j], font = (None, 10,), width = 10).grid(row = i + 1, column = j + 1);
 
                 
 def update(log_msg):
         global last_msg;
+        global bmsMainCurrentPeak;
+        global bmsMainTempPeak;
         timestamp_end = log_msg.find("]")+1;
         data_start = log_msg.find("}")+2;
         id = int(log_msg[log_msg.find("{")+1:log_msg.find("}")]);
-        time_str.set(log_msg[2:timestamp_end]);
+        timestamp = log_msg[2:timestamp_end];
+        var["time"].set(timestamp);
         
         if id == BRAKE_SIGNAL:
-                brake.set("ON" if int(log_msg[data_start]) else "OFF");
+                var["brake"].set("ON" if int(log_msg[data_start]) else "OFF");
                 print(log_msg[2:timestamp_end] + "[UPDATE] Brake: " + brake.get());
 
         elif id == HEARTBEAT_SIGNAL:
-                acceleration.set(str(float(log_msg[log_msg.find("A")+1:log_msg.find("R")]) / 255.0 * 100.0));
-                regen.set(str(float(log_msg[log_msg.find("R")+1:log_msg.find("D")]) / 255.0 * 100.0));
-                direction.set("FORWARD" if int(log_msg[log_msg.find("D")+1:log_msg.find("S")]) else "REVERSE")
+                var["accel"].set(str(float(log_msg[log_msg.find("A")+1:log_msg.find("R")]) / 255.0 * 100.0));
+                var["regen"].set(str(float(log_msg[log_msg.find("R")+1:log_msg.find("D")]) / 255.0 * 100.0));
+                var["dir"].set("FORWARD" if int(log_msg[log_msg.find("D")+1:log_msg.find("S")]) else "REVERSE")
 
                 signals = "{0:08b}".format(int(log_msg[log_msg.find("S")+1:log_msg.find("E")]));
-                hazard.set("ON" if int(signals[3]) else "OFF");
-                left_signal.set("ON" if int(signals[7]) else "OFF");
-                right_signal.set("ON" if int(signals[6]) else "OFF");
+                var["hazard"].set("ON" if int(signals[3]) else "OFF");
+                var["left"].set("ON" if int(signals[7]) else "OFF");
+                var["right"].set("ON" if int(signals[6]) else "OFF");
                 print(log_msg[2:timestamp_end] + "[HEARTBEAT] ");
-                print("Acceleration%: " + acceleration.get() + "\tRegen%: " + regen.get() + "\tDirection: " + direction.get());
-                print("Left signal: " + left_signal.get() + "\tRight signal: " + right_signal.get() + "\tHazard: " + hazard.get());
+                print("Acceleration%: " + var["accel"].get() + "\tRegen%: " + var["regen"].get() + "\tDirection: " + var["dir"].get());
+                print("Left signal: " + var["left"].get() + "\tRight signal: " + var["right"].get() + "\tHazard: " + var["hazard"].get());
 
         elif id == BMS_CORE_STATUS:
                 values = log_msg.split("} ")[1].split(" ");
-                status.set(STATES[int(values[0])%4]); #mod 4 is there just for testing. remove after
-                error.set(ERRORS[int(values[1])]);
-                state_of_charge.set(int(values[2]));
-                voltage.set(int(values[3]));
-                current.set(int(values[4]));
-                aux_voltage.set(float(values[5]));
-                temperature.set(int(values[6][:len(values[6]) - 5]));
-                error_label.config(fg = ("GREEN" if error.get() == "NONE" else "red"));
+                var["status"].set(STATES[int(values[0])%4]); #mod 4 is there just for testing. remove after
+                var["err"].set(ERRORS[int(values[1])]);
+                var["soc"].set(int(values[2]));
+                var["volt"].set(int(values[3]));
+                currentValue = int(values[4]);
+                var["current"][0].set(currentValue);
+                if(currentValue > bmsMainCurrentPeak):
+                        var["current"][1].set(currentValue);
+                        bmsMainCurrentPeak = currentValue;
+                        var["current"][2].set(timestamp);
+                var["aux volt"].set(float(values[5]));
+                tempValue = int(values[6][:len(values[6]) - 5])
+                var["temp"][0].set(tempValue);
+                if(tempValue > bmsMainTempPeak):
+                        var["temp"][1].set(tempValue);
+                        bmsMainTempPeak = tempValue;
+                        var["temp"][2].set(timestamp);
+                labels["err"].config(fg = ("GREEN" if var["err"].get() == "NONE" else "red"));
                 
-                print(log_msg[2:timestamp_end] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]") +\
-                      " Status: " + status.get() + " Error: " + ERRORS[int(values[1])] + \
+                print(log_msg[2:timestamp_end] + ("[WARNING]" if (int(values[1]) in [2,4,6,9]) else "[ERROR]" if int(values[1]) is 15 else "[UPDATE]") +\
+                      " Status: " + var["status"].get() + " Error: " + ERRORS[int(values[1])] + \
                       " SoC: " + values[2] + "% Voltage: " + values[3] + "V Current: " + values[4] +\
-                        "A Aux Voltage: " + aux_voltage.get() + "V Temperature: " + \
-                        temperature.get());
+                        "A Aux Voltage: " + var["aux volt"].get() + "V Temperature: " + \
+                        var["temp"][0].get());
 
-        elif id == CURRENT_SIGNAL_1:
+        elif id == CURRENT_SIGNAL_1: #CURRENT_SIGNAL_X and TEMP_SIGNAL_X refer to MPPT
                 currents = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT CURRENT1] ");
                 for i in range(4):
-                        current_details[i].set(currents[i+1]);
-                        print("Current sensor #" + str(i) + ": " + current_details[i].get() + "mA");
+                        thisCurrent = currents[i+1];
+                        var["mppt curr"][i][0].set(thisCurrent);
+                        if float(thisCurrent) > mppt_peak_currs[i]:
+                                var["mppt curr"][i][1].set(thisCurrent);
+                                var["mppt curr"][i][2].set(timestamp);
+                                mppt_peak_currs[i] = float(thisCurrent);
+                        
+                        print("Current sensor #" + str(i) + ": " + var["mppt curr"][i][0].get() + "A");
 
         elif id == CURRENT_SIGNAL_2:
                 currents = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT CURRENT2] ");
                 for i in range(2):
-                        current_details[i+4].set(currents[i+1]);
-                        print("Current sensor #" + str(i+4) + ": " + current_details[i+4].get() + "mA");
+                        thisCurrent = currents[i+1];
+                        var["mppt curr"][i+4][0].set(thisCurrent);
+                        if float(thisCurrent) > mppt_peak_currs[i+4]:
+                                var["mppt curr"][i + 4][1].set(thisCurrent);
+                                var["mppt curr"][i + 4][2].set(timestamp);
+                                mppt_peak_currs[i+4] = float(thisCurrent);
+                        print("Current sensor #" + str(i+4) + ": " + var["mppt curr"][i+4][0].get() + "A");
 
         elif id == TEMP_SIGNAL_1:
                 temps = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP1] ");
                 for i in range(4):
-                        temp_details[i].set(temps[i+1]);
-                        print("Temp sensor #" + str(i) + ": " + temp_details[i].get() + "C");
+                        thisTemp = temps[i+1];
+                        var["mppt temp"][i][0].set(thisTemp);
+                        if float(thisTemp) > mppt_peak_temps[i]:
+                                var["mppt temp"][i][1].set(thisTemp);
+                                var["mppt temp"][i][2].set(timestamp);
+                                mppt_peak_temps[i] = float(thisTemp);
+                        print("Temp sensor #" + str(i) + ": " + var["mppt temp"][i][0].get() + "C");
 
         elif id == TEMP_SIGNAL_2:
                 temps = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP2] ");
                 for i in range(4):
-                        temp_details[i+4].set(temps[i+1]);
-                        print("Temp sensor #" + str(i+4) + ": " + temp_details[i+4].get() + "C");
+                        thisTemp = temps[i+1];
+                        var["mppt temp"][i+4][0].set(thisTemp);
+                        if float(thisTemp) > mppt_peak_temps[i+4]:
+                                var["mppt temp"][i+4][1].set(thisTemp);
+                                var["mppt temp"][i+4][2].set(timestamp);
+                                mppt_peak_temps[i+4] = float(thisTemp);
+                        print("Temp sensor #" + str(i+4) + ": " + var["mppt temp"][i+4][0].get() + "C");
 
         elif id == TEMP_SIGNAL_3:
                 temps = log_msg.split();
                 print(log_msg[2:timestamp_end] + "[MPPT TEMP3] ");
                 for i in range(2):
-                        temp_details[i+8].set(temps[i+1]);
-                        print("Temp sensor #" + str(i+8) + ": " + temp_details[i+8].get() + "C");
+                        thisTemp = temps[i+1];
+                        var["mppt temp"][i+8][0].set(thisTemp);
+                        if float(thisTemp) > mppt_peak_temps[i+8]:
+                                var["mppt temp"][i+8][1].set(thisTemp);
+                                var["mppt temp"][i+8][2].set(timestamp);
+                                mppt_peak_temps[i+8] = float(thisTemp);
+                        print("Temp sensor #" + str(i+8) + ": " + var["mppt temp"][i+8][0].get() + "C");
                 
         elif id >= 100 and id < 140:
                 pack_num = int(id%100/10);
-                print(int(id%10));
+                row_count = 2 if pack_num is 3 else 3;
                 if id%10%2 is 0:
-                        print(log_msg[2:timestamp_end] + "[REQUEST] " + "Pack " + str(pack_num) + (" Status" if id%10 == 0 else(" Voltages of cells 0-5" if id%10 == 2 else " Voltages of cells of 6-11")) + " Requested");
+                        print(log_msg[2:timestamp_end] + "[REQUEST] " + "Pack " + str(pack_num) + (" Status" if id%10 == 0 else(" Cell Voltages and Temperature 0" if id%10 == 2 else " Temperature 1")) + " Requested");
 
                 elif id%10 is 1:
                         values = log_msg.split(" ");
-                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num), end = "  "); 
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num), end = "  ");
 
-                        for i in range(12):
-                                pack_details[pack_num][i][1].set("OK" if int(int(values[i + 1])/10) == 0 else ("LOW" if int(int(values[i + 1])/100) == 1 else "HIGH"));
-                                battery_warning_labels[pack_num][i][0].config(fg = ("Green" if pack_details[pack_num][i][1].get() == "OK" else "Red"));
-                                pack_details[pack_num][i][2].set("OK" if int(values[i + 1])%10 == 0 else "SHUN");
-                                battery_warning_labels[pack_num][i][1].config(fg = ("Green" if pack_details[pack_num][i][2].get() == "OK" else "Red"));
-                                print("Cell " + str(i) + ": Voltage: " + pack_details[pack_num][i][1].get() + " Shun? " + pack_details[pack_num][i][2].get(), end = " ");
-                        pack_details[pack_num][12][1].set("OK" if int(values[13]) == 0 else "LOW" if int(values[13]) == 1 else "HIGH");
-                        temp_warning_labels[pack_num][0].config(fg = ("Green" if pack_details[pack_num][12][1].get() == "OK" else "Red"));
-                        pack_details[pack_num][13][1].set("OK" if int(values[14][0]) == 0 else "LOW" if int(values[14][0]) == 2 else "HIGH");
-                        temp_warning_labels[pack_num][1].config(fg = ("Green" if pack_details[pack_num][13][1].get() == "OK" else "Red"));
-                        print("Temperature 1: " + pack_details[pack_num][12][1].get() + "\tTemperature 2: " + pack_details[pack_num][13][1].get());
+                        for i in range(row_count):
+                                var["pack"][pack_num][i][1].set("LOW" if ((int(value[1]) >> row_count)%2) == 1 else ("HIGH" if ((int(value[2]) >> row_count)%2) == 1 else "OK"));
+                                labels["battery"][pack_num][i][0].config(fg = ("Green" if var["pack"][pack_num][i][1].get() == "OK" else "Red"));
+                                var["pack"][pack_num][i][2].set("OK" if ((int(value[3]) >> row_count)%2) == 0 else "SHUN");
+                                labels["battery"][pack_num][i][1].config(fg = ("Green" if var["pack"][pack_num][i][2].get() == "OK" else "Red"));
+                                print("Cell " + str(i) + ": Voltage: " + var["pack"][pack_num][i][1].get() + " Shun? " + var["pack"][pack_num][i][2].get(), end = " ");
+                                
+                        var["pack"][pack_num][row_count][1].set("OK" if int(values[4]) == 0 else "LOW" if int(values[4]) == 1 else "HIGH");
+                        labels["temp"][pack_num][0][0].config(fg = ("Green" if var["pack"][pack_num][row_count][1].get() == "OK" else "Red"));
+                        var["pack"][pack_num][row_count + 1][1].set("OK" if int(values[5][0]) == 0 else "LOW" if int(values[5][0]) == 2 else "HIGH");
+                        labels["temp"][pack_num][1][0].config(fg = ("Green" if var["pack"][pack_num][row_count + 1][1].get() == "OK" else "Red"));
+                        print("Temperature 1: " + var["pack"][pack_num][row_count][1].get() + "\tTemperature 2: " + var["pack"][pack_num][row_count + 1][1].get());
+
+                elif id%10 is 3:
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "Cell Voltages: ", end = "");
+                        values = log_msg.split(" ");
+                        for i in range(row_count):
+                                var["pack"][pack_num][i][0].set(values[i + 1]);
+                                print(values[i + 1] + "V ", end = "");
+                        var["pack"][pack_num][row_count][0].set(values[4][:len(values[4]) - 5]);
+                        if var["pack"][pack_num][row_count][2].get() is "N/A" or int(var["pack"][pack_num][row_count][0].get()) > int(var["pack"][pack_num][row_count][2].get()):
+                              var["pack"][pack_num][row_count][2].set(var["pack"][pack_num][row_count][0].get());
+                              var["pack"][pack_num][row_count][3].set(log_msg[2:timestamp_end]);
+                        print("Temperature 0:" + var["pack"][pack_num][row_count][0].get());
+                        
+                elif id%10 is 5:
+                        value = log_msg.split(" ")[1];
+                        var["pack"][pack_num][row_count + 1][0].set(value[:len(value) - 5]);
+                        if var["pack"][pack_num][row_count + 1][2].get() is "N/A" or int(var["pack"][pack_num][row_count + 1][0].get()) > int(var["pack"][pack_num][row_count + 1][2].get()):
+                              var["pack"][pack_num][row_count + 1][2].set(var["pack"][pack_num][row_count + 1][0].get());
+                              var["pack"][pack_num][row_count + 1][3].set(log_msg[2:timestamp_end]);
+                        
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "Temperature 1:" + var["pack"][pack_num][row_count + 1][0].get());
+                        
+        last_msg = time.time();
+'''
+                elif id%3 is 5:
+                         var["pack"][pack_num][row_count + 1][0].set(values[7][:len(values[7]) - 5]);
+                        
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1)
+                                
+                        
 
                 elif id%10 in [3,5]:
                         half = 0 if id%10 == 3 else 1;
                         print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "  Voltages for cells " + ("6 - 11: " if half else "0 - 5: "), end = ""); 
                         values = log_msg.split(" ");
                         for i in range(6):
-                                pack_details[pack_num][i + half*6][0].set(values[i + 1]);
-                                print(pack_details[pack_num][i + half*6][0].get() + "V ", end = "");
-                        pack_details[pack_num][12 + half][0].set(values[7][:len(values[7]) - 5]);
-                        print("Temperature " + str(half) + ": " + pack_details[pack_num][12 + half][0].get());
-        last_msg = time.time();
+                                var["pack"][pack_num][i + half*6][0].set(values[i + 1]);
+                                print(var["pack"][pack_num][i + half*6][0].get() + "V ", end = "");
+                        var["pack"][pack_num][12 + half][0].set(values[7][:len(values[7]) - 5]);
+                        print("Temperature " + str(half) + ": " + var["pack"][pack_num][12 + half][0].get());
+                        '''
 
 def wait():
         global last_msg;
@@ -380,8 +469,8 @@ def wait():
                 if log_msg.find("]{") > -1:
                         update(log_msg);
                 
-        timer_str.set(str(int(time.time() - last_msg)) + " secs since last msg");
-        timer_label.config(fg = "black" if (time.time() - last_msg) < 5 else "red");
+        var["timer"].set(str(int(time.time() - last_msg)) + " secs since last msg");
+        labels["timer"].config(fg = "black" if (time.time() - last_msg) < 5 else "red");
         root.after(100, wait);
 
 root.after(10, wait);

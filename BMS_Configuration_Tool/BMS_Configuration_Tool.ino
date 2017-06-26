@@ -11,7 +11,7 @@
 bool shouldPrintBMS12Messages = true;
 bool shouldPrintCoreStatusMessages = true;
 bool shouldPrintCoreConfigMessages = true;
-bool shouldSendCoreConfigMessages = false;
+bool shouldSendCoreConfigMessages = true;
 
 MCP_CAN CAN(CAN_SS);
 
@@ -114,7 +114,7 @@ void loop() {
     zevaCoreStartSetupMode();
     bmsAlive |= B111;
   }
-  else if(bmsAlive == B1111) {
+  else if(bmsAlive == B111) {
 
     if(shouldSendCoreConfigMessages) {
       Serial.println("sending config data");
