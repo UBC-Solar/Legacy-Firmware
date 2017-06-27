@@ -168,9 +168,11 @@ void sendHeartbeatMessage() {
 
 unsigned long lastLeftSignalDebounceTime = 0;
 unsigned long lastRightSignalDebounceTime = 0;
+unsigned long lastHornDebounceTime = 0;
 unsigned long debounceDelay = 50;
 int lastLeftSignalState = HIGH;
 int lastRightSignalState = HIGH;
+int lastHornState = HIGH;
 bool inLeftSignalButtonPress = false;
 bool inRightSignalButtonPress = false;
 
@@ -199,7 +201,6 @@ void processSignals() {
       inLeftSignalButtonPress = false;
     }
   }
- 
 
   if(millis() - lastRightSignalDebounceTime > debounceDelay) {
 
@@ -241,9 +242,19 @@ void processSignals() {
   if(byteRegen > REGEN_THRESHOLD) {
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],2);
   }
-  
-  if(digitalRead(HORN_PIN)){
-    bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],3);
+
+  int currentHornState = digitalRead(HORN_PIN);
+
+  if(currentHornState != lastHornState) {
+    lastHornDebounceTime = millis();
+  }
+
+  lastHornState = currentHornState;
+
+  if(millis() - lastHornDebounceTime > debounceDelay) {
+    if(currentHornState == LOW) {
+      bitSet(txmsg.buf[BYTE_SIGNAL_STATUS], 3);
+    }
   }
 }
 
