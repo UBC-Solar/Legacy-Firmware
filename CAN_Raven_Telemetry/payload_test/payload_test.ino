@@ -10,8 +10,11 @@
 // the cs pin of the version after v1.1 is default to D9
 // v0.9b and v1.0 is default D10
 const int SPI_CS_PIN = 9;
-bool manual = false;
-
+int bytes = 0;
+bool idd = false;
+int id;
+byte stmp[8];
+      
 MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
 
 void setup()
@@ -44,62 +47,30 @@ START_INIT:
 void loop()
 {
       char c;
-      byte stmp[8] = {0x55, 0xA5, 0xAA, 0xFF, 0x86, 0x10, 0x00, 0x00};
-      if(Serial.available())
-      {
-          c = Serial.read();
-          int pack = int(c) - 48;
-          if (pack >  3) {
-            Serial.println("\n\nRunning with manual payload:");
-            printPayload(stmp);
-            manual = true;
-            pack %= 4;
-          }
-          else {
-            manual = false;
-            Serial.println("\n\nRunning with random payloads:");
-             for (int i = 0; i < 8; i++) {
-              stmp[i] = millis()%255;
-              delay(10);
-            }
-          }
-          Serial.println("================================================");
-          Serial.println("Sending signal 10");
-          CAN.sendMsgBuf(10, 0, 8,stmp);
-          if (!manual) {
-            Serial.println("Payload:");
-            printPayload(stmp);
-          }
-          delay(1000);
-
-          for (int i =0 ; i < 6 ; i++) {
-            Serial.println("================================================");
-            Serial.println("Sending signal 1" + String(pack) + String(i));
-            if (!manual) {
-             for (int i = 0; i < 8; i++) {
-              stmp[i] = millis()%255;
-              delay(10);
-               }
-              Serial.println("Payload:");
-          printPayload(stmp);
-            }
-            CAN.sendMsgBuf(100 + pack*10 + i, 0, 8, stmp);
-           delay(1000);
       
+
+      if (Serial.available()) {
+        if (!idd) {
+          id = int(Serial.read());
+          idd = true;
+        }
+        else {
+           stmp[bytes] = Serial.read();
+           bytes++;
+        }
+        
       }
+      if (bytes == 8) {
+        bytes = 0;
+        idd = false;
+        for (int i = 0; i < 8; i++) {
+          Serial.print(String(stmp[i]));
+          Serial.print(" ");
+        }
+        Serial.println();
+        CAN.sendMsgBuf(id , 0, 8, stmp);
       }
-      Serial.flush();
+      
 }
 
-void printPayload(byte stmp[]) {
-  for (int i = 0; i < 8; i++) {
-     for(byte mask = 0x80; mask; mask >>= 1){
-   if(mask  & stmp[i])
-       Serial.print('1');
-   else
-       Serial.print('0');
- }
- Serial.println();
-}
-}
 

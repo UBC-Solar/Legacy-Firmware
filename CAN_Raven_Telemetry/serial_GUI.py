@@ -21,8 +21,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
 connected = False;
-print((5 >> 1));
-'''
+
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -34,7 +33,7 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-'''
+
 root = Tk();
 
 var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
@@ -247,8 +246,8 @@ Label(subsubframe, text = "Peak", font = (None, 10, "bold",), width = 10).grid(r
 Label(subsubframe, text = "Peak Time", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 3);
 Label(subsubframe, text = "Reset", font = (None, 10, "bold",), width = 5).grid(row = 0, column = 4);
 
-mppt_peak_currs = {0,0,0,0,0,0};
-mppt_peak_temps = {0,0,0,0,0,0,0,0,0,0};
+mppt_peak_currs = [0,0,0,0,0,0];
+mppt_peak_temps = [0,0,0,0,0,0,0,0,0,0];
 def reset_mppt_peak(key, index):
         print(key);
         print(index);
@@ -408,15 +407,15 @@ def update(log_msg):
                         print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num), end = "  ");
 
                         for i in range(row_count):
-                                var["pack"][pack_num][i][1].set("LOW" if ((int(value[1]) >> row_count)%2) == 1 else ("HIGH" if ((int(value[2]) >> row_count)%2) == 1 else "OK"));
+                                var["pack"][pack_num][i][1].set("LOW" if ((int(values[1]) >> i)%2) == 1 else ("HIGH" if ((int(values[2]) >> i)%2) == 1 else "OK"));
                                 labels["battery"][pack_num][i][0].config(fg = ("Green" if var["pack"][pack_num][i][1].get() == "OK" else "Red"));
-                                var["pack"][pack_num][i][2].set("OK" if ((int(value[3]) >> row_count)%2) == 0 else "SHUN");
+                                var["pack"][pack_num][i][2].set("OK" if ((int(values[3]) >> i)%2) == 0 else "SHUN");
                                 labels["battery"][pack_num][i][1].config(fg = ("Green" if var["pack"][pack_num][i][2].get() == "OK" else "Red"));
                                 print("Cell " + str(i) + ": Voltage: " + var["pack"][pack_num][i][1].get() + " Shun? " + var["pack"][pack_num][i][2].get(), end = " ");
                                 
                         var["pack"][pack_num][row_count][1].set("OK" if int(values[4]) == 0 else "LOW" if int(values[4]) == 1 else "HIGH");
                         labels["temp"][pack_num][0][0].config(fg = ("Green" if var["pack"][pack_num][row_count][1].get() == "OK" else "Red"));
-                        var["pack"][pack_num][row_count + 1][1].set("OK" if int(values[5][0]) == 0 else "LOW" if int(values[5][0]) == 2 else "HIGH");
+                        var["pack"][pack_num][row_count + 1][1].set("OK" if int(values[5][0]) == 0 else "LOW" if int(values[5][0]) == 4 else "HIGH");
                         labels["temp"][pack_num][1][0].config(fg = ("Green" if var["pack"][pack_num][row_count + 1][1].get() == "OK" else "Red"));
                         print("Temperature 1: " + var["pack"][pack_num][row_count][1].get() + "\tTemperature 2: " + var["pack"][pack_num][row_count + 1][1].get());
 
@@ -473,5 +472,5 @@ def wait():
         labels["timer"].config(fg = "black" if (time.time() - last_msg) < 5 else "red");
         root.after(100, wait);
 
-#root.after(10, wait);
+root.after(10, wait);
 root.mainloop();
