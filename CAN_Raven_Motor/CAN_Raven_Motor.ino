@@ -142,13 +142,13 @@ void setRheo(int ss, byte r){
 
 void motorSwitchDir(int dir){
   // this function should only be called when the direction changes
-  // 0=FWD, 1=REV
+  // 1=FWD, 2=REV
   digitalWrite(FORWARD_SWITCH, LOW);
   digitalWrite(REVERSE_SWITCH, LOW);
   delay(100);
-  if(dir == 0)
+  if(dir == 1)
     digitalWrite(FORWARD_SWITCH, HIGH);
-  else if(dir == 1)
+  else if(dir == 2)
     digitalWrite(REVERSE_SWITCH, HIGH);
 }
 

@@ -7,7 +7,8 @@
 #define RIGHT_SIGNAL_PIN 15
 #define REGEN_PIN 20
 #define THROTTLE_PIN 23
-#define DIRECTION_PIN 7
+#define DIRECTION_FWD_PIN 18
+#define DIRECTION_REV_PIN 16
 
 #define BMS_LAMP_RED_PIN 8
 #define BMS_LAMP_GREEN_PIN 11
@@ -54,6 +55,11 @@ void setup() {
 
   pinMode(THROTTLE_PIN, INPUT);
   pinMode(REGEN_PIN, INPUT);
+  pinMode(HORN_PIN, INPUT_PULLUP);
+  pinMode(DIRECTION_FWD_PIN, INPUT_PULLUP);
+  pinMode(DIRECTION_REV_PIN, INPUT_PULLUP);
+  pinMode(LEFT_SIGNAL_PIN, INPUT_PULLUP);
+  pinMode(RIGHT_SIGNAL_PIN, INPUT_PULLUP);
   
   pinMode(BMS_LAMP_RED_PIN, OUTPUT);
   pinMode(BMS_LAMP_GREEN_PIN, OUTPUT);
@@ -117,9 +123,13 @@ void processSignals() {
   else if(rightSignalOn){
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],1);
   }
-  if(analogRead(REGEN_PIN) > REGEN_THRESHOLD){
+  
+  int rawRegen = analogRead(REGEN_PIN);
+  byte byteRegen = rawRegen / 1023.0 * 255.0;
+  if(byteRegen > REGEN_THRESHOLD) {
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],2);
   }
+  
   if(digitalRead(HORN_PIN)){
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],3);
   }
@@ -145,11 +155,23 @@ byte processRegen() {
   }
 }
 
+byte processDirection() {
+
+  if(digitalRead(DIRECTION_FWD_PIN) == LOW) {
+    return 1;
+  }
+  else if(digitalRead(DIRECTION_REV_PIN) == LOW) {
+    return 2;
+  }
+
+  return 0;
+}
+
 void loop() {
   
   //check input, TODO: verify with David how each of these sections work
   txmsg.buf[BYTE_THROTTLE_ACCEL] = processThrottle();
-  txmsg.buf[BYTE_THROTTLE_DIR] = digitalRead(DIRECTION_PIN);
+  txmsg.buf[BYTE_THROTTLE_DIR] = processDirection();
   txmsg.buf[BYTE_THROTTLE_REGEN] = processRegen();
 
   if(digitalRead(LEFT_SIGNAL_PIN)){
