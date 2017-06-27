@@ -3,7 +3,7 @@
 #include <ubcsolar_can_ids.h>
 
 #define HORN_PIN 14
-#define LEFT_SIGNAL_PIN 13
+#define LEFT_SIGNAL_PIN 17
 #define RIGHT_SIGNAL_PIN 15
 #define REGEN_PIN 20
 #define THROTTLE_PIN 23
@@ -40,6 +40,7 @@ static CAN_message_t txmsg, rxmsg;
 
 unsigned long int previousMillis;
 unsigned long int previousSignalCheck;
+
 bool jumpHeartbeat = false;
 bool leftSignalOn = false;
 bool rightSignalOn = false;
@@ -113,7 +114,73 @@ void sendHeartbeatMessage() {
   }
 }
 
+unsigned long lastLeftSignalDebounceTime = 0;
+unsigned long lastRightSignalDebounceTime = 0;
+unsigned long debounceDelay = 50;
+int lastLeftSignalState = HIGH;
+int lastRightSignalState = HIGH;
+int debouncedLeftSignalState = HIGH;
+int debouncedRightSignalState = HIGH;
+bool inLeftSignalButtonPress = false;
+bool inRightSignalButtonPress = false;
+
 void processSignals() {
+
+  int currentLeftSignalState = digitalRead(LEFT_SIGNAL_PIN);
+  int currentRightSignalState = digitalRead(RIGHT_SIGNAL_PIN);
+
+  if(currentLeftSignalState != lastLeftSignalState) {
+    lastLeftSignalDebounceTime = millis();
+  }
+  if(currentRightSignalState != lastRightSignalState) {
+    lastRightSignalDebounceTime = millis();
+  }
+
+  lastRightSignalState = currentRightSignalState;
+  lastLeftSignalState = currentLeftSignalState;
+
+  if(millis() - lastLeftSignalDebounceTime > debounceDelay) {
+    if(debouncedLeftSignalState != currentLeftSignalState) {
+      debouncedLeftSignalState = currentLeftSignalState;
+
+      if(debouncedLeftSignalState == LOW) {
+        inLeftSignalButtonPress = true;
+      }
+      else if(inLeftSignalButtonPress) {
+        leftSignalOn = !leftSignalOn;
+        inLeftSignalButtonPress = false;
+      }
+    }
+  }
+
+  if(millis() - lastRightSignalDebounceTime > debounceDelay) {
+    if(debouncedRightSignalState != currentRightSignalState) {
+      debouncedRightSignalState = currentRightSignalState;
+
+      if(debouncedRightSignalState == LOW) {
+        inRightSignalButtonPress = true;
+      }
+      else if(inRightSignalButtonPress) {
+        rightSignalOn = !rightSignalOn;
+        inRightSignalButtonPress = false;
+      }
+    }
+  }
+
+  if(rightSignalOn) {
+    digitalWrite(RIGHT_TURN_LAMP_PIN, HIGH);
+  }
+  else {
+    digitalWrite(RIGHT_TURN_LAMP_PIN, LOW);
+  }
+
+  if(leftSignalOn) {
+    digitalWrite(LEFT_TURN_LAMP_PIN, HIGH);
+  }
+  else {
+    digitalWrite(LEFT_TURN_LAMP_PIN, LOW);
+  }
+  
   if(leftSignalOn && rightSignalOn) {
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS], 4);
   }
@@ -169,17 +236,9 @@ byte processDirection() {
 
 void loop() {
   
-  //check input, TODO: verify with David how each of these sections work
   txmsg.buf[BYTE_THROTTLE_ACCEL] = processThrottle();
   txmsg.buf[BYTE_THROTTLE_DIR] = processDirection();
   txmsg.buf[BYTE_THROTTLE_REGEN] = processRegen();
-
-  if(digitalRead(LEFT_SIGNAL_PIN)){
-    leftSignalOn = !leftSignalOn;
-  }
-  if(digitalRead(RIGHT_SIGNAL_PIN)){
-    rightSignalOn = !rightSignalOn;
-  }
 
   processSignals();
   
