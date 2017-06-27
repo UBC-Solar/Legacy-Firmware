@@ -171,8 +171,6 @@ unsigned long lastRightSignalDebounceTime = 0;
 unsigned long debounceDelay = 50;
 int lastLeftSignalState = HIGH;
 int lastRightSignalState = HIGH;
-int debouncedLeftSignalState = HIGH;
-int debouncedRightSignalState = HIGH;
 bool inLeftSignalButtonPress = false;
 bool inRightSignalButtonPress = false;
 
@@ -192,30 +190,25 @@ void processSignals() {
   lastLeftSignalState = currentLeftSignalState;
 
   if(millis() - lastLeftSignalDebounceTime > debounceDelay) {
-    if(debouncedLeftSignalState != currentLeftSignalState) {
-      debouncedLeftSignalState = currentLeftSignalState;
 
-      if(debouncedLeftSignalState == LOW) {
-        inLeftSignalButtonPress = true;
-      }
-      else if(inLeftSignalButtonPress) {
-        leftSignalOn = !leftSignalOn;
-        inLeftSignalButtonPress = false;
-      }
+    if(currentLeftSignalState == LOW) {
+      inLeftSignalButtonPress = true;
+    }
+    else if(inLeftSignalButtonPress) {
+      leftSignalOn = !leftSignalOn;
+      inLeftSignalButtonPress = false;
     }
   }
+ 
 
   if(millis() - lastRightSignalDebounceTime > debounceDelay) {
-    if(debouncedRightSignalState != currentRightSignalState) {
-      debouncedRightSignalState = currentRightSignalState;
 
-      if(debouncedRightSignalState == LOW) {
-        inRightSignalButtonPress = true;
-      }
-      else if(inRightSignalButtonPress) {
-        rightSignalOn = !rightSignalOn;
-        inRightSignalButtonPress = false;
-      }
+    if(currentRightSignalState == LOW) {
+      inRightSignalButtonPress = true;
+    }
+    else if(inRightSignalButtonPress) {
+      rightSignalOn = !rightSignalOn;
+      inRightSignalButtonPress = false;
     }
   }
 
