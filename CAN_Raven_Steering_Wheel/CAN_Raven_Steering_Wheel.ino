@@ -102,8 +102,60 @@ void setup() {
   Serial.println(F("System initialized"));
 }
 
-void msgHandler() {
-  
+unsigned long lastZevaCoreMessageTime = 0;
+unsigned long lastMotorControllerMessageTime = 0;
+unsigned long lastMpptMessageTime = 0;
+unsigned long thresholdTime = 250;
+ 
+void processIndicatorLamps() {
+
+  if(CANbus.available()) {
+    CANbus.read(rxmsg);
+
+    if(rxmsg.id == CAN_ID_ZEVA_BMS_CORE_STATUS) {
+      lastZevaCoreMessageTime = millis();
+      int error = rxmsg.buf[0] >> 4;
+
+      if(error == 0) {
+        // Zeva has reported no error
+        digitalWrite(BMS_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(LOW_12V_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(BMS_LAMP_RED_PIN, LOW);
+        digitalWrite(LOW_12V_LAMP_RED_PIN, LOW);
+      }
+      else if(error == 12) {
+        // Zeva has reported 12V system voltage below warning level
+        digitalWrite(BMS_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(LOW_12V_LAMP_GREEN_PIN, LOW);
+        digitalWrite(BMS_LAMP_RED_PIN, LOW);
+        digitalWrite(LOW_12V_LAMP_RED_PIN, HIGH);
+      }
+      else {
+        // Zeva has reported some other error
+        digitalWrite(BMS_LAMP_GREEN_PIN, LOW);
+        digitalWrite(LOW_12V_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(BMS_LAMP_RED_PIN, HIGH);
+        digitalWrite(LOW_12V_LAMP_RED_PIN, LOW);
+      }
+    }
+  }
+
+  if(millis() - lastZevaCoreMessageTime > thresholdTime) {
+    digitalWrite(BMS_LAMP_GREEN_PIN, LOW);
+    digitalWrite(LOW_12V_LAMP_GREEN_PIN, HIGH);
+    digitalWrite(BMS_LAMP_RED_PIN, HIGH);
+    digitalWrite(LOW_12V_LAMP_RED_PIN, LOW);
+  }
+
+  if(millis() - lastMotorControllerMessageTime > thresholdTime) {
+    digitalWrite(MOTOR_LAMP_GREEN_PIN, LOW);
+    digitalWrite(MOTOR_LAMP_RED_PIN, HIGH);
+  }
+
+  if(millis() - lastMpptMessageTime > thresholdTime) {
+    digitalWrite(MPPT_LAMP_GREEN_PIN, LOW);
+    digitalWrite(MPPT_LAMP_RED_PIN, HIGH);
+  }
 }
 
 void sendHeartbeatMessage() {
@@ -242,9 +294,7 @@ void loop() {
 
   processSignals();
   
-  if(CANbus.read(rxmsg)){
-    msgHandler();
-  }
+  processIndicatorLamps();
   
   if(jumpHeartbeat || (millis() - previousMillis > HEARTBEAT_TIME)){
     sendHeartbeatMessage();
