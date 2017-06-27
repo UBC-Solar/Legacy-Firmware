@@ -144,7 +144,7 @@ void loop()
             Serial.println("u");
             Serial.println("sending current and temperature from BMS");
             unsigned int current = 1001 + 2048;//needs offset of 2048 (bc it's unsigned); subtract 2048 on other end to get real value
-            unsigned int temperature = 37 + 128;//maybe needs offset of 128? to allow negative temperatures 
+            unsigned int temperature = 20 + 128;//maybe needs offset of 128? to allow negative temperatures 
             for(int i = 0; i < 4; i++){
               if(bitRead(current,i)){
                 bitSet(bigStmp[3], i);   
@@ -184,10 +184,10 @@ void loop()
           {
             Serial.println("m");
             Serial.println(" mppt message");
-            unsigned int val1 = 35.23 * 1000;
-            unsigned int val2 = 33.21 * 1000;
-            unsigned int val3 = 30.97 * 1000;
-            unsigned int val4 = 37.21 * 1000;
+            unsigned int val1 = 35.23 * 100;
+            unsigned int val2 = 33.21 * 100;
+            unsigned int val3 = 30.97 * 100;
+            unsigned int val4 = 37.21 * 100;
             bigStmp[0] = highByte(val1);
             bigStmp[1] = lowByte(val1);
             bigStmp[2] = highByte(val2);

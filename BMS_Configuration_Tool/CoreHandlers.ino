@@ -88,11 +88,11 @@ void zevaCoreSendConfigData1() {
   uint32_t frame_id = CAN_ID_ZEVA_BMS_CORE_CONFIG_WR1;
   byte frame_data[8];
 
-  frame_data[0] = 20;     // pack capacity is 20 Ah
+  frame_data[0] = 80;     // pack capacity is 20 Ah
   frame_data[1] = 20;     // low state of charge warning is 20%
-  frame_data[2] = 46/2;   // max pack voltage is 46V
-  frame_data[3] = 180/10; // overcurrent warning threshold is 100A (max. continuous discharge)
-  frame_data[4] = 200/10; // overcurrent shutdown threshold is 200A (max. peak discharge)
+  frame_data[2] = int(12.54/2);   // max pack voltage is 46V
+  frame_data[3] = 50/10; // overcurrent warning threshold is 50A (max. continuous discharge)
+  frame_data[4] = 100/10; // overcurrent shutdown threshold is 100A (max. peak discharge)
   frame_data[5] = 40;     // overtemperature threshold is 40C
   frame_data[6] = 11;     // minimum auxiliary voltage (from DC/DC or supplemental battery) is 11V
   frame_data[7] = 50;     // maximum leakage percentage is 50%
@@ -131,7 +131,7 @@ void zevaCoreSendConfigData2() {
   frame_data[4] = 0;            // temp gauge cold percentage (we aren't using this feature)
   frame_data[5] = int(1.2*10);  // peukeurt's exponent
   frame_data[6] = 0;            // enable precharge (0 = disabled, 1 = enabled)
-  frame_data[7] = 0;            // enable contactor auxiliary switches (0 = disabled, 1 = enabled)
+  frame_data[7] = 1;            // enable contactor auxiliary switches (0 = disabled, 1 = enabled)
 
   CAN.sendMsgBuf(frame_id, 0, length, frame_data);
 }
@@ -187,8 +187,8 @@ void zevaCoreSetCellNum(void) {
   // format is 16 4-bit values
   // ie. 0x0B means module ID 0 has 11 cells
   //     0xBB means module IDs 0 and 1 have 11 cells each
-  frame_data[0] = 0x03;
-  frame_data[1] = 0;
+  frame_data[0] = 0x33;
+  frame_data[1] = 0x23;
   frame_data[2] = 0;
   frame_data[3] = 0;
   frame_data[4] = 0;
