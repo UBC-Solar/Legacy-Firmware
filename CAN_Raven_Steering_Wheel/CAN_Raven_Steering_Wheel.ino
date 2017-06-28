@@ -102,8 +102,60 @@ void setup() {
   Serial.println(F("System initialized"));
 }
 
-void msgHandler() {
-  
+unsigned long lastZevaCoreMessageTime = 0;
+unsigned long lastMotorControllerMessageTime = 0;
+unsigned long lastMpptMessageTime = 0;
+unsigned long thresholdTime = 250;
+ 
+void processIndicatorLamps() {
+
+  if(CANbus.available()) {
+    CANbus.read(rxmsg);
+
+    if(rxmsg.id == CAN_ID_ZEVA_BMS_CORE_STATUS) {
+      lastZevaCoreMessageTime = millis();
+      int error = rxmsg.buf[0] >> 4;
+
+      if(error == 0) {
+        // Zeva has reported no error
+        digitalWrite(BMS_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(LOW_12V_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(BMS_LAMP_RED_PIN, LOW);
+        digitalWrite(LOW_12V_LAMP_RED_PIN, LOW);
+      }
+      else if(error == 12) {
+        // Zeva has reported 12V system voltage below warning level
+        digitalWrite(BMS_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(LOW_12V_LAMP_GREEN_PIN, LOW);
+        digitalWrite(BMS_LAMP_RED_PIN, LOW);
+        digitalWrite(LOW_12V_LAMP_RED_PIN, HIGH);
+      }
+      else {
+        // Zeva has reported some other error
+        digitalWrite(BMS_LAMP_GREEN_PIN, LOW);
+        digitalWrite(LOW_12V_LAMP_GREEN_PIN, HIGH);
+        digitalWrite(BMS_LAMP_RED_PIN, HIGH);
+        digitalWrite(LOW_12V_LAMP_RED_PIN, LOW);
+      }
+    }
+  }
+
+  if(millis() - lastZevaCoreMessageTime > thresholdTime) {
+    digitalWrite(BMS_LAMP_GREEN_PIN, LOW);
+    digitalWrite(LOW_12V_LAMP_GREEN_PIN, HIGH);
+    digitalWrite(BMS_LAMP_RED_PIN, HIGH);
+    digitalWrite(LOW_12V_LAMP_RED_PIN, LOW);
+  }
+
+  if(millis() - lastMotorControllerMessageTime > thresholdTime) {
+    digitalWrite(MOTOR_LAMP_GREEN_PIN, LOW);
+    digitalWrite(MOTOR_LAMP_RED_PIN, HIGH);
+  }
+
+  if(millis() - lastMpptMessageTime > thresholdTime) {
+    digitalWrite(MPPT_LAMP_GREEN_PIN, LOW);
+    digitalWrite(MPPT_LAMP_RED_PIN, HIGH);
+  }
 }
 
 void sendHeartbeatMessage() {
@@ -116,11 +168,11 @@ void sendHeartbeatMessage() {
 
 unsigned long lastLeftSignalDebounceTime = 0;
 unsigned long lastRightSignalDebounceTime = 0;
+unsigned long lastHornDebounceTime = 0;
 unsigned long debounceDelay = 50;
 int lastLeftSignalState = HIGH;
 int lastRightSignalState = HIGH;
-int debouncedLeftSignalState = HIGH;
-int debouncedRightSignalState = HIGH;
+int lastHornState = HIGH;
 bool inLeftSignalButtonPress = false;
 bool inRightSignalButtonPress = false;
 
@@ -140,30 +192,24 @@ void processSignals() {
   lastLeftSignalState = currentLeftSignalState;
 
   if(millis() - lastLeftSignalDebounceTime > debounceDelay) {
-    if(debouncedLeftSignalState != currentLeftSignalState) {
-      debouncedLeftSignalState = currentLeftSignalState;
 
-      if(debouncedLeftSignalState == LOW) {
-        inLeftSignalButtonPress = true;
-      }
-      else if(inLeftSignalButtonPress) {
-        leftSignalOn = !leftSignalOn;
-        inLeftSignalButtonPress = false;
-      }
+    if(currentLeftSignalState == LOW) {
+      inLeftSignalButtonPress = true;
+    }
+    else if(inLeftSignalButtonPress) {
+      leftSignalOn = !leftSignalOn;
+      inLeftSignalButtonPress = false;
     }
   }
 
   if(millis() - lastRightSignalDebounceTime > debounceDelay) {
-    if(debouncedRightSignalState != currentRightSignalState) {
-      debouncedRightSignalState = currentRightSignalState;
 
-      if(debouncedRightSignalState == LOW) {
-        inRightSignalButtonPress = true;
-      }
-      else if(inRightSignalButtonPress) {
-        rightSignalOn = !rightSignalOn;
-        inRightSignalButtonPress = false;
-      }
+    if(currentRightSignalState == LOW) {
+      inRightSignalButtonPress = true;
+    }
+    else if(inRightSignalButtonPress) {
+      rightSignalOn = !rightSignalOn;
+      inRightSignalButtonPress = false;
     }
   }
 
@@ -196,9 +242,19 @@ void processSignals() {
   if(byteRegen > REGEN_THRESHOLD) {
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],2);
   }
-  
-  if(digitalRead(HORN_PIN)){
-    bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],3);
+
+  int currentHornState = digitalRead(HORN_PIN);
+
+  if(currentHornState != lastHornState) {
+    lastHornDebounceTime = millis();
+  }
+
+  lastHornState = currentHornState;
+
+  if(millis() - lastHornDebounceTime > debounceDelay) {
+    if(currentHornState == LOW) {
+      bitSet(txmsg.buf[BYTE_SIGNAL_STATUS], 3);
+    }
   }
 }
 
@@ -242,9 +298,7 @@ void loop() {
 
   processSignals();
   
-  if(CANbus.read(rxmsg)){
-    msgHandler();
-  }
+  processIndicatorLamps();
   
   if(jumpHeartbeat || (millis() - previousMillis > HEARTBEAT_TIME)){
     sendHeartbeatMessage();
