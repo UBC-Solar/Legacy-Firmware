@@ -54,22 +54,20 @@ frame.grid(row = 0);
 var["time"].set("N/A");
 var["timer"].set("N/A");
 
-Label(frame, text = "Last CAN message: ", font = (None, 10, "bold",), width = 25, anchor = E).grid(row = 0, column = 0, sticky = E);
-Label(frame, textvariable = var["time"], font = (None, 10,), width = 10, anchor = W).grid(row = 0, column = 1);
-labels["timer"] = Label(frame, textvariable = var["timer"], font = (None, 10,), width = 25, anchor = W);
+Label(frame, text = "Last CAN message: ", font = (None, 10, "bold",), width = 20, anchor = E, bg = "gray85").grid(row = 0, column = 0, sticky = E);
+Label(frame, textvariable = var["time"], font = (None, 10,), width = 15, anchor = W, bg = "gray85").grid(row = 0, column = 1);
+labels["timer"] = Label(frame, textvariable = var["timer"], font = (None, 10,), width = 15, anchor = W, bg = "gray85");
 labels["timer"].grid(row = 0, column = 2);
 
-frame = Frame(root);
-frame.grid(row = 1, column = 0);
 
 var["left"].set("OFF");
 var["right"].set("OFF");
 
-Label(frame, text = "Left Signal: " , font = (None, 10, "bold",), width = 50, anchor = E, bg = "gray85").grid(row = 0, column = 0);
-Label(frame, textvariable = var["left"], font = (None, 10,), width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 1);
+Label(frame, text = "Left Signal: " , font = (None, 10, "bold",), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 3);
+Label(frame, textvariable = var["left"], font = (None, 10,), width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 4);
 
-Label(frame, text = "Right Signal: ", font = (None, 10, "bold",), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 2);
-Label(frame, textvariable = var["right"], font = (None, 10,) , width = 50, anchor = W, bg = "gray85").grid(row = 0, column = 3);
+Label(frame, text = "Right Signal: ", font = (None, 10, "bold",), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 5);
+Label(frame, textvariable = var["right"], font = (None, 10,) , width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 6);
 
 var["accel"].set("N/A");
 var["regen"].set("N/A");
