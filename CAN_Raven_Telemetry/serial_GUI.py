@@ -21,8 +21,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
 connected = False;
-print((5 >> 1));
-
+'''
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -34,7 +33,7 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-
+'''
 root = Tk();
 root.resizable(width=True, height=True)
 
@@ -189,7 +188,7 @@ def reset_bms_temp(pack_num, temp):
 
 for i in range(4):
         subsubframe = Frame(subframe, width = 50);
-        subsubframe.grid(row = i*2, pady = 10);
+        subsubframe.grid(row = i*2);
         
         Label(subsubframe, text = "Pack " + str(i + 1) + ":", font = (None, 12, "bold"), width = 50, anchor = W).grid(row = 0, columnspan = 4);
         Label(subsubframe, text = "Cell: " , font = (None, 10, "bold",), width = 5).grid(row = 1, column = 0);
@@ -202,7 +201,7 @@ for i in range(4):
         row_count = 2 if i is 3 else 3;
 
         for j in range(row_count):
-                Label(subsubframe, text = str(j) + ":", font = (None, 10, "bold",), width = 12).grid(row = j + 2, column = 0);
+                Label(subsubframe, text = str(j) + ":", font = (None, 8, "bold",), width = 12).grid(row = j + 2, column = 0);
                 var["pack"][i].append((StringVar(), StringVar(), StringVar(),));
                 var["pack"][i][j][0].set("N/A");
                 var["pack"][i][j][1].set("OK");
@@ -214,27 +213,27 @@ for i in range(4):
                 labels["battery"][i][j][1].grid(row = j + 2, column = 3);
 
         subsubframe = Frame(subframe);
-        subsubframe.grid(row = i*2 + 1, pady = 10);
-        Label(subsubframe, text = "Temperature:  ", font = (None, 10, "bold",), width = 11).grid(row = 0, column = 1);
-        Label(subsubframe, text = "Warning :", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 2);
-        Label(subsubframe, text = "Peak :", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 3);
-        Label(subsubframe, text = "Time of Peak :", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 4);
-        Label(subsubframe, text = "Reset Peak:", font = (None, 10, "bold",), width = 10).grid(row = 0, column = 5);
+        subsubframe.grid(row = i*2 + 1);
+        Label(subsubframe, text = "Temperature:  ", font = (None, 8, "bold",), width = 11).grid(row = 0, column = 1);
+        Label(subsubframe, text = "Warning :", font = (None, 8, "bold",), width = 10).grid(row = 0, column = 2);
+        Label(subsubframe, text = "Peak :", font = (None, 8, "bold",), width = 10).grid(row = 0, column = 3);
+        Label(subsubframe, text = "Time of Peak :", font = (None, 8, "bold",), width = 10).grid(row = 0, column = 4);
+        Label(subsubframe, text = "Reset Peak:", font = (None, 8, "bold",), width = 10).grid(row = 0, column = 5);
 
         for k in range(2):
-                Label(subsubframe, text = "Temperature " + str(k) + ": ", font = (None, 10, "bold",), width = 12).grid(row = k + 1);
+                Label(subsubframe, text = "Temperature " + str(k) + ": ", font = (None, 8, "bold",), width = 12, height = 1).grid(row = k + 1);
                 var["pack"][i].append((StringVar(), StringVar(), StringVar(), StringVar()));
                 var["pack"][i][k + row_count][0].set("N/A");
                 var["pack"][i][k + row_count][1].set("OK");
                 var["pack"][i][k + row_count][2].set("N/A");
                 var["pack"][i][k + row_count][3].set("N/A");
-                Label(subsubframe, textvariable = var["pack"][i][row_count + k][0], font = (None, 10,), width = 10).grid(row = k + 1, column = 1);
-                labels["temp"][i].append((Label(subsubframe, textvariable = var["pack"][i][row_count + k][1], font = (None, 10,), width = 10), \
-                                       Label(subsubframe, textvariable = var["pack"][i][row_count + k][2], font = (None, 10,), width = 10),));
-                Label(subsubframe, textvariable = var["pack"][i][row_count + k][3], font = (None, 10,), width = 10).grid(row = k + 1, column = 4);
+                Label(subsubframe, textvariable = var["pack"][i][row_count + k][0], font = (None, 8,), width = 10, height = 1).grid(row = k + 1, column = 1);
+                labels["temp"][i].append((Label(subsubframe, textvariable = var["pack"][i][row_count + k][1], font = (None, 8,), width = 10, height = 1), \
+                                       Label(subsubframe, textvariable = var["pack"][i][row_count + k][2], font = (None, 8,), width = 10, height = 1),));
+                Label(subsubframe, textvariable = var["pack"][i][row_count + k][3], font = (None, 8,), width = 10, height = 1).grid(row = k + 1, column = 4);
                 labels["temp"][i][k][0].grid(row = k + 1, column = 2);
                 labels["temp"][i][k][1].grid(row = k + 1, column = 3);
-                Button(subsubframe, text = "RESET", width = 10, command = lambda x = i, y = k:reset_bms_temp(x, y)).grid(row = k + 1, column = 5);
+                Button(subsubframe, text = "RESET", width = 10, command = lambda x = i, y = k:reset_bms_temp(x, y), height = 1).grid(row = k + 1, column = 5);
 
                 
 subframe = Frame(frame, width = 45);
@@ -409,15 +408,15 @@ def update(log_msg):
                         print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num), end = "  ");
 
                         for i in range(row_count):
-                                var["pack"][pack_num][i][1].set("LOW" if ((int(value[1]) >> row_count)%2) == 1 else ("HIGH" if ((int(value[2]) >> row_count)%2) == 1 else "OK"));
+                                var["pack"][pack_num][i][1].set("LOW" if ((int(values[1]) >> i)%2) == 1 else ("HIGH" if ((int(values[2]) >> i)%2) == 1 else "OK"));
                                 labels["battery"][pack_num][i][0].config(fg = ("Green" if var["pack"][pack_num][i][1].get() == "OK" else "Red"));
-                                var["pack"][pack_num][i][2].set("OK" if ((int(value[3]) >> row_count)%2) == 0 else "SHUN");
+                                var["pack"][pack_num][i][2].set("OK" if ((int(values[3]) >> i)%2) == 0 else "SHUN");
                                 labels["battery"][pack_num][i][1].config(fg = ("Green" if var["pack"][pack_num][i][2].get() == "OK" else "Red"));
                                 print("Cell " + str(i) + ": Voltage: " + var["pack"][pack_num][i][1].get() + " Shun? " + var["pack"][pack_num][i][2].get(), end = " ");
                                 
                         var["pack"][pack_num][row_count][1].set("OK" if int(values[4]) == 0 else "LOW" if int(values[4]) == 1 else "HIGH");
                         labels["temp"][pack_num][0][0].config(fg = ("Green" if var["pack"][pack_num][row_count][1].get() == "OK" else "Red"));
-                        var["pack"][pack_num][row_count + 1][1].set("OK" if int(values[5][0]) == 0 else "LOW" if int(values[5][0]) == 2 else "HIGH");
+                        var["pack"][pack_num][row_count + 1][1].set("OK" if int(values[5][0]) == 0 else "LOW" if int(values[5][0]) == 4 else "HIGH");
                         labels["temp"][pack_num][1][0].config(fg = ("Green" if var["pack"][pack_num][row_count + 1][1].get() == "OK" else "Red"));
                         print("Temperature 1: " + var["pack"][pack_num][row_count][1].get() + "\tTemperature 2: " + var["pack"][pack_num][row_count + 1][1].get());
 

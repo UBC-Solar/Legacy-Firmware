@@ -40,7 +40,7 @@ void msgHandleBmsStatus(uint32_t frame_id, byte* frame_data, byte length) {
   printHelper(F(" "));
   printHelper(String((frame_data[1] >> 4)&0x7));
   printHelper(F(" "));
-  printHelper(String(frame_data[4]&0x7));
+  printHelper(String(frame_data[3]&0x7));
   printHelper(F(" "));
   printHelper(String(temp_warn & 0x3));
   printHelper(" ");
