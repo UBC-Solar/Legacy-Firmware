@@ -36,6 +36,7 @@ while not connected:
         
 
 root = Tk();
+root.resizable(width=True, height=True)
 
 var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
              "left" : StringVar(), "right" : StringVar(),\
@@ -427,7 +428,7 @@ def update(log_msg):
                                 var["pack"][pack_num][i][0].set(values[i + 1]);
                                 print(values[i + 1] + "V ", end = "");
                         var["pack"][pack_num][row_count][0].set(values[4][:len(values[4]) - 5]);
-                        if var["pack"][pack_num][row_count][2].get() is "N/A" or int(var["pack"][pack_num][row_count][0].get()) > int(var["pack"][pack_num][row_count][2].get()):
+                        if var["pack"][pack_num][row_count][2].get() == "N/A" or int(var["pack"][pack_num][row_count][0].get()) > int(var["pack"][pack_num][row_count][2].get()):
                               var["pack"][pack_num][row_count][2].set(var["pack"][pack_num][row_count][0].get());
                               var["pack"][pack_num][row_count][3].set(log_msg[2:timestamp_end]);
                         print("Temperature 0:" + var["pack"][pack_num][row_count][0].get());
@@ -435,7 +436,7 @@ def update(log_msg):
                 elif id%10 is 5:
                         value = log_msg.split(" ")[1];
                         var["pack"][pack_num][row_count + 1][0].set(value[:len(value) - 5]);
-                        if var["pack"][pack_num][row_count + 1][2].get() is "N/A" or int(var["pack"][pack_num][row_count + 1][0].get()) > int(var["pack"][pack_num][row_count + 1][2].get()):
+                        if var["pack"][pack_num][row_count + 1][2].get() == "N/A" or int(var["pack"][pack_num][row_count + 1][0].get()) > int(var["pack"][pack_num][row_count + 1][2].get()):
                               var["pack"][pack_num][row_count + 1][2].set(var["pack"][pack_num][row_count + 1][0].get());
                               var["pack"][pack_num][row_count + 1][3].set(log_msg[2:timestamp_end]);
                         
