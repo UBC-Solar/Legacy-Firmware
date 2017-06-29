@@ -5,8 +5,8 @@
 #define HORN_PIN 14
 #define LEFT_SIGNAL_PIN 17
 #define RIGHT_SIGNAL_PIN 15
-#define REGEN_PIN 20
-#define THROTTLE_PIN 23
+#define REGEN_PIN 23
+#define THROTTLE_PIN 20
 #define DIRECTION_FWD_PIN 18
 #define DIRECTION_REV_PIN 16
 
@@ -26,13 +26,11 @@
 #define BYTE_THROTTLE_DIR 2
 #define BYTE_SIGNAL_STATUS 3
 
-#define THROTTLE_THRESHOLD 0
-#define THROTTLE_MULTIPLIER 1 // should be <= 1
-
-#define REGEN_THRESHOLD 0
-#define REGEN_MULTIPLIER 1 // should be <= 1
-
 #define HEARTBEAT_TIME 100 //in ms
+
+int rawRegenRangeMin = 857;
+int rawRegenRangeMax = 898;
+int rawRegenFullRange = rawRegenRangeMax - rawRegenRangeMin;
 
 unsigned long int baudRate = 125000;
 FlexCAN CANbus(baudRate);
@@ -159,7 +157,6 @@ void processIndicatorLamps() {
 }
 
 void sendHeartbeatMessage() {
-  Serial.println("heartbeat");
   CANbus.write(txmsg);
   for(int i = 0; i < 8; i++){
     bitClear(txmsg.buf[BYTE_SIGNAL_STATUS], i);
@@ -238,8 +235,7 @@ void processSignals() {
   }
   
   int rawRegen = analogRead(REGEN_PIN);
-  byte byteRegen = rawRegen / 1023.0 * 255.0;
-  if(byteRegen > REGEN_THRESHOLD) {
+  if(rawRegen > rawRegenRangeMin) {
     bitSet(txmsg.buf[BYTE_SIGNAL_STATUS],2);
   }
 
@@ -258,24 +254,49 @@ void processSignals() {
   }
 }
 
+int rawThrottleRangeMin = 543;
+int rawThrottleRangeMax = 610;
+int rawThrottleFullRange = rawThrottleRangeMax - rawThrottleRangeMin;
+
 byte processThrottle() {
-  int rawThrottle = analogRead(THROTTLE_PIN);
-  byte byteThrottle = rawThrottle / 1023.0 * 255.0;
-  if(byteThrottle > THROTTLE_THRESHOLD) {
-    return THROTTLE_MULTIPLIER * byteThrottle;
-  } else {
-    return 0;
+  
+  int rawThrottle = 0;
+  for(int i=0; i<3; i++) {
+    rawThrottle += analogRead(THROTTLE_PIN);
   }
+  rawThrottle = rawThrottle / 3.0;
+
+  // throttle pot decreases as trigger is pressed
+  rawThrottle = 1023 - rawThrottle;
+
+  if(rawThrottle < rawThrottleRangeMin) {
+    rawThrottle = rawThrottleRangeMin;
+  }
+  else if(rawThrottle > rawThrottleRangeMax) {
+    rawThrottle = rawThrottleRangeMax;
+  }
+
+  byte byteThrottle = float(rawThrottle - rawThrottleRangeMin) / rawThrottleFullRange * 255.0;
+  return byteThrottle;
 }
 
 byte processRegen() {
-  int rawRegen = analogRead(REGEN_PIN);
-  byte byteRegen = rawRegen / 1023.0 * 255.0;
-  if(byteRegen > REGEN_THRESHOLD) {
-    return REGEN_MULTIPLIER * byteRegen;
-  } else {
-    return 0;
+  
+  int rawRegen = 0;
+  for(int i=0; i<3; i++) {
+    rawRegen += analogRead(REGEN_PIN);
   }
+  rawRegen = rawRegen / 3.0;
+
+  if(rawRegen < rawRegenRangeMin) {
+    rawRegen = rawRegenRangeMin;
+  }
+  else if(rawRegen > rawRegenRangeMax) {
+    rawRegen = rawRegenRangeMax;
+  }
+  
+  byte byteRegen = float(rawRegen - rawRegenRangeMin) / rawRegenFullRange * 255.0;
+  return byteRegen;
 }
 
 byte processDirection() {
