@@ -21,7 +21,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
 connected = False;
-'''
+
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -33,7 +33,7 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-'''
+
 root = Tk();
 
 var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(), "velocity" : StringVar(),\
@@ -54,9 +54,9 @@ frame.grid(row = 0);
 var["time"].set("N/A");
 var["timer"].set("N/A");
 
-Label(frame, text = "Last CAN message: ", font = (None, 10, "bold",), width = 20, anchor = E, bg = "gray85").grid(row = 0, column = 0, sticky = E);
-Label(frame, textvariable = var["time"], font = (None, 10,), width = 15, anchor = W, bg = "gray85").grid(row = 0, column = 1);
-labels["timer"] = Label(frame, textvariable = var["timer"], font = (None, 10,), width = 15, anchor = W, bg = "gray85");
+Label(frame, text = "Last CAN message: ", font = (None, 10, "bold",), width = 15, anchor = E, bg = "gray85").grid(row = 0, column = 0, sticky = E);
+Label(frame, textvariable = var["time"], font = (None, 10,), width = 10, anchor = W, bg = "gray85").grid(row = 0, column = 1);
+labels["timer"] = Label(frame, textvariable = var["timer"], font = (None, 10,), width = 25, anchor = W, bg = "gray85");
 labels["timer"].grid(row = 0, column = 2);
 
 
@@ -108,11 +108,11 @@ var["velocity"].set("N/A");
 var["current"][0].set("N/A");
 var["current"][1].set("N/A");
 var["current"][2].set("N/A");
-bmsMainCurrentPeak = 0;
+bmsMainCurrentPeak = None;
 
 def bmsMainCurrentReset():
         global bmsMainCurrentPeak;
-        bmsMainCurrentPeak = 0;
+        bmsMainCurrentPeak = None;
         var["current"][1].set("N/A");
         var["current"][2].set("N/A");
 
@@ -120,11 +120,11 @@ def bmsMainCurrentReset():
 var["temp"][0].set("N/A");
 var["temp"][1].set("N/A");
 var["temp"][2].set("N/A");
-bmsMainTempPeak = 0;
+bmsMainTempPeak = None;
 
 def bmsMainTempReset():
         global bmsMainTempPeak;
-        bmsMainTempPeak = 0;
+        bmsMainTempPeak = None;
         var["temp"][1].set("N/A");
         var["temp"][2].set("N/A");
 
@@ -318,14 +318,14 @@ def update(log_msg):
                 var["volt"].set(int(values[3]));
                 currentValue = int(values[4]);
                 var["current"][0].set(currentValue);
-                if(currentValue > bmsMainCurrentPeak):
+                if(bmsMainCurrentPeak is None or currentValue > bmsMainCurrentPeak):
                         var["current"][1].set(currentValue);
                         bmsMainCurrentPeak = currentValue;
                         var["current"][2].set(timestamp);
                 var["aux volt"].set(float(values[5]));
                 tempValue = int(values[6][:len(values[6]) - 5])
                 var["temp"][0].set(tempValue);
-                if(tempValue > bmsMainTempPeak):
+                if(bmsMainTempPeak is None or tempValue > bmsMainTempPeak):
                         var["temp"][1].set(tempValue);
                         bmsMainTempPeak = tempValue;
                         var["temp"][2].set(timestamp);
@@ -435,12 +435,13 @@ def update(log_msg):
                         
                 elif id%10 is 5:
                         value = log_msg.split(" ")[1];
+                        print(len(value));
                         var["pack"][pack_num][row_count + 1][0].set(value[:len(value) - 5]);
-                        if var["pack"][pack_num][row_count + 1][2].get() is "N/A" or int(var["pack"][pack_num][row_count + 1][0].get()) > int(var["pack"][pack_num][row_count + 1][2].get()):
+                        if var["pack"][pack_num][row_count + 1][2].get() == "N/A" or int(var["pack"][pack_num][row_count + 1][0].get()) > int(var["pack"][pack_num][row_count + 1][2].get()):
                               var["pack"][pack_num][row_count + 1][2].set(var["pack"][pack_num][row_count + 1][0].get());
                               var["pack"][pack_num][row_count + 1][3].set(log_msg[2:timestamp_end]);
                         
-                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "Temperature 1:" + var["pack"][pack_num][row_count + 1][0].get());
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + " Temperature 1:" + var["pack"][pack_num][row_count + 1][0].get());
                         
         last_msg = time.time();
 
@@ -451,7 +452,7 @@ def wait():
                 print(log_msg);
                 if log_msg.find("]{") > -1:
                         try:
-                                update(log_msg);
+                         update(log_msg);
                         except:
                                 print("CAN message ERROR");
                 
