@@ -21,7 +21,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
 connected = False;
-
+'''
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -33,10 +33,10 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-
+'''
 root = Tk();
 
-var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
+var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(), "velocity" : StringVar(),\
              "left" : StringVar(), "right" : StringVar(),\
              "accel" : StringVar(), "regen" : StringVar(), "dir" : StringVar(),\
              "status": StringVar(), "err" : StringVar(),\
@@ -103,6 +103,7 @@ var["aux volt"].set("N/A");
 
 var["brake"].set("OFF");
 var["hazard"].set("OFF");
+var["velocity"].set("N/A");
 
 var["current"][0].set("N/A");
 var["current"][1].set("N/A");
@@ -146,6 +147,9 @@ Label(subframe, textvariable = var["brake"], font = (None, 15,), width = 10, hei
 
 Label(subframe, text = "Hazard: " , font = (None, 10, "bold",), width = 25).grid(row = 2, column = 1);
 Label(subframe, textvariable = var["hazard"], font = (None, 15,),  width = 25, height = 3).grid(row = 3, column = 1);
+
+Label(subframe, text = "Velocity: " , font = (None, 10, "bold",), width = 25).grid(row = 2, column = 2);
+Label(subframe, textvariable = var["velocity"], font = (None, 15,),  width = 25, height = 3).grid(row = 3, column = 2);
 
 subframe = Frame(frame);
 subframe.grid(row = 1, column = 0, sticky = N);
