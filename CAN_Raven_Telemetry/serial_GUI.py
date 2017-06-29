@@ -21,7 +21,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
 connected = False;
-'''
+
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -33,7 +33,7 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-'''
+
 root = Tk();
 
 var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
@@ -439,24 +439,6 @@ def update(log_msg):
                         print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "Temperature 1:" + var["pack"][pack_num][row_count + 1][0].get());
                         
         last_msg = time.time();
-'''
-                elif id%3 is 5:
-                         var["pack"][pack_num][row_count + 1][0].set(values[7][:len(values[7]) - 5]);
-                        
-                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1)
-                                
-                        
-
-                elif id%10 in [3,5]:
-                        half = 0 if id%10 == 3 else 1;
-                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "  Voltages for cells " + ("6 - 11: " if half else "0 - 5: "), end = ""); 
-                        values = log_msg.split(" ");
-                        for i in range(6):
-                                var["pack"][pack_num][i + half*6][0].set(values[i + 1]);
-                                print(var["pack"][pack_num][i + half*6][0].get() + "V ", end = "");
-                        var["pack"][pack_num][12 + half][0].set(values[7][:len(values[7]) - 5]);
-                        print("Temperature " + str(half) + ": " + var["pack"][pack_num][12 + half][0].get());
-                        '''
 
 def wait():
         global last_msg;
@@ -464,7 +446,10 @@ def wait():
                 log_msg = str(ser.readline());
                 print(log_msg);
                 if log_msg.find("]{") > -1:
-                        update(log_msg);
+                        try:
+                                update(log_msg);
+                        except:
+                                print("CAN message ERROR");
                 
         var["timer"].set(str(int(time.time() - last_msg)) + " secs since last msg");
         labels["timer"].config(fg = "black" if (time.time() - last_msg) < 5 else "red");
