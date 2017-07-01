@@ -21,7 +21,7 @@ ERRORS = ["NONE", "SETTINGS CORRUPTED", "OVERCURRENT WARNING", "OVERCURRENT SHUT
           "AUX BATTERY VOLTAGE BELOW WARNING LEVEL", "PRECHARGE FAILED", "CONTATOR SWITCH ERROR", "CANBUS COMMUNICATION ERROR"];
 
 connected = False;
-'''
+
 while not connected:
         print("Enter COM port: ");
         port_num = input();
@@ -33,11 +33,11 @@ while not connected:
         except:
                 print("COM" + port_num +" is not connected\n");
         
-'''
+
 root = Tk();
 root.resizable(width=True, height=True)
 
-var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(),\
+var= {"time" : StringVar(), "timer" : StringVar(), "brake" : StringVar(), "hazard" : StringVar(), "velocity" : StringVar(),\
              "left" : StringVar(), "right" : StringVar(),\
              "accel" : StringVar(), "regen" : StringVar(), "dir" : StringVar(),\
              "status": StringVar(), "err" : StringVar(),\
@@ -55,22 +55,20 @@ frame.grid(row = 0);
 var["time"].set("N/A");
 var["timer"].set("N/A");
 
-Label(frame, text = "Last CAN message: ", font = (None, 10, "bold",), width = 25, anchor = E).grid(row = 0, column = 0, sticky = E);
-Label(frame, textvariable = var["time"], font = (None, 10,), width = 10, anchor = W).grid(row = 0, column = 1);
-labels["timer"] = Label(frame, textvariable = var["timer"], font = (None, 10,), width = 25, anchor = W);
+Label(frame, text = "Last CAN message: ", font = (None, 10, "bold",), width = 15, anchor = E, bg = "gray85").grid(row = 0, column = 0, sticky = E);
+Label(frame, textvariable = var["time"], font = (None, 10,), width = 10, anchor = W, bg = "gray85").grid(row = 0, column = 1);
+labels["timer"] = Label(frame, textvariable = var["timer"], font = (None, 10,), width = 25, anchor = W, bg = "gray85");
 labels["timer"].grid(row = 0, column = 2);
 
-frame = Frame(root);
-frame.grid(row = 1, column = 0);
 
 var["left"].set("OFF");
 var["right"].set("OFF");
 
-Label(frame, text = "Left Signal: " , font = (None, 10, "bold",), width = 50, anchor = E, bg = "gray85").grid(row = 0, column = 0);
-Label(frame, textvariable = var["left"], font = (None, 10,), width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 1);
+Label(frame, text = "Left Signal: " , font = (None, 10, "bold",), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 3);
+Label(frame, textvariable = var["left"], font = (None, 10,), width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 4);
 
-Label(frame, text = "Right Signal: ", font = (None, 10, "bold",), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 2);
-Label(frame, textvariable = var["right"], font = (None, 10,) , width = 50, anchor = W, bg = "gray85").grid(row = 0, column = 3);
+Label(frame, text = "Right Signal: ", font = (None, 10, "bold",), width = 25, anchor = E, bg = "gray85").grid(row = 0, column = 5);
+Label(frame, textvariable = var["right"], font = (None, 10,) , width = 25, anchor = W, bg = "gray85").grid(row = 0, column = 6);
 
 var["accel"].set("N/A");
 var["regen"].set("N/A");
@@ -106,15 +104,16 @@ var["aux volt"].set("N/A");
 
 var["brake"].set("OFF");
 var["hazard"].set("OFF");
+var["velocity"].set("N/A");
 
 var["current"][0].set("N/A");
 var["current"][1].set("N/A");
 var["current"][2].set("N/A");
-bmsMainCurrentPeak = 0;
+bmsMainCurrentPeak = None;
 
 def bmsMainCurrentReset():
         global bmsMainCurrentPeak;
-        bmsMainCurrentPeak = 0;
+        bmsMainCurrentPeak = None;
         var["current"][1].set("N/A");
         var["current"][2].set("N/A");
 
@@ -122,11 +121,11 @@ def bmsMainCurrentReset():
 var["temp"][0].set("N/A");
 var["temp"][1].set("N/A");
 var["temp"][2].set("N/A");
-bmsMainTempPeak = 0;
+bmsMainTempPeak = None;
 
 def bmsMainTempReset():
         global bmsMainTempPeak;
-        bmsMainTempPeak = 0;
+        bmsMainTempPeak = None;
         var["temp"][1].set("N/A");
         var["temp"][2].set("N/A");
 
@@ -149,6 +148,9 @@ Label(subframe, textvariable = var["brake"], font = (None, 15,), width = 10, hei
 
 Label(subframe, text = "Hazard: " , font = (None, 10, "bold",), width = 25).grid(row = 2, column = 1);
 Label(subframe, textvariable = var["hazard"], font = (None, 15,),  width = 25, height = 3).grid(row = 3, column = 1);
+
+Label(subframe, text = "Velocity: " , font = (None, 10, "bold",), width = 25).grid(row = 2, column = 2);
+Label(subframe, textvariable = var["velocity"], font = (None, 15,),  width = 25, height = 3).grid(row = 3, column = 2);
 
 subframe = Frame(frame);
 subframe.grid(row = 1, column = 0, sticky = N);
@@ -317,14 +319,14 @@ def update(log_msg):
                 var["volt"].set(int(values[3]));
                 currentValue = int(values[4]);
                 var["current"][0].set(currentValue);
-                if(currentValue > bmsMainCurrentPeak):
+                if(bmsMainCurrentPeak is None or currentValue > bmsMainCurrentPeak):
                         var["current"][1].set(currentValue);
                         bmsMainCurrentPeak = currentValue;
                         var["current"][2].set(timestamp);
                 var["aux volt"].set(float(values[5]));
                 tempValue = int(values[6][:len(values[6]) - 5])
                 var["temp"][0].set(tempValue);
-                if(tempValue > bmsMainTempPeak):
+                if(bmsMainTempPeak is None or tempValue > bmsMainTempPeak):
                         var["temp"][1].set(tempValue);
                         bmsMainTempPeak = tempValue;
                         var["temp"][2].set(timestamp);
@@ -434,32 +436,15 @@ def update(log_msg):
                         
                 elif id%10 is 5:
                         value = log_msg.split(" ")[1];
+                        print(len(value));
                         var["pack"][pack_num][row_count + 1][0].set(value[:len(value) - 5]);
                         if var["pack"][pack_num][row_count + 1][2].get() == "N/A" or int(var["pack"][pack_num][row_count + 1][0].get()) > int(var["pack"][pack_num][row_count + 1][2].get()):
                               var["pack"][pack_num][row_count + 1][2].set(var["pack"][pack_num][row_count + 1][0].get());
                               var["pack"][pack_num][row_count + 1][3].set(log_msg[2:timestamp_end]);
                         
-                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "Temperature 1:" + var["pack"][pack_num][row_count + 1][0].get());
+                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + " Temperature 1:" + var["pack"][pack_num][row_count + 1][0].get());
                         
         last_msg = time.time();
-'''
-                elif id%3 is 5:
-                         var["pack"][pack_num][row_count + 1][0].set(values[7][:len(values[7]) - 5]);
-                        
-                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1)
-                                
-                        
-
-                elif id%10 in [3,5]:
-                        half = 0 if id%10 == 3 else 1;
-                        print(log_msg[2:timestamp_end] + "[BMS UPDATE] Pack " + str(pack_num + 1) + "  Voltages for cells " + ("6 - 11: " if half else "0 - 5: "), end = ""); 
-                        values = log_msg.split(" ");
-                        for i in range(6):
-                                var["pack"][pack_num][i + half*6][0].set(values[i + 1]);
-                                print(var["pack"][pack_num][i + half*6][0].get() + "V ", end = "");
-                        var["pack"][pack_num][12 + half][0].set(values[7][:len(values[7]) - 5]);
-                        print("Temperature " + str(half) + ": " + var["pack"][pack_num][12 + half][0].get());
-                        '''
 
 def wait():
         global last_msg;
@@ -467,7 +452,10 @@ def wait():
                 log_msg = str(ser.readline());
                 print(log_msg);
                 if log_msg.find("]{") > -1:
-                        update(log_msg);
+                        try:
+                         update(log_msg);
+                        except:
+                                print("CAN message ERROR");
                 
         var["timer"].set(str(int(time.time() - last_msg)) + " secs since last msg");
         labels["timer"].config(fg = "black" if (time.time() - last_msg) < 5 else "red");
