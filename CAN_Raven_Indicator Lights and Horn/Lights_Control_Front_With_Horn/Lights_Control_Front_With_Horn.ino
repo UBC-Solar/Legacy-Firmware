@@ -38,7 +38,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define FALSE 0
 
 // 2 arduino pins are used for horn control to split the current required to turn on the Relay  
-#define HORN_PIN 4 
+#define HORN_PIN 5
 
 // 2 groups of outputs for 4 lights, output pins can be changed according to pins available
 #define FRONT_R_PIN   6
