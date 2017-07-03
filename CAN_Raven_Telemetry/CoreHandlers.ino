@@ -94,7 +94,7 @@ void msgHandleBms(uint32_t frame_id, byte* frame_data, byte length) {
 void msgHandleMPPTData(uint32_t frame_id, byte* frame_data, byte length) {
   printLogHeader(frame_id);
   int numValues;
-  if(frame_id == CAN_ID_CURRENT_SENSOR_2 || frame_id == CAN_ID_TEMP_SENSOR_3) {
+  if(frame_id == CAN_ID_MPPT_CURRENT_SENSOR_2 || frame_id == CAN_ID_MPPT_TEMP_SENSOR_3) {
     numValues = 2;
   } else {
     numValues = 4;
@@ -148,19 +148,19 @@ void msgHandler(uint32_t frame_id, byte *frame_data, byte length) {
     case CAN_ID_ZEVA_BMS_CORE_STATUS:
       msgHandleCoreStatus(frame_id, frame_data, length);
       break;
-    case CAN_ID_CURRENT_SENSOR_1:
+    case CAN_ID_MPPT_CURRENT_SENSOR_1:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_CURRENT_SENSOR_2:
+    case CAN_ID_MPPT_CURRENT_SENSOR_2:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_TEMP_SENSOR_1:
+    case CAN_ID_MPPT_TEMP_SENSOR_1:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_TEMP_SENSOR_2:
+    case CAN_ID_MPPT_TEMP_SENSOR_2:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
-    case CAN_ID_TEMP_SENSOR_3:
+    case CAN_ID_MPPT_TEMP_SENSOR_3:
       msgHandleMPPTData(frame_id, frame_data, length);
       break;
     default:

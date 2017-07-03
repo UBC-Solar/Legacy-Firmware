@@ -48,17 +48,9 @@
 #include <mcp_can.h>
 #include <mcp_can_dfs.h>
 
-#define CAN_ID_MPPT_CURRENT1 202          //0-3
-#define CAN_ID_MPPT_CURRENT2 201          //4-5
-
 /* UPDATE - Still need this? */
 #define CAN_ID_MPPT_CONTROL 200           // External control of relay (independent from kil/ switch)
-
-#define CAN_ID_MPPT_TEMP1 199             // 0-3
-#define CAN_ID_MPPT_TEMP2 198             // 4-7
-#define CAN_ID_MPPT_TEMP3 197             // 8-9 
-#define CAN_ID_MPPT_CURRENT_WARNING 196
-#define CAN_ID_MPPT_TEMP_WARNING 195     
+   
 #define CAN_ID_MPPT_RELAY_STATUS 194  
 #define MAX_TEMP 60.0                     // Celsius
 #define MAX_CURRENT 60.0
@@ -294,11 +286,11 @@ for ( int x = 4, z = 0; (x < 6) && (z < 4); z+2, x++) {
     Serial.print("\n");
   }
   
-  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT1,0,8,frame_data_current1); 
-  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT2,0,4,frame_data_current2); 
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP1,0,8,frame_data_temperature1);
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP2,0,8,frame_data_temperature2);
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP3,0,4,frame_data_temperature3);
+  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT_SENSOR_1,0,8,frame_data_current1); 
+  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT_SENSOR_2,0,4,frame_data_current2); 
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_SENSOR_1,0,8,frame_data_temperature1);
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_SENSOR_2,0,8,frame_data_temperature2);
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_SENSOR_3,0,4,frame_data_temperature3);
 
   if (bitRead(warning_current,0) == 1) {
     byte* warning_current_pointer = &warning_current;
