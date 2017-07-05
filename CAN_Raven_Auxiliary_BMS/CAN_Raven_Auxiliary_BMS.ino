@@ -17,11 +17,4 @@ void setup() {
 
 void loop() {
 
-  mpu6050.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  Serial.print(ax); Serial.print(" ");
-  Serial.print(ay); Serial.print(" ");
-  Serial.print(az); Serial.print(" ");
-  Serial.print(gx); Serial.print(" ");
-  Serial.print(gy); Serial.print(" ");
-  Serial.print(gz); Serial.println("");
 }
