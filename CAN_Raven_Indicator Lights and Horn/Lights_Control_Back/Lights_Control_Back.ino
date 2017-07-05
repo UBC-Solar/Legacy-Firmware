@@ -50,6 +50,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 // time intervals used for blinking
 #define HAZARD_INTERVAL 250
 #define NORMAL_INTERVAL 500
+#define BMS_INTERVAL 1000
 
 // 5 flages for each message
 boolean brakeFlag    =0;
@@ -77,7 +78,8 @@ boolean ledState_BC =LOW;
 boolean ledState_BPS=LOW;
 
 unsigned long previousMillis =0;
-long blinkInterval = NORMAL_INTERVAL;       
+long blinkInterval = NORMAL_INTERVAL;
+long bmsBlinkInterval = BMS_INTERVAL;       
 
 void setup() {
   
@@ -272,11 +274,16 @@ void loop() {
       ledState_BC = LOW;
     }
     
-    if ( bpsTripFlag )
-        ledState_BPS = HIGH;
-    else
-        ledState_BPS = LOW;
-    
+    if ( bpsTripFlag ) {
+      if(currentMillis - previousMillis >= bmsBlinkInterval) {
+        previousMillis = currentMillis;
+        ledState_BPS = !ledState_BPS;
+      }
+    }
+    else {
+      ledState_BPS = LOW;
+    }
+      
     // ******************* Driving the outputs *********************
 //
 //      Serial.print("led brake R: ");

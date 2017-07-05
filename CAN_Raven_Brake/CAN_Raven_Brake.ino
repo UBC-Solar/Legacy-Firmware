@@ -4,8 +4,8 @@
 #include <ubcsolar_can_ids.h>
 #include <SPI.h>
 
-#define PRESSURE_PIN0 0
-#define PRESSURE_PIN1 1
+#define PRESSURE_PIN0 A0
+#define PRESSURE_PIN1 A1
 
 #define BUS_SPEED CAN_125KBPS
 #define CAN_SS 9
