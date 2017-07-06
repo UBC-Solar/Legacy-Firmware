@@ -38,7 +38,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 #define FALSE 0
 
 // 2 arduino pins are used for horn control to split the current required to turn on the Relay  
-#define HORN_PIN 5
+#define HORN_PIN 2
 
 // 2 groups of outputs for 4 lights, output pins can be changed according to pins available
 #define FRONT_R_PIN   6
@@ -73,6 +73,7 @@ void setup() {
     pinMode(FRONT_L_PIN,OUTPUT);
 
     pinMode(HORN_PIN, OUTPUT);
+    digitalWrite(HORN_PIN, LOW);
 
     previousMillis = millis();
 
@@ -118,8 +119,6 @@ void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
         int hornStatus = bitRead(signalStatus, 3);
         int hazardSignalStatus = bitRead(signalStatus, 4);
 
-        
-
         if (hazardSignalStatus == 1)  //Emergency Hazard ON
         {
             hazardFlag = TRUE;
@@ -157,12 +156,12 @@ void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
         }
         if (hornStatus)
         {
-            hornFlag = TRUE;
-            Serial.println(F("Brake signal true"));
+            hornFlag = HIGH;
+            Serial.println(F("Horn signal true"));
         }
         else {
-            hornFlag = FALSE;
-            Serial.println(F("Brake signal false"));
+            hornFlag = LOW;
+            Serial.println(F("Horn signal false"));
         }
     }
 }
@@ -172,6 +171,7 @@ void loop() {
     uint32_t canID;
     byte buf[8]; 
     byte len;
+
     
     if(CAN_MSGAVAIL == CAN.checkReceive())            // check if data is coming
     {
@@ -209,12 +209,12 @@ void loop() {
     
     // ******************* Driving the outputs *********************
 
-      Serial.print("led brake R: ");
-      Serial.println(ledState_FR);
-      Serial.print("led brake L: ");
-      Serial.println(ledState_FL);
-      Serial.print("horn: ");
-      Serial.println(hornFlag);
+//      Serial.print("led brake R: ");
+//      Serial.println(ledState_FR);
+//      Serial.print("led brake L: ");
+//      Serial.println(ledState_FL);
+//      Serial.print("horn: ");
+//      Serial.println(hornFlag);
 
     digitalWrite(FRONT_R_PIN, ledState_FR);
     digitalWrite(FRONT_L_PIN, ledState_FL);

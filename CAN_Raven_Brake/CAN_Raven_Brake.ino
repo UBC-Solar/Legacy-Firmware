@@ -4,8 +4,8 @@
 #include <ubcsolar_can_ids.h>
 #include <SPI.h>
 
-#define PRESSURE_PIN0 A0
-#define PRESSURE_PIN1 A1
+#define PRESSURE_PIN0 4
+#define PRESSURE_PIN1 7
 
 #define BUS_SPEED CAN_125KBPS
 #define CAN_SS 9
@@ -13,7 +13,6 @@
 // the cs pin of the version after v1.1 is default to D9
 // v0.9b and v1.0 is default D10
 const int SPI_CS_PIN = 9;
-
 
 MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
 
@@ -23,6 +22,7 @@ void setup()
     pinMode(PRESSURE_PIN1, INPUT); 
     Serial.begin(115200);
     int canSSOffset = 0;
+
 
 CAN_INIT:
 
@@ -42,13 +42,13 @@ if(CAN_OK == CAN.begin(BUS_SPEED))                   // init can bus : baudrate 
   }
 }
 
-unsigned char stmp[1] = {1};
+unsigned char stmp[1] = {0};
 
 void loop()
 {
   bool pressure0 = digitalRead(PRESSURE_PIN0);
   bool pressure1 = digitalRead(PRESSURE_PIN1);
-
+  
   if ((pressure0 || pressure1) && stmp[0] == 0) {
     // send data:  id = 0x00, standrad frame, data len = 1, stmp: data buf
     stmp[0] = 1;
