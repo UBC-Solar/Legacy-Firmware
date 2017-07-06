@@ -9,6 +9,8 @@
 #define CAN_ID_BRAKE 0
 #define CAN_ID_HEARTBEAT 6
 
+#define CAN_ID_AUX_BMS 7
+
 #define CAN_ID_MPPT_CURRENT_WARNING 8
 #define CAN_ID_MPPT_TEMP_WARNING 9
 
