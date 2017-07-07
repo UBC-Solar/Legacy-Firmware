@@ -10,7 +10,11 @@
 // the cs pin of the version after v1.1 is default to D9
 // v0.9b and v1.0 is default D10
 const int SPI_CS_PIN = 9;
-
+int bytes = 0;
+bool idd = false;
+int id;
+byte stmp[8];
+      
 MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
 
 void setup()
@@ -43,12 +47,30 @@ START_INIT:
 void loop()
 {
       char c;
-      byte stmp[8] = {0x55, 0xA5, 0xAA, 0xFF, 0x86, 0x10, 0x00, 0x00};
-      if(Serial.available())
-      {
-          c = Serial.read();
-          CAN.sendMsgBuf(131 , 0, 8, stmp);
+      
 
-          
+      if (Serial.available()) {
+        if (!idd) {
+          id = int(Serial.read());
+          idd = true;
+        }
+        else {
+           stmp[bytes] = Serial.read();
+           bytes++;
+        }
+        
       }
+      if (bytes == 8) {
+        bytes = 0;
+        idd = false;
+        for (int i = 0; i < 8; i++) {
+          Serial.print(String(stmp[i]));
+          Serial.print(" ");
+        }
+        Serial.println();
+        CAN.sendMsgBuf(id , 0, 8, stmp);
+      }
+      
 }
+
+

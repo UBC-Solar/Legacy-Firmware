@@ -1,40 +1,47 @@
 
 
 /* Current Sensor, Relay, and Array Temperature Sensor Code
- *  UBC Solar
- *  Purpose: 1. To read the current output of the panels on the MPPT, determine whether the batteries are fully charged, and disconnect the panels from the MPPT if necessary
- *           2. Measure the temperature of each of the six arrays 
- *           3. Periodically (every second) send status message containing current levels and temperatures (201, length = 6 bytes)
- *           4. Recieves control message to connect or disconnect solar panels (200, length = 1 byte)
- *           
- *  Last Update: 06/09/2017
- *  Board: Arduino Mega 2560
- *  Analog Pins: A0 to A15
- *  Digital Pins: 
- *  
- *  Output: 1. Current+/-20mA of each of the 6 current sensors
- *          2. Status of 6 MPPT relays 
- *          3. Each temperature sensor status
- *          4. Battery charge status
- *          
- *  Input:  1. Temperature sensor voltage
- *          2. Current sensor voltage
- *          3. Driver controlled kill switch (enitrely mechanical)
- *          4.
+ * Last Update: 06/10/2017
+ * Board: Arduino Mega 2560
  * 
  * 
- * ID       SYSTEM            LENGTH (BYTE)    FORMAT
+ * ID       SYSTEM                           COMPONENT NUMBERS    LENGTH     FORMAT
+ *                                           (INCLUSIVE)          (BYTE) 
+ *                                                                      
  * 
- * 201      CURRENT SENSORS     6              frame_data[0-5] = currentOut[0-5]
- * 200      RELAY CONTROL       6              frame_data[0-5] = relay [0-5] status (0 = OFF, 1 = ON)
- * 199      TEMP SENSORS 1      5              frame_data[0-4] = tempCelsius[0-4]
- * 198      TEMP SENSORS 2      5              frame_data[0-4] = tempCelsius[5-9]
- * 197      WARNING CURRENT     1              frame_data[0] = statu(0 = OK, 1 = SHIT)
- * 196      WARNING TEMP        1              frame_data[0] = status(0 = OK, 1 = SHIT)
- * 195      RELAY STATUS        6              frame_data[0-5] = relay[0-5]
+ * 202      CURRENT SENSORS                  (0 to 3)             8          Each current value is 2 bytes in mA; This ID contains 4 values; First 2 bytes are current sensor #0
+ *                                                                         > format_data[0] = highByte(currentsensor[0]) ; format_data[1] = lowByte(currentsensor[0]) 
+ *                                                                           format_data[2] = highByte(currentsensor[1]) ; format_data[3] = lowByte(currentsensor[1])
+ *                                                                           format_data[4] = highByte(currentsensor[2]) ; format_data[5] = lowByte(currentsensor[2])
+ *                                                                           format_data[6] = highByte(currentsensor[3]) ; format_data[7] = lowByte(currentsensor[3])                                                                                      
  * 
+ * 201      CURRENT SENSORS                  (4 to 5)             4          Same as above; This ID contains 2 values; First 2 bytes are current sensor #4
  * 
- */
+ * 200      (EXTERNAL) RELAY CONTROL         (0 to 5)             6          Receiving this!; (0 = OPEN, 1 = CLOSED); First byte is relay #0            
+ *                                                                         > format_data[0] = relay [0] ; format_data[1] = relay [1] ; format_data[2] = relay [2] 
+ *                                                                           format_data[3] = relay [3] ; format_data[4] = relay [4] ; format_data[5] = relay [5]  
+ *        
+ * 199      TEMP. SENSORS                    (0 to 3)             8          Each temp. value is 2 bytes in milliCelsius (lol); This ID contains 4 values; First 2 bytes are temp. sensor #0 
+ *                                                                         > format_data[0] = highByte(tempsensor[0]) ; format_data[1] = lowByte(tempsensor[0])
+ *                                                                           format_data[2] = highByte(tempsensor[1]) ; format_data[3] = lowByte(tempsensor[1])
+ *                                                                           format_data[4] = highByte(tempsensor[2]) ; format_data[5] = lowByte(tempsensor[2])
+ *                                                                           format_data[6] = highByte(tempsensor[3]) ; format_data[7] = lowByte(tempsensor[3])
+ *                                                                           
+ * 198      TEMP. SENSORS                    (4 to 7)             8          Same as above; This ID contains 4 values; First 2 bytes are temp. sensor #4
+ * 
+ * 197      TEMP. SENSORS                    (8 to 9)             4          Same as above; This ID contains 2 values; First 2 bytes are temp. sensor #8
+ * 
+ * 196      EXTREME CURRENT WARNING          General              1          Using LSB  -- currently sends a message only when LSB is 1 
+ *                                                                         > frame_data[0] = warning_current 
+ * 
+ * 195      EXTREME TEMP WARNING             General              1          Using LSB  -- currently sends a message only when LSB is 1 
+ *                                                                         > frame_data[0] = warning_temp
+ * 
+ * 194      RELAY STATUS                     (0 to 5)             6          Sending status!; (0 = OPEN, 1 = CLOSED); First byte is relay #0
+ *                                                                         > format_data[0] = relay [0] ; format_data[1] = relay [1] ; format_data[2] = relay [2] 
+ *                                                                           format_data[3] = relay [3] ; format_data[4] = relay [4] ; format_data[5] = relay [5]  
+ * 
+  */
 
 #include <ubcsolar_can_ids.h>
 #include <SPI.h>
@@ -42,13 +49,15 @@
 #include <mcp_can.h>
 #include <mcp_can_dfs.h>
 
-#define CAN_ID_MPPT_CURRENT 201
+#define CAN_ID_MPPT_CURRENT1 202          //0-3
+#define CAN_ID_MPPT_CURRENT2 201          //4-5
 #define CAN_ID_MPPT_CONTROL 200           // External control of relay (independent from kil switch
-#define CAN_ID_MPPT_TEMP1 199             // TSensors 0-4
-#define CAN_ID_MPPT_TEMP2 198             // TSensors 5-9 
-#define CAN_ID_MPPT_CURRENT_WARNING 197
-#define CAN_ID_MPPT_TEMP_WARNING 196     
-#define CAN_ID_MPPT_RELAY_STATUS 195  
+#define CAN_ID_MPPT_TEMP1 199             // 0-3
+#define CAN_ID_MPPT_TEMP2 198             // 4-7
+#define CAN_ID_MPPT_TEMP3 197             // 8-9 
+#define CAN_ID_MPPT_CURRENT_WARNING 196
+#define CAN_ID_MPPT_TEMP_WARNING 195     
+#define CAN_ID_MPPT_RELAY_STATUS 194  
 #define MAX_CURRENT  8000.0
 #define MAX_TEMP 80.0                     // Celsius
 #define BUS_SPEED CAN_125KBPS
@@ -63,9 +72,10 @@ const float uC_OFFSET[6] = {-2.667,-2.661,-2.619,-2.674,-2.676,-2.663};
 float currentValue[6] = {0};
 float currentVoltageOut[6] = {0};
 float currentOut[6] = {0};
+int currentCAN[6] = {0};
 
 // TEMPERATURE SENSOR CONSTANTS
-const float TEMP_BASE_VOLTAGE [10] = {608,617,613,607,610,610,0,0,0,0};
+const float TEMP_BASE_VOLTAGE [10] = {620,617,613,607,0,610,615,620,620,619};     // FIX TEMPERATURE SENSOR 5!!!
 float baseVoltage[10] = {0}; 
 float baseCelsius[10] = {0};
 float tempVoltage[10] = {0};
@@ -73,21 +83,23 @@ float temp2Voltage[10] = {0};
 float tempConvert[10] =  {0};                     
 float tempCelsius[10] =  {0};    
 float tempF[10] = {0};
+int tempCAN[10] = {0};
 
 // PIN CONFIG
 const int panel[6] = {A0,A1,A2,A3,A4,A5};                                         // Analog input pin that the current sensor for the panel input of MPPT 0 is attached to
-const int relay[6] = {0,1,2,3,4,5};                                               // Digital output pins corresponding to their respective power relays
+const int relay[6] = {2,3,4,5,6,7};                                               // Digital output pins corresponding to their respective power relays
 const int temp_sensor[10] = {A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
  
-// CAN SETUP -- figure out correct sizes
-byte frame_data_current[6] = {0};
-byte frame_data_temperature1[5] = {0};    // Will be sending in two seperate IDs because there is too much data
-byte frame_data_temperature2[5] = {0};
+// CAN SETUP 
+byte frame_data_current1[8] = {0};
+byte frame_data_current2[4] = {0};
+byte frame_data_temperature1[8] = {0};    // Will be sending in two seperate IDs because there is too much data
+byte frame_data_temperature2[8] = {0};
+byte frame_data_temperature3[4] = {0};
+byte frame_data_relay_status[6] = {0};
+
 byte warning_current = 0;                 // Overcurrent state when LSB is 1
 byte warning_temp = 0;                    // Overtemperature state when LSB is 1
-
-int data_length_current = 6;              // In bytes
-int data_length_temp = 5;           
 
 const int SPI_CS_PIN = 10;
 
@@ -96,14 +108,22 @@ MCP_CAN CAN(SPI_CS_PIN);
 void setup() {
   
 // Initialize serial communications at 115200 bps
-  Serial.begin(115200); 
+  Serial.begin(115200);
 
 // Set pin modes and turn relays on
-  for (int i = 0; i < 6; i++) {
-    pinMode(panel[i], INPUT);
-    pinMode(relay[i], OUTPUT);
-    digitalWrite(relay[i], HIGH);
-  }
+//  for (int i = 0; i < 6; i++) {
+//    pinMode(panel[i], INPUT);
+//    pinMode(relay[i], OUTPUT);
+//    digitalWrite(relay[i], HIGH);
+//  }
+
+  // Initialize relays
+  digitalWrite(relay[0], 1);
+  digitalWrite(relay[1], 1);
+  digitalWrite(relay[2], 1);
+  digitalWrite(relay[3], 1);
+  digitalWrite(relay[4], 1);
+  digitalWrite(relay[5], 1);
   
   for (int x = 0; x < 10; x++) {
     pinMode(temp_sensor[x],INPUT);
@@ -134,26 +154,36 @@ void loop() {
   byte length;
   uint32_t frame_id;
   byte frame_data[8];   // Max length
-  
+
+
+  // checking for relay control message 
   if(CAN_MSGAVAIL == CAN.checkReceive()) {
     CAN.readMsgBuf(&length, frame_data);
     frame_id = CAN.getCanId();   
-    msgHandler(frame_id, frame_data, length);
-    
+    msgHandler(frame_id, frame_data, length);   
   }
+
+  // sending relay status 
+  for (int i = 0; i < 5; i++) {
+    frame_data_relay_status[i] = relay[i];
+  }
+  CAN.sendMsgBuf(CAN_ID_MPPT_RELAY_STATUS,0,6,frame_data_relay_status);
   
   // reading and displaying current levels, as well as relay logic
   for (int i = 0; i < 6; i++) {
     currentValue[i] = analogRead(panel[i]);
     currentVoltageOut[i] = float((currentValue[i] / 100.0) + uC_OFFSET[i]) - ZERO_CURRENT_VOLTAGE[i];      // Convert value read in sensorValue to the voltage value output of the current sensor - 2.543
     currentOut[i] = currentVoltageOut[i] / CURRENT_CONVERSION_FACTOR[i] * 1000.0 / 2.0;                    // Convert voltage value to current value, I_p, read from the current sensor
+    
+    // for CAN
+    currentCAN[i] = int (currentOut[i] * 100.0);
    
     Serial.print("MPPT");
     Serial.print(i);
     Serial.print(": Voltage (V) = ");
     Serial.print(currentVoltageOut[i]);
     Serial.print("\t Current (mA) = ");
-    Serial.print(currentOut[0]);
+    Serial.print(currentOut[i]);
     Serial.print("\n\r");
 
     // relay logic
@@ -169,7 +199,7 @@ void loop() {
       bitSet(warning_current,0); // LSB is set to 1
       
     } else {
-      digitalWrite(relay[i], HIGH);
+//      digitalWrite(relay[i], HIGH);
       Serial.print( "\nMPPT" );
       Serial.print( i );
       Serial.print( " connected.\n\n" );
@@ -184,11 +214,12 @@ void loop() {
     baseCelsius[j] = (baseVoltage[j]/0.01) - 273.15;                         // At room temperature: Convert to celsius -- around 27
     tempVoltage[j] = analogRead(temp_sensor[j]);                             // Real-time (mV)   
     temp2Voltage[j] = (tempVoltage[j]*VCC)/1024;                             // Real-time (V)
-//  tempConvert[j] = (temp2Voltage[j]/0.01) - 273.15;                        // Converting voltage reading into temperature   
-//  tempCelsius[j] = baseCelsius[j] + (baseCelsius[j] - tempConvert[j]);     // Adding difference -- since voltage decreases as temperature increases
-    tempCelsius[j] = ((14*((temp2Voltage[j] / baseVoltage[j]) - 1))+1) * baseCelsius[j] - 10;
+    tempCelsius[j] = ((14*((temp2Voltage[j] / baseVoltage[j]) - 1))+1) * baseCelsius[j] - 23;
     tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird American units
- 
+
+   // for CAN
+    tempCAN[j] = int (tempCelsius[j]*100.0);
+
     Serial.print("LM335Z");
     Serial.print(j);
     Serial.print(": Analog Voltage (mV):");
@@ -217,22 +248,57 @@ void loop() {
     }
   }
 
-// handling data to be sent through CAN bus shield
+// Sending data through CAN bus shield  -- Each value is 2 bytes and so multiple IDs are being used to send all the data
+// 6 Current Values
+// 10 Temperature Values
 
-  // assigning frame data array with measured values
-  for (int z = 0; z < 5; z++) {
-    frame_data_temperature1[z] = tempCelsius[z];      //0-4
-    frame_data_temperature2[z+5] = tempCelsius[z+5];  //5-9
-    }
-     
-  for (int c = 0; c < 6; c++) {
-    frame_data_current[c] = currentOut[c];  
+for ( int x = 0, z = 0; (x < 4) && (z < 8); z+2, x++) {
+    frame_data_temperature1[z] = highByte(tempCAN[x]); 
+    frame_data_temperature1[z+1] = lowByte(tempCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_temperature1[z]);
+    Serial.print("\n");
+  }
+
+for ( int x = 4, z = 0; (x < 8) && (z < 8); z+2, x++) {
+    frame_data_temperature2[z] = highByte(tempCAN[x]); 
+    frame_data_temperature2[z+1] = lowByte(tempCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_temperature2[z]);
+    Serial.print("\n");
+  }
+
+for ( int x = 8, z = 0; (x < 10) && (z < 4); z+2, x++) {
+    frame_data_temperature3[z] = highByte(tempCAN[x]); 
+    frame_data_temperature3[z+1] = lowByte(tempCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_temperature3[z]);
+    Serial.print("\n");
+  }
+
+for ( int x = 0, z = 0; (x < 4) && (z < 8); z+2, x++) {
+    frame_data_current1[z] = highByte(currentCAN[x]); 
+    frame_data_current1[z+1] = lowByte(currentCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_current1[z]);
+    Serial.print("\n");
+  }
+
+
+for ( int x = 4, z = 0; (x < 6) && (z < 4); z+2, x++) {
+    frame_data_current2[z] = highByte(currentCAN[x]); 
+    frame_data_current2[z+1] = lowByte(currentCAN[x]);
+    Serial.print("\n");
+    Serial.print(frame_data_current2[z]);
+    Serial.print("\n");
   }
   
-  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT, 0, data_length_current, frame_data_current);  
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP1, 0, data_length_temp, frame_data_temperature1);
-  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP2, 0, data_length_temp, frame_data_temperature2);
-  
+  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT1,0,8,frame_data_current1); 
+  CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT2,0,4,frame_data_current2); 
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP1,0,8,frame_data_temperature1);
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP2,0,8,frame_data_temperature2);
+  CAN.sendMsgBuf(CAN_ID_MPPT_TEMP3,0,4,frame_data_temperature3);
+
   if (bitRead(warning_current,0) == 1) {
     byte* warning_current_pointer = &warning_current;
     CAN.sendMsgBuf(CAN_ID_MPPT_CURRENT_WARNING, 0 , 1 , warning_current_pointer); 
@@ -241,7 +307,9 @@ void loop() {
   if (bitRead(warning_temp,0) == 1) {
     byte* warning_temp_pointer = &warning_temp;
   CAN.sendMsgBuf(CAN_ID_MPPT_TEMP_WARNING, 0 , 1 , warning_temp_pointer); } 
-  
+
+ 
+
   delay(1000);
 }
 

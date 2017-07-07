@@ -29,4 +29,11 @@
 #define CAN_ID_ZEVA_BMS_BASE 100
 #define CAN_ID_ZEVA_BMS_END 139 //informational purpose only. not used in code
 
+#define CAN_ID_CURRENT_SENSOR_1 202
+#define CAN_ID_CURRENT_SENSOR_2 201
+
+#define CAN_ID_TEMP_SENSOR_1 199
+#define CAN_ID_TEMP_SENSOR_2 198
+#define CAN_ID_TEMP_SENSOR_3 197
+
 #endif
