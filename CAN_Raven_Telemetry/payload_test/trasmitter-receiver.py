@@ -62,12 +62,12 @@ if connected:
     while rec.inWaiting():
         print(rec.readline());
 
-print("\n\nRun auto test?");
+print("\n\nRun auto test for BMS status?");
 if input() == 'y':
     for i in range(8):
         for j in range(8):
             for k in [0, 1, 2, 4, 5, 6, 8, 9, "a"]:
-                send_payload("131 0" + str(i) + "00000" + str(j) + str(k));
+                send_payload("121 0" + str(i) + "00000" + str(j) + str(k));
                 time.sleep(0.5);
                 while ser.inWaiting():
                     print(ser.readline());
@@ -77,7 +77,7 @@ if input() == 'y':
     for i in range(8):
         for j in range(8):
             for k in [0, 1, 2, 4, 5, 6, 8, 9, "a"]:
-                send_payload("131 00" + str(i) + "0000" + str(j) + str(k));
+                send_payload("121 00" + str(i) + "0000" + str(j) + str(k));
                 time.sleep(0.5);
                 while ser.inWaiting():
                     print(ser.readline());
@@ -85,7 +85,52 @@ if input() == 'y':
                     while rec.inWaiting():
                         print(rec.readline());
     print("-------------------TEST COMPLETED------------------------");
-    
+
+print("\n\nRun auto test for BMS pack (1x3) ?");
+if input() == 'y':
+    for i in range(8):
+        for j in range(8):
+            for k in range(8):
+                for l in range(8):
+                    send_payload("103 " + str(j) + "0" + str(k) + "0" + str(l) + "00000000" + str(i));
+                    time.sleep(0.5);
+                    while ser.inWaiting():
+                        print(ser.readline());
+                    if connected:
+                        while rec.inWaiting():
+                            print(rec.readline());
+
+    print("-------------------TEST COMPLETED------------------------");
+
+print("\n\nRun auto test for BMS pack (signal 1x5) ?");
+if input() == 'y':
+    for i in range(10):
+        for j in range(10):
+                send_payload("125 " + "00000000000000" + str(i) + str(j));
+                time.sleep(0.5);
+                while ser.inWaiting():
+                        print(ser.readline());
+                if connected:
+                        while rec.inWaiting():
+                                print(rec.readline());
+
+    print("-------------------TEST COMPLETED------------------------");
+
+print("\n\nRun auto test for BMS Core status?");
+if input() == 'y':
+    for i in range(4):
+        for j in range(4):
+            for k in [0, 2, 4, 8, "a"]:
+                for l in [0, 2, 4, 8]:
+                    send_payload("10 " + str(i) + str(j) + str(k) + "0" + str(l) + "000" + str(l) + "00" + str(l) + "00" + str(l));
+                    time.sleep(0.2);
+                    while ser.inWaiting():
+                        print(ser.readline());
+                    if connected:
+                        while rec.inWaiting():
+                            print(rec.readline());
+
+    print("-------------------TEST COMPLETED------------------------");
 
 while True:
     while ser.inWaiting():

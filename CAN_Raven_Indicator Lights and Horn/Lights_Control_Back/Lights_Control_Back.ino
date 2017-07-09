@@ -50,6 +50,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 // time intervals used for blinking
 #define HAZARD_INTERVAL 250
 #define NORMAL_INTERVAL 500
+#define BMS_INTERVAL 1000
 
 // 5 flages for each message
 boolean brakeFlag    =0;
@@ -77,7 +78,8 @@ boolean ledState_BC =LOW;
 boolean ledState_BPS=LOW;
 
 unsigned long previousMillis =0;
-long blinkInterval = NORMAL_INTERVAL;       
+long blinkInterval = NORMAL_INTERVAL;
+long bmsBlinkInterval = BMS_INTERVAL;       
 
 void setup() {
   
@@ -183,7 +185,6 @@ void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
     }
     else if (frame_id == CAN_ID_BRAKE)  // Brake message
     {
-
         if (buf[0])  // Brake ON
         {
             brakeFlag = TRUE;
@@ -195,19 +196,13 @@ void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
             Serial.println(F("led should turn off. Brakes OFF"));
         }
     }
-    else if (frame_id == CAN_ID_ZEVA_BMS_CORE_STATUS)  //BPS Trip Message  TODO for msg ID
+    else if (frame_id == CAN_ID_AUX_BMS)
     {
-        unsigned char error = buf[0] & 15; //error is the bits 3-0 of frame_data[0]
-        if (error == 3 || error == 5 || error == 8) // BPS Trip Indicator ON      TODO for message data
+        unsigned char error = buf[0];
+        if (error == 1) // BPS Trip Indicator ON
         {
             bpsTripFlag = TRUE;
-            Serial.print(F("White Strobe Light Should turn on. BPS TRIP happened,  ERROR : "));
-            if (error == 3)
-                Serial.println(F(" ---- OverCurrent "));
-            else if (error == 5)
-                Serial.println(F(" ---- UnderVoltage for +10s "));
-            else if (error == 8)
-                Serial.println(F(" ---- OverTemperature "));               
+            Serial.print(F("White Strobe Light Should turn on. BPS TRIP happened"));     
         }
         else if(error == 0) //  No BMS ERROR. BPS Trip Indicator OFF
         {
@@ -272,11 +267,16 @@ void loop() {
       ledState_BC = LOW;
     }
     
-    if ( bpsTripFlag )
-        ledState_BPS = HIGH;
-    else
-        ledState_BPS = LOW;
-    
+    if ( bpsTripFlag ) {
+      if(currentMillis - previousMillis >= bmsBlinkInterval) {
+        previousMillis = currentMillis;
+        ledState_BPS = !ledState_BPS;
+      }
+    }
+    else {
+      ledState_BPS = LOW;
+    }
+      
     // ******************* Driving the outputs *********************
 //
 //      Serial.print("led brake R: ");

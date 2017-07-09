@@ -54,35 +54,35 @@ void loop()
               Serial.println("0");
               Serial.println("Emergency Hazard ---------------------- ON");
               stmp[0]=1;
-              CAN.sendMsgBuf(CAN_ID_HAZARD , 0, 1, stmp);
+              //CAN.sendMsgBuf(CAN_ID_HAZARD , 0, 1, stmp);
           }
           else if(c == '1')                      // EMERGENCY HAZARD  OFF
           {
               Serial.println("1");
               Serial.println("Emergency Hazard ---------------------- OFF");
               stmp[0]=0;
-              CAN.sendMsgBuf(CAN_ID_HAZARD , 0, 1, stmp);
+              //CAN.sendMsgBuf(CAN_ID_HAZARD , 0, 1, stmp);
           }
           else if(c == '2')                       // right Indicator  on
           {
               Serial.println("2");
               Serial.println("indicator  ---------------------- ON ------------- RIGHT side");
               stmp[0]=2;
-              CAN.sendMsgBuf(CAN_ID_SIGNAL_CTRL , 0, 1, stmp);
+              //CAN.sendMsgBuf(CAN_ID_SIGNAL_CTRL , 0, 1, stmp);
           }
           else if(c == '3')                       // left Indicator  on
           {
               Serial.println("3");
               Serial.println("indicator  ---------------------- ON ------------- LEFT side");
               stmp[0]=1;
-              CAN.sendMsgBuf(CAN_ID_SIGNAL_CTRL , 0, 1, stmp);
+              //CAN.sendMsgBuf(CAN_ID_SIGNAL_CTRL , 0, 1, stmp);
           }
           else if(c == '4')                       // right Indicator  on
           {
               Serial.println("4");
               Serial.println("indicator  ---------------------- OFF  ");
               stmp[0]=0;
-              CAN.sendMsgBuf(CAN_ID_SIGNAL_CTRL , 0, 1, stmp);
+              //CAN.sendMsgBuf(CAN_ID_SIGNAL_CTRL , 0, 1, stmp);
           }
           else if(c == '5')                       // BRAKE  on
           {
@@ -103,14 +103,14 @@ void loop()
               Serial.println("7");
               Serial.println(" Horn  ---------------------- ON");
               stmp[0]=1;
-              CAN.sendMsgBuf(CAN_ID_HORN, 0, 1, stmp);
+              //CAN.sendMsgBuf(CAN_ID_HORN, 0, 1, stmp);
           }
           else if(c == '8')
           {
               Serial.println("8");
               Serial.println(" Horn  ---------------------- OFF");
               stmp[0]=0;
-              CAN.sendMsgBuf(CAN_ID_HORN, 0, 1, stmp);
+              //CAN.sendMsgBuf(CAN_ID_HORN, 0, 1, stmp);
           }
           else if (c== 'c')
           {
@@ -167,17 +167,35 @@ void loop()
           {
             Serial.println("h");
             Serial.println(" Heartbeat message from steering wheel");
-            bigStmp[0] = 255;
-            bigStmp[1] = 100;
-            bigStmp[2] = 1;
+
+            bitSet(bigStmp[3], 0); //left turn
+            //bitSet(bigStmp[3], 1); //right turn
+            
+            //bitSet(bigStmp[3], 2); //regen brake
+            bitSet(bigStmp[3], 3); //horn
+            //bitSet(bigStmp[3], 4); //hazard
+            
+            CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, bigStmp);
+            for(int i = 0; i < 8; i++){
+              bitClear(bigStmp[3], i);   
+            }
+          }
+          else if (c == 'i')
+          {
+            Serial.println("i");
+            Serial.println(" Heartbeat message from steering wheel");
             //bitSet(bigStmp[3], 0);
             //bitSet(bigStmp[3], 1);
             //bitSet(bigStmp[3], 2);
             //bitSet(bigStmp[3], 3);
-            bitSet(bigStmp[3], 4);
-            CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, bigStmp);
+            //bitSet(bigStmp[3], 4);
             for(int i = 0; i < 8; i++){
               bitClear(stmp[3], i);   
+            }
+            Serial.println(bigStmp[3], BIN);
+            CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, bigStmp);
+            for(int i = 0; i < 8; i++){
+              bitClear(bigStmp[3], i);   
             }
           }
           else if (c == 'm')
