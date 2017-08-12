@@ -168,11 +168,12 @@ void loop()
             Serial.println("h");
             Serial.println(" Heartbeat message from steering wheel");
 
-            bitSet(bigStmp[3], 0); //left turn
+            bigStmp[1] = 10;
+            //bitSet(bigStmp[3], 0); //left turn
             //bitSet(bigStmp[3], 1); //right turn
             
-            //bitSet(bigStmp[3], 2); //regen brake
-            bitSet(bigStmp[3], 3); //horn
+            bitSet(bigStmp[3], 2); //regen brake
+            //bitSet(bigStmp[3], 3); //horn
             //bitSet(bigStmp[3], 4); //hazard
             
             CAN.sendMsgBuf(CAN_ID_HEARTBEAT, 0, 8, bigStmp);

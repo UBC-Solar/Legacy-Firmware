@@ -81,6 +81,11 @@ unsigned long previousMillis =0;
 long blinkInterval = NORMAL_INTERVAL;
 long bmsBlinkInterval = BMS_INTERVAL;       
 
+int maxRegen = 0;
+int minRegen = 255;
+int maxThrottle = 0;
+int minThrottle = 255;
+
 void setup() {
   
 // SERIAL INIT 
@@ -117,16 +122,37 @@ START_INIT:
 
 void msgHandler(uint32_t frame_id, byte *buf, byte frame_length)
 {      
-//    Serial.print("frame_id: ");
-//    Serial.println(frame_id);
-//    Serial.print("buf[0]: ");
-//    Serial.println(buf[0]);
-//    Serial.print("buf[1]: ");
-//    Serial.println(buf[1]);
-//    Serial.print("buf[2]: ");
-//    Serial.println(buf[2]);
-//    Serial.print("buf[3]: ");
-//    Serial.println(buf[3], BIN);
+    Serial.print("frame_id: ");
+    Serial.println(frame_id);
+    Serial.print("buf[0]: ");
+    Serial.println(buf[0]);
+    if(buf[0] > maxThrottle){
+      maxThrottle = buf[0];
+    }
+    if(buf[0] < minThrottle){
+      minThrottle = buf[0];
+    }
+    if(buf[1] > maxRegen){
+      maxRegen = buf[1];
+    }
+    if(buf[1] < minRegen){
+      minRegen = buf[1];
+    }
+    Serial.print("buf[1]: ");
+    Serial.println(buf[1]);
+    Serial.print("buf[2]: ");
+    Serial.println(buf[2]);
+    Serial.print("buf[3]: ");
+    Serial.println(buf[3], BIN);
+
+    Serial.print("maxThrottle: ");
+    Serial.println(maxThrottle);
+    Serial.print("minThrottle: ");
+    Serial.println(minThrottle);
+    Serial.print("maxRegen: ");
+    Serial.println(maxRegen);
+    Serial.print("minRegen: ");
+    Serial.println(minRegen);
   
     if (frame_id == CAN_ID_HEARTBEAT)   // Turning Indicator message
     {
@@ -285,15 +311,15 @@ void loop() {
     }
       
     // ******************* Driving the outputs *********************
-//
-//      Serial.print("led brake R: ");
-//      Serial.println(ledState_BR);
-//      Serial.print("led brake L: ");
-//      Serial.println(ledState_BL);
-//      Serial.print("led brake C: ");
-//      Serial.println(ledState_BC);
-//      Serial.print("led brake W: ");
-//      Serial.println(ledState_BPS);
+
+      Serial.print("led brake R: ");
+      Serial.println(ledState_BR);
+      Serial.print("led brake L: ");
+      Serial.println(ledState_BL);
+      Serial.print("led brake C: ");
+      Serial.println(ledState_BC);
+      Serial.print("led brake W: ");
+      Serial.println(ledState_BPS);
 
     digitalWrite(BACK_R_PIN, ledState_BR);
     digitalWrite(BACK_L_PIN, ledState_BL);

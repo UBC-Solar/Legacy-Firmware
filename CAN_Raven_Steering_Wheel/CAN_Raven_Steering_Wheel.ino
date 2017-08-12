@@ -45,7 +45,7 @@ bool rightSignalOn = false;
 
 void setup() {
   Serial.begin(115200);
-  
+   
   CANbus.begin();
   txmsg.id = CAN_ID_HEARTBEAT;
   txmsg.len = 8;
@@ -263,6 +263,8 @@ byte processThrottle() {
   int rawThrottle = 0;
   for(int i=0; i<3; i++) {
     rawThrottle += analogRead(THROTTLE_PIN);
+    Serial.print("rawThrottle: ");
+    Serial.println(analogRead(THROTTLE_PIN));
   }
   rawThrottle = rawThrottle / 3.0;
 
@@ -312,7 +314,7 @@ byte processDirection() {
 }
 
 void loop() {
-  
+  Serial.println("in the loop");
   txmsg.buf[BYTE_THROTTLE_ACCEL] = processThrottle();
   txmsg.buf[BYTE_THROTTLE_DIR] = processDirection();
   txmsg.buf[BYTE_THROTTLE_REGEN] = processRegen();
