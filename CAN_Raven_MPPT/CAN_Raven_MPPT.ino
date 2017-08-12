@@ -73,22 +73,25 @@ int currentCAN[6] = {0};
 float currentTotal = 0.0;
 
 // TEMPERATURE SENSOR CONSTANTS
+const float TEMP_BASE_VOLTAGE [10] = {620,617,613,607,620,610,615,620,620,619};     // FIX TEMPERATURE SENSOR 5!!!
 
 /* UPDATE - Get the rest of the base voltages for temperature sensors */
-const float TEMP_BASE_VOLTAGE [10] = {608,617,613,607,610,610,0,0,0,0};
 float baseVoltage[10] = {0}; 
 float baseCelsius[10] = {0};
 float tempVoltage[10] = {0};
 float temp2Voltage[10] = {0};
 float tempConvert[10] =  {0};                     
-float tempCelsius[10] =  {0};    
+float tempCelsius[10] =  {0};   
 float tempF[10] = {0};
 int tempCAN[10] = {0};        // Temperature being sent through CAN
 
 // PIN CONFIG
+// const int panel[6] = {A0,A1,A2,A3,A4,A5};                                         // Analog input pin that the current sensor for the panel input of MPPT 0 is attached to
 const int battery_current[6] = {A0,A1,A2,A3,A4,A5};                               // Analog input pin that the current sensor for the battery_current input of MPPT 0 is attached to
 const int relay[6] = {2,3,4,5,6,7};                                               // Digital output pins corresponding to their respective power relays
 const int temp_sensor[10] = {A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
+
+int i = 0;
  
 // CAN SETUP 
 byte frame_data_current1[8] = {0};
@@ -108,9 +111,10 @@ MCP_CAN CAN(SPI_CS_PIN);
 void setup() {
   
 // Initialize serial communications at 115200 bps
-  Serial.begin(115200); 
+  Serial.begin(115200);
 
 // Set pin modes and turn relays on
+
   for (int i = 0; i < 6; i++) {
     pinMode(battery_current[i], INPUT);
     pinMode(relay[i], OUTPUT);
@@ -187,6 +191,11 @@ void loop() {
     if (currentTotal > MAX_CURRENT) {
       bitSet(warning_current,0); // LSB is set to 1   
     } else {
+      digitalWrite(relay[i], HIGH);
+      Serial.print( "\nMPPT" );
+      Serial.print( i );
+      Serial.print( " connected.\n\n" );
+
       bitClear(warning_current,0); // LSB is set to 0
     }
 
@@ -196,9 +205,11 @@ void loop() {
     baseCelsius[j] = (baseVoltage[j]/0.01) - 273.15;                         // At room temperature: Convert to celsius -- around 27
     tempVoltage[j] = analogRead(temp_sensor[j]);                             // Real-time (mV)   
     temp2Voltage[j] = (tempVoltage[j]*VCC)/1024;                             // Real-time (V)
-    tempCelsius[j] = ((14*((temp2Voltage[j] / baseVoltage[j]) - 1))+1) * baseCelsius[j] - 10;
+    tempCelsius[j] = ((14*((temp2Voltage[j] / baseVoltage[j]) - 1))+1) * baseCelsius[j] - 23;
     tempF[j] = tempCelsius[j]*(9.0/5.0) + 32.0;                              // Convert to weird American units
-    tempCAN[j] = int (tempCelsius[j]*100.0);                                 // Readable value for CAN communication
+
+   // for CAN
+    tempCAN[j] = int (tempCelsius[j]*100.0);
 
     Serial.print("LM335Z");
     Serial.print(j);
