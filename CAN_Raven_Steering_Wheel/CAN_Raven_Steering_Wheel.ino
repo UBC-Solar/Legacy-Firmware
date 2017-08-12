@@ -28,8 +28,8 @@
 
 #define HEARTBEAT_TIME 100 //in ms
 
-int rawRegenRangeMin = 857;
-int rawRegenRangeMax = 898;
+int rawRegenRangeMin = 933;//862; //857;
+int rawRegenRangeMax = 960; //898; 
 int rawRegenFullRange = rawRegenRangeMax - rawRegenRangeMin;
 
 unsigned long int baudRate = 125000;
@@ -254,8 +254,8 @@ void processSignals() {
   }
 }
 
-int rawThrottleRangeMin = 543;
-int rawThrottleRangeMax = 610;
+int rawThrottleRangeMin = 1023 - 488; //405;
+int rawThrottleRangeMax = 1023 - 441; //465;
 int rawThrottleFullRange = rawThrottleRangeMax - rawThrottleRangeMin;
 
 byte processThrottle() {
@@ -263,6 +263,8 @@ byte processThrottle() {
   int rawThrottle = 0;
   for(int i=0; i<3; i++) {
     rawThrottle += analogRead(THROTTLE_PIN);
+    //Serial.print("rawThrottle: ");
+    //Serial.println(analogRead(THROTTLE_PIN));
   }
   rawThrottle = rawThrottle / 3.0;
 
@@ -312,7 +314,6 @@ byte processDirection() {
 }
 
 void loop() {
-  
   txmsg.buf[BYTE_THROTTLE_ACCEL] = processThrottle();
   txmsg.buf[BYTE_THROTTLE_DIR] = processDirection();
   txmsg.buf[BYTE_THROTTLE_REGEN] = processRegen();
